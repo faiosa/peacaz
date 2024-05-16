@@ -23,6 +23,8 @@ from utils.controllers import (
 )
 from utils.settings import load_settings, save_settings
 from windows.settings import SettingsWindow
+from windows.restore import RestorationProgressWindow
+from utils.position_window import position_window_at_centre
 
 
 class AngleSelector(Canvas):
@@ -31,6 +33,7 @@ class AngleSelector(Canvas):
 
         # Load settings at the beginning of the program
         self.settings = load_settings()
+        self.restore_window = RestorationProgressWindow(master)
 
         self.size = size
         self.x = 400
@@ -58,9 +61,11 @@ class AngleSelector(Canvas):
             command=self.switch_controller,
         )
         self.controller_menu.config(
-            bg="#FFFFFF", fg="black", font=("AnonymousPro Regular", 16)
+            bg="#FFFFFF",
+            fg="black",
+            font=("AnonymousPro Regular", 16),
         )
-        self.controller_menu.place(x=100, y=30)
+        self.controller_menu.place(x=120, y=30)
 
         self.desired_azimuth_entry = Entry(
             master,
@@ -144,6 +149,7 @@ class AngleSelector(Canvas):
             text="Поточний кут: 0.00",
             font=("AnonymousPro Regular", 16),
         )
+
         self.current_degree_label.place(x=100, y=590, width=200, height=30)
         self.update_callbacks.append(self.update_current_degree_text)
 
@@ -194,6 +200,8 @@ class AngleSelector(Canvas):
         self.draw_arrow()
 
     def restore_defaults(self, controller_name: str):
+        self.restore_window.start()
+
         serial_port = get_controller_serial_by_name(
             controller_name, self.controller_values
         )
@@ -207,6 +215,8 @@ class AngleSelector(Canvas):
         self.previous_angle = 0
         self.draw_arrow()
         messagebox.showinfo("Success", message)
+
+        self.restore_window.stop()
 
     def turn_ptz_left(self, selected_controller: str):
         self.start_continuous_update(-ROTATION_SPEED)
@@ -375,7 +385,7 @@ class AngleSelector(Canvas):
         )
         if new_angle <= controller_min_angle or new_angle >= controller_max_angle:
             self.stop_ptz(controller_name)
-            messagebox.showwarning("Warning", "Максимальний кут досягнуто")
+            messagebox.showwarning("Warning", "Граничний кут досягнуто")
         else:
             self.draw_arrow()
             self.update_current_degree_text(new_angle)
@@ -391,8 +401,9 @@ class AngleSelector(Canvas):
 
 
 window = Tk()
-
-window.geometry("386x832")
+app_icon = PhotoImage(file="./assets/frame0/icon.png")
+window.iconphoto(False, app_icon)
+window.geometry(position_window_at_centre(window, width=386, height=832))
 window.title("PTZ Controller")
 window.configure(bg="#FFFFFF")
 
