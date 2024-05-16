@@ -1,5 +1,7 @@
 import math
 import time
+import os
+import sys
 from tkinter import (
     Button,
     Canvas,
@@ -25,6 +27,17 @@ from utils.settings import load_settings, save_settings
 from windows.settings import SettingsWindow
 from windows.restore import RestorationProgressWindow
 from utils.position_window import position_window_at_centre
+
+
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 
 class AngleSelector(Canvas):
@@ -104,7 +117,9 @@ class AngleSelector(Canvas):
             font=("AnonymousPro Regular", 16),
         )
 
-        self.turn_left_image = PhotoImage(file="./assets/frame0/turn_left.png")
+        self.turn_left_image = PhotoImage(
+            file=resource_path(".\\assets\\turn_left.png")
+        )
         self.turn_left_button = Button(
             image=self.turn_left_image,
             borderwidth=0,
@@ -114,7 +129,9 @@ class AngleSelector(Canvas):
         )
         self.turn_left_button.place(x=50.0, y=700.0, width=50, height=50)
 
-        self.turn_right_image = PhotoImage(file="./assets/frame0/turn_right.png")
+        self.turn_right_image = PhotoImage(
+            file=resource_path("./assets/turn_right.png")
+        )
         self.turn_right_button = Button(
             image=self.turn_right_image,
             borderwidth=0,
@@ -124,7 +141,7 @@ class AngleSelector(Canvas):
         )
         self.turn_right_button.place(x=280.0, y=700.0, width=50, height=50)
 
-        self.stop_image = PhotoImage(file="./assets/frame0/stop.png")
+        self.stop_image = PhotoImage(file=resource_path(".\\asset\\stop.png"))
         self.stop_button = Button(
             image=self.stop_image,
             borderwidth=0,
@@ -163,7 +180,7 @@ class AngleSelector(Canvas):
         self.current_azimuth_label.place(x=100, y=640, width=200, height=30)
         self.update_callbacks.append(self.update_current_azimuth_text)
 
-        self.settings_image = PhotoImage(file="./assets/frame0/settings.png")
+        self.settings_image = PhotoImage(file=resource_path(".\\assets\\settings.png"))
         self.settings_button = Button(
             image=self.settings_image,
             borderwidth=0,
@@ -401,7 +418,7 @@ class AngleSelector(Canvas):
 
 
 window = Tk()
-app_icon = PhotoImage(file="./assets/frame0/icon.png")
+app_icon = PhotoImage(file=resource_path(".\\assets\\icon.png"))
 window.iconphoto(False, app_icon)
 window.geometry(position_window_at_centre(window, width=386, height=832))
 window.title("PTZ Controller")
