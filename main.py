@@ -98,7 +98,7 @@ class AngleSelector(Canvas):
             font=("AnonymousPro Regular", 14),
         )
 
-        self.turn_left_image = PhotoImage(file=resource_path("assets/turn_left.png"))
+        self.turn_left_image = PhotoImage(file=resource_path("assets\\turn_left.png"))
         self.turn_left_button = Button(
             image=self.turn_left_image,
             borderwidth=0,
@@ -108,7 +108,7 @@ class AngleSelector(Canvas):
         )
         self.turn_left_button.place(x=60.0, y=600.0, width=50, height=50)
 
-        self.turn_right_image = PhotoImage(file=resource_path("assets/turn_right.png"))
+        self.turn_right_image = PhotoImage(file=resource_path("assets\\turn_right.png"))
         self.turn_right_button = Button(
             image=self.turn_right_image,
             borderwidth=0,
@@ -118,7 +118,7 @@ class AngleSelector(Canvas):
         )
         self.turn_right_button.place(x=290.0, y=600.0, width=50, height=50)
 
-        self.stop_image = PhotoImage(file=resource_path("assets/stop.png"))
+        self.stop_image = PhotoImage(file=resource_path("assets\\stop.png"))
         self.stop_button = Button(
             image=self.stop_image,
             borderwidth=0,
@@ -147,7 +147,7 @@ class AngleSelector(Canvas):
         self.current_degree_label.place(x=100, y=550, width=200, height=30)
         self.update_callbacks.append(self.update_current_degree_text)
 
-        self.settings_image = PhotoImage(file=resource_path("assets/settings.png"))
+        self.settings_image = PhotoImage(file=resource_path("assets\\settings.png"))
         self.settings_button = Button(
             image=self.settings_image,
             borderwidth=0,
@@ -355,8 +355,8 @@ class AngleSelector(Canvas):
 
 
 window = Tk()
-# app_icon = PhotoImage(file=resource_path(".\\assets\\icon.png"))
-# window.iconphoto(False, app_icon)
+app_icon = PhotoImage(file=resource_path(".\\assets\\icon.png"))
+window.iconphoto(False, app_icon)
 window.geometry(position_window_at_centre(window, width=400, height=750))
 window.title("PTZ Controller")
 window.configure(bg="#FFFFFF")

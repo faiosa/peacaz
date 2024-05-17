@@ -1,1 +1,1 @@
-SETTINGS_FILE = "./config/settings.json"
+SETTINGS_FILE = "config\\settings.json"
