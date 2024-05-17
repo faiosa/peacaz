@@ -16,7 +16,6 @@ from tkinter import (
 
 import ptz_controller
 from config.ptz_controls_config import RIGHT, ROTATION_SPEED
-from utils.calculations import get_angle_from_azimuth, get_azimuth_from_angle
 from utils.controllers import (
     get_controller_id_by_name,
     get_controller_serial_by_name,
@@ -33,7 +32,7 @@ def resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller"""
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
+        base_path = sys._MEIPASS2
     except Exception:
         base_path = os.path.abspath(".")
 
@@ -42,7 +41,7 @@ def resource_path(relative_path):
 
 class AngleSelector(Canvas):
     def __init__(self, master, size=200, **kwargs):
-        super().__init__(master, width=400, height=832, bg="#FFFFFF", bd=0, **kwargs)
+        super().__init__(master, width=400, height=750, bg="#FFFFFF", bd=0, **kwargs)
 
         # Load settings at the beginning of the program
         self.settings = load_settings()
@@ -50,7 +49,7 @@ class AngleSelector(Canvas):
 
         self.size = size
         self.x = 400
-        self.y = 832
+        self.y = 750
         self.previous_angle = 0
         self.angle = 0
         self.arrow_length = size // 2 - 30
@@ -76,33 +75,15 @@ class AngleSelector(Canvas):
         self.controller_menu.config(
             bg="#FFFFFF",
             fg="black",
-            font=("AnonymousPro Regular", 16),
+            font=("AnonymousPro Regular", 14),
         )
         self.controller_menu.place(x=120, y=30)
 
-        self.desired_azimuth_entry = Entry(
-            master,
-            bd=0,
-            relief="ridge",
-            font=("AnonymousPro Regular", 16),
-            bg="#FFFFFF",
-            fg="black",
-        )
-        self.desired_azimuth_entry.place(x=100, y=200, width=200, height=30)
-        self.desired_azimuth_entry.bind("<Return>", self.set_desired_azimuth)
-
-        self.create_text(
-            200.0,
-            180.0,
-            text="Введіть бажаний азимут",
-            fill="#000000",
-            font=("AnonymousPro Regular", 16),
-        )
         self.desired_degree_entry = Entry(
             master,
             bd=0,
             relief="ridge",
-            font=("AnonymousPro Regular", 16),
+            font=("AnonymousPro Regular", 14),
             bg="#FFFFFF",
             fg="black",
         )
@@ -114,12 +95,10 @@ class AngleSelector(Canvas):
             100.0,
             text="Введіть бажаний кут",
             fill="#000000",
-            font=("AnonymousPro Regular", 16),
+            font=("AnonymousPro Regular", 14),
         )
 
-        self.turn_left_image = PhotoImage(
-            file=resource_path(".\\assets\\turn_left.png")
-        )
+        self.turn_left_image = PhotoImage(file=resource_path("assets/turn_left.png"))
         self.turn_left_button = Button(
             image=self.turn_left_image,
             borderwidth=0,
@@ -127,11 +106,9 @@ class AngleSelector(Canvas):
             command=lambda: self.turn_ptz_left(self.selected_controller.get()),
             relief="flat",
         )
-        self.turn_left_button.place(x=50.0, y=700.0, width=50, height=50)
+        self.turn_left_button.place(x=60.0, y=600.0, width=50, height=50)
 
-        self.turn_right_image = PhotoImage(
-            file=resource_path("./assets/turn_right.png")
-        )
+        self.turn_right_image = PhotoImage(file=resource_path("assets/turn_right.png"))
         self.turn_right_button = Button(
             image=self.turn_right_image,
             borderwidth=0,
@@ -139,9 +116,9 @@ class AngleSelector(Canvas):
             command=lambda: self.turn_ptz_right(self.selected_controller.get()),
             relief="flat",
         )
-        self.turn_right_button.place(x=280.0, y=700.0, width=50, height=50)
+        self.turn_right_button.place(x=290.0, y=600.0, width=50, height=50)
 
-        self.stop_image = PhotoImage(file=resource_path(".\\asset\\stop.png"))
+        self.stop_image = PhotoImage(file=resource_path("assets/stop.png"))
         self.stop_button = Button(
             image=self.stop_image,
             borderwidth=0,
@@ -149,7 +126,7 @@ class AngleSelector(Canvas):
             command=lambda: self.stop_ptz(self.selected_controller.get()),
             relief="flat",
         )
-        self.stop_button.place(x=165.0, y=700.0, width=50, height=50)
+        self.stop_button.place(x=175.0, y=600.0, width=50, height=50)
 
         self.restore_defaults_button = Button(
             borderwidth=0,
@@ -158,29 +135,19 @@ class AngleSelector(Canvas):
             text="Відновити початкові значення",
             bg="#FFFFFF",
         )
-        self.restore_defaults_button.place(x=86.0, y=780.0, width=214.0, height=33.0)
+        self.restore_defaults_button.place(x=76.0, y=680.0, width=250.0, height=33.0)
         self.current_degree_label = Label(
             master,
             bg="#FFFFFF",
             fg="black",
             text="Поточний кут: 0.00",
-            font=("AnonymousPro Regular", 16),
+            font=("AnonymousPro Regular", 14),
         )
 
-        self.current_degree_label.place(x=100, y=590, width=200, height=30)
+        self.current_degree_label.place(x=100, y=550, width=200, height=30)
         self.update_callbacks.append(self.update_current_degree_text)
 
-        self.current_azimuth_label = Label(
-            master,
-            text="Поточний азимут: 90.00",
-            font=("AnonymousPro Regular", 16),
-            bg="#FFFFFF",
-            fg="black",
-        )
-        self.current_azimuth_label.place(x=100, y=640, width=200, height=30)
-        self.update_callbacks.append(self.update_current_azimuth_text)
-
-        self.settings_image = PhotoImage(file=resource_path(".\\assets\\settings.png"))
+        self.settings_image = PhotoImage(file=resource_path("assets/settings.png"))
         self.settings_button = Button(
             image=self.settings_image,
             borderwidth=0,
@@ -188,7 +155,7 @@ class AngleSelector(Canvas):
             command=self.open_settings_window,
             relief="flat",
         )
-        self.settings_button.place(x=348.0, y=798.0, width=24.0, height=24.0)
+        self.settings_button.place(x=370.0, y=723.0, width=24.0, height=24.0)
         self.switch_controller(self.selected_controller.get())
 
     def open_settings_window(self):
@@ -210,10 +177,8 @@ class AngleSelector(Canvas):
         angle = self.controller_values[controller_id]["current_degree"]
         # Update labels with values for the selected controller
         self.update_current_degree_text(angle)
-        self.update_current_azimuth_text(angle)
         self.angle = angle
         self.previous_angle = angle
-        # Redraw the arrow with the new angle
         self.draw_arrow()
 
     def restore_defaults(self, controller_name: str):
@@ -227,7 +192,6 @@ class AngleSelector(Canvas):
         )
         message = ptz_controller.restore_defaults(serial_port, max_angle)
         self.update_current_degree_text(0)
-        self.update_current_azimuth_text(0)
         self.angle = 0
         self.previous_angle = 0
         self.draw_arrow()
@@ -326,36 +290,10 @@ class AngleSelector(Canvas):
         )
         save_settings(self.settings)
 
-    def update_current_azimuth_text(self, angle):
-        azimuth = get_azimuth_from_angle(angle)
-        self.current_azimuth_label.config(text=f"Поточний азимут: {azimuth:.2f}")
-        # Update the controller value with the new degree
-        controller_name = self.selected_controller.get()
-        controller_id = get_controller_id_by_name(
-            controller_name, self.controller_values
-        )
-        self.controller_values[controller_id]["current_azimuth"] = float(
-            f"{azimuth:.2f}"
-        )
-        self.settings["controller_values"][controller_id]["current_azimuth"] = float(
-            f"{azimuth:.2f}"
-        )
-        save_settings(self.settings)
-
     def set_desired_degree(self, event=None):
         try:
             desired_degree = float(self.desired_degree_entry.get())
             self.turn(desired_degree)
-
-        except ValueError:
-            messagebox.showwarning("Warning", "Введіть коректне число")
-
-    def set_desired_azimuth(self, event=None):
-        try:
-            desired_azimuth = float(self.desired_azimuth_entry.get())
-
-            angle = get_angle_from_azimuth(desired_azimuth)
-            self.turn(angle)
 
         except ValueError:
             messagebox.showwarning("Warning", "Введіть коректне число")
@@ -406,7 +344,6 @@ class AngleSelector(Canvas):
         else:
             self.draw_arrow()
             self.update_current_degree_text(new_angle)
-            self.update_current_azimuth_text(new_angle)
             # Schedule the next update
             self.continuous_update_id = self.after(
                 16, self.continuous_update_helper, direction, time_end
@@ -418,9 +355,9 @@ class AngleSelector(Canvas):
 
 
 window = Tk()
-app_icon = PhotoImage(file=resource_path(".\\assets\\icon.png"))
-window.iconphoto(False, app_icon)
-window.geometry(position_window_at_centre(window, width=386, height=832))
+# app_icon = PhotoImage(file=resource_path(".\\assets\\icon.png"))
+# window.iconphoto(False, app_icon)
+window.geometry(position_window_at_centre(window, width=400, height=750))
 window.title("PTZ Controller")
 window.configure(bg="#FFFFFF")
 
