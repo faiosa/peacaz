@@ -1,6 +1,7 @@
-from config.ptz_controls_config import ROTATION_SPEED, LEFT, STOP, RIGHT
-import time
 import serial
+import time
+
+from config.ptz_controls_config import ROTATION_SPEED, LEFT, STOP, RIGHT
 
 
 def turn_ptz_left(selected_controller: str):
@@ -83,8 +84,11 @@ def send_pelco_command(command: bytes, selected_controller: str) -> None:
         checksum = calculate_checksum(command)
         full_command = command + checksum
         # Replace with your serial port settings (consult camera manual)
-        with serial.Serial(selected_controller, 2400, timeout=1) as ser:
+        with serial.Serial(
+            port=selected_controller, baudrate=2400, bytesize=8, timeout=0.01
+        ) as ser:
             ser.write(full_command)
+            ser.read(size=64)
             print(f"Sent command: {command.hex()}")
     except serial.SerialException as e:
         print(f"Serial error: {e}")
