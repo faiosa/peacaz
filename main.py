@@ -23,6 +23,7 @@ from utils.controllers import (
     get_controller_max_angle_by_name,
 )
 from utils.settings import load_settings, save_settings
+from utils.controls import disable_buttons, enable_buttons
 from windows.settings import SettingsWindow
 from windows.restore import RestorationProgressWindow
 from utils.position_window import position_window_at_centre
@@ -61,6 +62,7 @@ class AngleSelector(Canvas):
         self.update_callbacks = []
         self.stop_turn = False
         self.time_start = time.time()
+        self.is_moving = False
 
         self.controller_values = self.settings.get("controller_values", {})
         self.selected_controller = StringVar(master)
@@ -81,7 +83,7 @@ class AngleSelector(Canvas):
 
         self.desired_degree_entry = Entry(
             master,
-            bd=0,
+            bd=1,
             relief="ridge",
             font=("AnonymousPro Regular", 14),
             bg="#FFFFFF",
@@ -142,6 +144,7 @@ class AngleSelector(Canvas):
             fg="black",
             text="Поточний кут: 0.00",
             font=("AnonymousPro Regular", 14),
+            bd=1,
         )
 
         self.current_degree_label.place(x=100, y=550, width=200, height=30)
@@ -200,20 +203,28 @@ class AngleSelector(Canvas):
         self.restore_window.stop()
 
     def turn_ptz_left(self, selected_controller: str):
-        self.start_continuous_update(-ROTATION_SPEED)
-        serial_port = get_controller_serial_by_name(
-            selected_controller, self.controller_values
-        )
-        ptz_controller.turn_ptz_left(serial_port)
+        if self.is_moving:
+            return
+        else:
+            disable_buttons(self)
+            self.start_continuous_update(-ROTATION_SPEED)
+            serial_port = get_controller_serial_by_name(
+                selected_controller, self.controller_values
+            )
+            ptz_controller.turn_ptz_left(serial_port)
+            self.is_moving = True
 
     def turn_ptz_right(self, selected_controller: str):
-        print("Turning PTZ right")
-        # Start continuous update when the "Turn PTZ Right" button is pressed
-        self.start_continuous_update(ROTATION_SPEED)
-        serial_port = get_controller_serial_by_name(
-            selected_controller, self.controller_values
-        )
-        ptz_controller.turn_ptz_right(serial_port)
+        if self.is_moving:
+            return
+        else:
+            disable_buttons(self)
+            self.start_continuous_update(ROTATION_SPEED)
+            serial_port = get_controller_serial_by_name(
+                selected_controller, self.controller_values
+            )
+            ptz_controller.turn_ptz_right(serial_port)
+            self.is_moving = True
 
     def stop_ptz(self, selected_controller: str, time_end=None):
         serial_port = get_controller_serial_by_name(
@@ -230,6 +241,8 @@ class AngleSelector(Canvas):
             # Stop continuous update when the button is released
             self.stop_continuous_update()
             ptz_controller.stop_ptz(serial_port)
+        self.is_moving = False
+        enable_buttons(self)
 
     def draw_circle(self):
         center_x = self.x // 2
