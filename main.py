@@ -364,5 +364,10 @@ window.configure(bg="#FFFFFF")
 angle_selector = AngleSelector(window, size=350)
 angle_selector.place(x=0, y=0)
 
+# Add bindings to control ptz with arrows
+window.bind("<Left>", angle_selector.turn_ptz_left)
+window.bind("<Right>", angle_selector.turn_ptz_right)
+window.bind("<End>", angle_selector.stop_ptz)
+
 window.resizable(False, False)
 window.mainloop()
