@@ -85,10 +85,10 @@ def send_pelco_command(command: bytes, selected_controller: str) -> None:
         full_command = command + checksum
         # Replace with your serial port settings (consult camera manual)
         with serial.Serial(
-            port=selected_controller, baudrate=2400, bytesize=8, timeout=0.01
+            port=selected_controller, baudrate=2400, bytesize=8, timeout=0.1
         ) as ser:
             ser.write(full_command)
-            ser.read(size=64)
+            ser.read(size=1024)
             print(f"Sent command: {command.hex()}")
     except serial.SerialException as e:
         print(f"Serial error: {e}")
