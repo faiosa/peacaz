@@ -21,6 +21,7 @@ from utils.controllers import (
     get_controller_serial_by_name,
     get_controller_min_angle_by_name,
     get_controller_max_angle_by_name,
+    get_rotation_speed_by_name,
 )
 from utils.settings import load_settings, save_settings
 from utils.controls import disable_buttons, enable_buttons
@@ -67,6 +68,7 @@ class AngleSelector(Canvas):
         self.controller_values = self.settings.get("controller_values", {})
         self.selected_controller = StringVar(master)
         self.selected_controller.set(self.controller_values["1"]["name"])
+        self.selected_controller_name = self.selected_controller.get()
 
         self.controller_menu = OptionMenu(
             master,
@@ -173,6 +175,7 @@ class AngleSelector(Canvas):
 
     def switch_controller(self, controller_name):
         print("Switching to", controller_name)
+        self.selected_controller_name = controller_name
         # Get values for the selected controller
         controller_id = get_controller_id_by_name(
             controller_name, self.controller_values
@@ -202,33 +205,39 @@ class AngleSelector(Canvas):
 
         self.restore_window.stop()
 
-    def turn_ptz_left(self, selected_controller: str):
+    def turn_ptz_left(self, event=None):
         if self.is_moving:
             return
         else:
             disable_buttons(self)
-            self.start_continuous_update(-ROTATION_SPEED)
-            serial_port = get_controller_serial_by_name(
-                selected_controller, self.controller_values
+            rotation_speed = get_rotation_speed_by_name(
+                self.selected_controller_name, self.controller_values
             )
+            serial_port = get_controller_serial_by_name(
+                self.selected_controller_name, self.controller_values
+            )
+            self.start_continuous_update(-rotation_speed)
             ptz_controller.turn_ptz_left(serial_port)
             self.is_moving = True
 
-    def turn_ptz_right(self, selected_controller: str):
+    def turn_ptz_right(self, event=None):
         if self.is_moving:
             return
         else:
             disable_buttons(self)
-            self.start_continuous_update(ROTATION_SPEED)
-            serial_port = get_controller_serial_by_name(
-                selected_controller, self.controller_values
+            rotation_speed = get_rotation_speed_by_name(
+                self.selected_controller_name, self.controller_values
             )
+            serial_port = get_controller_serial_by_name(
+                self.selected_controller_name, self.controller_values
+            )
+            self.start_continuous_update(rotation_speed)
             ptz_controller.turn_ptz_right(serial_port)
             self.is_moving = True
 
-    def stop_ptz(self, selected_controller: str, time_end=None):
+    def stop_ptz(self, event=None, time_end=None):
         serial_port = get_controller_serial_by_name(
-            selected_controller, self.controller_values
+            self.selected_controller_name, self.controller_values
         )
         if time_end:
             if time_end <= time.time():
@@ -292,9 +301,8 @@ class AngleSelector(Canvas):
     def update_current_degree_text(self, angle):
         self.current_degree_label.config(text=f"Поточний кут: {angle:.2f}")
         # Update the controller value with the new degree
-        controller_name = self.selected_controller.get()
         controller_id = get_controller_id_by_name(
-            controller_name, self.controller_values
+            self.selected_controller_name, self.controller_values
         )
 
         self.controller_values[controller_id]["current_degree"] = float(f"{angle:.2f}")
@@ -312,9 +320,8 @@ class AngleSelector(Canvas):
             messagebox.showwarning("Warning", "Введіть коректне число")
 
     def turn(self, desired_degree: float):
-        selected_controller = self.selected_controller.get()
         serial_port = get_controller_serial_by_name(
-            selected_controller, self.controller_values
+            self.selected_controller_name, self.controller_values
         )
         rotate_direction = ptz_controller.get_rotate_direction(
             desired_degree, self.previous_angle
@@ -324,15 +331,19 @@ class AngleSelector(Canvas):
         )
         time_start = time.time()
         time_end = time_start + rotate_time
+        rotation_speed = get_rotation_speed_by_name(
+            self.selected_controller_name, self.controller_values
+        )
+
         self.start_continuous_update(
-            ROTATION_SPEED if rotate_direction == RIGHT else -ROTATION_SPEED,
-            time_end,
+            rotation_speed if rotate_direction == RIGHT else -rotation_speed,
+            time_end=time_end,
         )
         ptz_controller.turn_ptz(rotate_direction, serial_port)
 
     def start_continuous_update(self, direction, time_end=None):
-        # Start continuous update with the given direction (positive or negative ROTATION_SPEED)
-        self.continuous_update_helper(direction, time_end)
+        # Start continuous update with the given direction (positive or negative rotation_speed)
+        self.continuous_update_helper(direction=direction, time_end=time_end)
 
     def stop_continuous_update(self):
         # Stop continuous update by canceling the scheduled updates
@@ -344,15 +355,14 @@ class AngleSelector(Canvas):
         # Update arrow position continuously with the given direction
         new_angle = self.angle + direction / 60  # 60 updates per second
         self.angle = new_angle
-        controller_name = self.selected_controller.get()
         controller_min_angle = get_controller_min_angle_by_name(
-            controller_name, self.controller_values
+            self.selected_controller_name, self.controller_values
         )
         controller_max_angle = get_controller_max_angle_by_name(
-            controller_name, self.controller_values
+            self.selected_controller_name, self.controller_values
         )
         if new_angle <= controller_min_angle or new_angle >= controller_max_angle:
-            self.stop_ptz(controller_name)
+            self.stop_ptz()
             messagebox.showwarning("Warning", "Граничний кут досягнуто")
         else:
             self.draw_arrow()
@@ -364,7 +374,7 @@ class AngleSelector(Canvas):
             self.previous_angle = new_angle
         if time_end:
             if time_end <= time.time():
-                self.stop_ptz(controller_name)
+                self.stop_ptz()
 
 
 window = Tk()

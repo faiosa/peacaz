@@ -37,33 +37,41 @@ class SettingsWindow:
         name_entry.insert(0, values["name"])
         name_entry.grid(row=row, column=1, padx=10, pady=5)
 
-        Label(self.window, text="Серійний порт:").grid(
+        Label(self.window, text="Швидкість повертання (градус/c ):").grid(
             row=row, column=2, padx=10, pady=5
+        )
+        rotation_speed_entry = Entry(self.window)
+        rotation_speed_entry.insert(0, values["rotation_speed"])
+        rotation_speed_entry.grid(row=row, column=3, padx=10, pady=5)
+
+        Label(self.window, text="Серійний порт:").grid(
+            row=row, column=4, padx=10, pady=5
         )
         port_entry = Entry(self.window)
         port_entry.insert(0, values["serial_port"])
-        port_entry.grid(row=row, column=3, padx=10, pady=5)
+        port_entry.grid(row=row, column=5, padx=10, pady=5)
 
-        Label(self.window, text="Мін. кут:").grid(row=row, column=4, padx=10, pady=5)
+        Label(self.window, text="Мін. кут:").grid(row=row, column=6, padx=10, pady=5)
         min_entry = Entry(self.window)
         min_entry.insert(0, values["min_angle"])
-        min_entry.grid(row=row, column=5, padx=10, pady=5)
+        min_entry.grid(row=row, column=7, padx=10, pady=5)
 
-        Label(self.window, text="Макс. кут:").grid(row=row, column=6, padx=10, pady=5)
+        Label(self.window, text="Макс. кут:").grid(row=row, column=8, padx=10, pady=5)
         max_entry = Entry(self.window)
         max_entry.insert(0, values["max_angle"])
-        max_entry.grid(row=row, column=7, padx=10, pady=5)
+        max_entry.grid(row=row, column=9, padx=10, pady=5)
 
         delete_button = Button(
             self.window,
             text="Видалити",
             command=lambda idx=index: self.remove_controller(idx),
         )
-        delete_button.grid(row=row, column=8, padx=10, pady=5)
+        delete_button.grid(row=row, column=10, padx=10, pady=5)
 
         self.controller_entries[index] = {
             "name": name_entry,
             "serial_port": port_entry,
+            "rotation_speed": rotation_speed_entry,
             "min_angle": min_entry,
             "max_angle": max_entry,
         }
@@ -73,11 +81,15 @@ class SettingsWindow:
         updated_controller_values = {}
         for i, (index, _) in enumerate(self.controller_values.items()):
             name = self.controller_entries[index]["name"].get()
+            rotation_speed = float(
+                self.controller_entries[index]["rotation_speed"].get()
+            )
             serial_port = self.controller_entries[index]["serial_port"].get()
             min_angle = int(self.controller_entries[index]["min_angle"].get())
             max_angle = int(self.controller_entries[index]["max_angle"].get())
             updated_controller_values[index] = {
                 "name": name,
+                "rotation_speed": rotation_speed,
                 "serial_port": serial_port,
                 "current_degree": self.controller_values[index]["current_degree"],
                 "current_azimuth": self.controller_values[index]["current_azimuth"],
@@ -92,6 +104,7 @@ class SettingsWindow:
         index = str(len(self.controller_values) + 1)
         self.controller_values[index] = {
             "name": "",
+            "rotation_speed": 0.0,
             "serial_port": "",
             "current_degree": 0.0,
             "current_azimuth": 0.0,
