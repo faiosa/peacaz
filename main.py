@@ -209,16 +209,17 @@ class AngleSelector(Canvas):
         if self.is_moving:
             return
         else:
+            self.is_moving = True
             disable_buttons(self)
+
             rotation_speed = get_rotation_speed_by_name(
                 self.selected_controller_name, self.controller_values
             )
             serial_port = get_controller_serial_by_name(
                 self.selected_controller_name, self.controller_values
             )
-            self.start_continuous_update(-rotation_speed)
             ptz_controller.turn_ptz_left(serial_port)
-            self.is_moving = True
+            self.start_continuous_update(-rotation_speed)
 
     def turn_ptz_right(self, event=None):
         if self.is_moving:
@@ -231,11 +232,14 @@ class AngleSelector(Canvas):
             serial_port = get_controller_serial_by_name(
                 self.selected_controller_name, self.controller_values
             )
-            self.start_continuous_update(rotation_speed)
             ptz_controller.turn_ptz_right(serial_port)
+            self.start_continuous_update(rotation_speed)
             self.is_moving = True
 
     def stop_ptz(self, event=None, time_end=None):
+        self.is_moving = False
+        enable_buttons(self)
+
         serial_port = get_controller_serial_by_name(
             self.selected_controller_name, self.controller_values
         )
@@ -250,8 +254,6 @@ class AngleSelector(Canvas):
             # Stop continuous update when the button is released
             self.stop_continuous_update()
             ptz_controller.stop_ptz(serial_port)
-        self.is_moving = False
-        enable_buttons(self)
 
     def draw_circle(self):
         center_x = self.x // 2
@@ -259,8 +261,9 @@ class AngleSelector(Canvas):
         radius = self.size // 2 - 40
 
         for angle in range(0, 360, 10):
-            x = center_x + radius * math.cos(math.radians(angle))
-            y = center_y + radius * math.sin(math.radians(angle))
+            adjusted_angle = angle - 90  # Adjust angle to make 0 at the top
+            x = center_x + radius * math.cos(math.radians(adjusted_angle))
+            y = center_y + radius * math.sin(math.radians(adjusted_angle))
             self.create_oval(x, y, x + 1, y + 1, fill="black")
 
     def draw_marks(self):
@@ -269,8 +272,9 @@ class AngleSelector(Canvas):
         radius = self.size // 2 - 20
 
         for angle in range(0, 360, 10):
-            x = center_x + radius * math.cos(math.radians(angle))
-            y = center_y + radius * math.sin(math.radians(angle))
+            adjusted_angle = angle - 90  # Adjust angle to make 0 at the top
+            x = center_x + radius * math.cos(math.radians(adjusted_angle))
+            y = center_y + radius * math.sin(math.radians(adjusted_angle))
             self.create_text(x, y, text=str(angle), fill="black")
 
     def draw_arrow(self):
@@ -278,9 +282,11 @@ class AngleSelector(Canvas):
             self.delete(self.arrow)
         center_x = self.x // 2
         center_y = self.y // 2
-        angle_rad = math.radians(self.angle)
-        x = center_x + self.arrow_length * math.cos(angle_rad)
-        y = center_y + self.arrow_length * math.sin(angle_rad)
+        adjusted_angle_rad = math.radians(
+            self.angle - 90
+        )  # Adjust angle to make 0 at the top
+        x = center_x + self.arrow_length * math.cos(adjusted_angle_rad)
+        y = center_y + self.arrow_length * math.sin(adjusted_angle_rad)
         self.arrow = self.create_line(
             center_x, center_y, x, y, arrow="last", fill="black"
         )
@@ -335,15 +341,15 @@ class AngleSelector(Canvas):
             self.selected_controller_name, self.controller_values
         )
 
+        ptz_controller.turn_ptz(rotate_direction, serial_port)
         self.start_continuous_update(
             rotation_speed if rotate_direction == RIGHT else -rotation_speed,
             time_end=time_end,
         )
-        ptz_controller.turn_ptz(rotate_direction, serial_port)
 
-    def start_continuous_update(self, direction, time_end=None):
+    def start_continuous_update(self, rotation_speed, time_end=None):
         # Start continuous update with the given direction (positive or negative rotation_speed)
-        self.continuous_update_helper(direction=direction, time_end=time_end)
+        self.continuous_update_helper(rotation_speed=rotation_speed, time_end=time_end)
 
     def stop_continuous_update(self):
         # Stop continuous update by canceling the scheduled updates
@@ -351,30 +357,36 @@ class AngleSelector(Canvas):
             self.after_cancel(self.continuous_update_id)
             self.continuous_update_id = None
 
-    def continuous_update_helper(self, direction, time_end=None):
-        # Update arrow position continuously with the given direction
-        new_angle = self.angle + direction / 60  # 60 updates per second
+    def continuous_update_helper(self, rotation_speed, time_end=None):
+        # Calculate the time passed since the last update (in seconds)
+        time_passed = 1 / 100  # 60 updates per second
+
+        # Update arrow position continuously with the given rotation speed
+        new_angle = self.angle + (rotation_speed * time_passed)
         self.angle = new_angle
+
         controller_min_angle = get_controller_min_angle_by_name(
             self.selected_controller_name, self.controller_values
         )
         controller_max_angle = get_controller_max_angle_by_name(
             self.selected_controller_name, self.controller_values
         )
+
         if new_angle <= controller_min_angle or new_angle >= controller_max_angle:
             self.stop_ptz()
             messagebox.showwarning("Warning", "Граничний кут досягнуто")
+            self.master.focus_force()
         else:
             self.draw_arrow()
             self.update_current_degree_text(new_angle)
             # Schedule the next update
             self.continuous_update_id = self.after(
-                16, self.continuous_update_helper, direction, time_end
+                10, self.continuous_update_helper, rotation_speed, time_end
             )
             self.previous_angle = new_angle
-        if time_end:
-            if time_end <= time.time():
-                self.stop_ptz()
+
+        if time_end and time.time() >= time_end:
+            self.stop_ptz()
 
 
 window = Tk()
