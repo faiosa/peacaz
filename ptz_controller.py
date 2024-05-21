@@ -1,7 +1,7 @@
 import serial
 import time
 
-from config.ptz_controls_config import ROTATION_SPEED, LEFT, STOP, RIGHT
+from config.ptz_controls_config import LEFT, STOP, RIGHT
 
 
 def turn_ptz_left(selected_controller: str):
@@ -25,8 +25,10 @@ def stop_ptz_with_time(time_end: float, selected_controller: str):
         send_pelco_command(STOP, selected_controller)
 
 
-def restore_defaults(controller_serial: bytes, max_angle: int) -> str:
-    rotate_time = get_rotate_time(0, max_angle, LEFT)
+def restore_defaults(
+    controller_serial: bytes, max_angle: int, rotation_speed: float
+) -> str:
+    rotate_time = get_rotate_time(0, max_angle, LEFT, rotation_speed)
     turn_ptz_left(controller_serial)
     time.sleep(float(f"{rotate_time:.2f}"))
     stop_ptz(controller_serial)
@@ -34,18 +36,21 @@ def restore_defaults(controller_serial: bytes, max_angle: int) -> str:
 
 
 def get_rotate_time(
-    new_angle: float, previous_angle: float, rotate_direction: bytes
+    new_angle: float,
+    previous_angle: float,
+    rotate_direction: bytes,
+    rotation_speed: float,
 ) -> float:
     if rotate_direction == RIGHT:
         rotate_angle = new_angle - previous_angle
     else:
         rotate_angle = previous_angle - new_angle
 
-    return rotate_angle / ROTATION_SPEED
+    return rotate_angle / rotation_speed
 
 
-def get_rotate_angle(time_spend: float):
-    rotate_angle = time_spend * ROTATION_SPEED
+def get_rotate_angle(time_spend: float, rotation_speed: float) -> float:
+    rotate_angle = time_spend * rotation_speed
     return rotate_angle
 
 
@@ -65,10 +70,10 @@ def update_ptz_angle(selected_controller: str, new_angle: float, previous_angle:
         rotation_direction = LEFT
         rotate_angle = previous_angle - new_angle
 
-    time_to_rotate = rotate_angle / ROTATION_SPEED
+    # time_to_rotate = rotate_angle / ROTATION_SPEED
 
     send_pelco_command(rotation_direction, selected_controller)
-    time.sleep(float(f"{time_to_rotate:.2f}"))
+    # time.sleep(float(f"{time_to_rotate:.2f}"))
     send_pelco_command(STOP, selected_controller)
 
 
