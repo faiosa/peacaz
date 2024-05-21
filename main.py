@@ -107,7 +107,7 @@ class AngleSelector(Canvas):
             image=self.turn_left_image,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: self.turn_ptz_left(self.selected_controller.get()),
+            command=self.turn_ptz_left,
             relief="flat",
         )
         self.turn_left_button.place(x=60.0, y=600.0, width=50, height=50)
@@ -117,7 +117,7 @@ class AngleSelector(Canvas):
             image=self.turn_right_image,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: self.turn_ptz_right(self.selected_controller.get()),
+            command=self.turn_ptz_right,
             relief="flat",
         )
         self.turn_right_button.place(x=290.0, y=600.0, width=50, height=50)
@@ -127,13 +127,13 @@ class AngleSelector(Canvas):
             image=self.stop_image,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: self.stop_ptz(self.selected_controller.get()),
+            command=self.stop_ptz,
             relief="flat",
         )
         self.stop_button.place(x=175.0, y=600.0, width=50, height=50)
 
         self.restore_defaults_button = Button(
-            borderwidth=0,
+            borderwidth=1,
             highlightthickness=0,
             command=lambda: self.restore_defaults(self.selected_controller.get()),
             text="Відновити початкові значення",
