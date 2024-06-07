@@ -1,7 +1,15 @@
 import serial
 import time
 
-from config.ptz_controls_config import LEFT, STOP, RIGHT
+from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
+
+
+def turn_ptz_up(selected_controller: str):
+    send_pelco_command(UP, selected_controller)
+
+
+def turn_ptz_down(selected_controller: str):
+    send_pelco_command(DOWN, selected_controller)
 
 
 def turn_ptz_left(selected_controller: str):
@@ -26,12 +34,24 @@ def stop_ptz_with_time(time_end: float, selected_controller: str):
 
 
 def restore_defaults(
-    controller_serial: bytes, max_angle: int, rotation_speed: float
+    controller_serial: bytes,
+    max_angle: int,
+    rotation_speed: float,
+    max_tilt: int,
+    min_tilt: int,
+    tilt_speed: float,
 ) -> str:
     rotate_time = get_rotate_time(0, max_angle, LEFT, rotation_speed)
+    tilt_time = get_rotate_time(min_tilt, max_tilt, DOWN, tilt_speed)
+
     turn_ptz_left(controller_serial)
     time.sleep(float(f"{rotate_time:.2f}"))
     stop_ptz(controller_serial)
+
+    turn_ptz_down(controller_serial)
+    time.sleep(float(f"{tilt_time:.2f}"))
+    stop_ptz(controller_serial)
+
     return "PTZ restored to default position"
 
 
@@ -41,7 +61,7 @@ def get_rotate_time(
     rotate_direction: bytes,
     rotation_speed: float,
 ) -> float:
-    if rotate_direction == RIGHT:
+    if rotate_direction == RIGHT or rotate_direction == DOWN:
         rotate_angle = new_angle - previous_angle
     else:
         rotate_angle = previous_angle - new_angle
