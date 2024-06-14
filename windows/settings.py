@@ -1,45 +1,107 @@
-from tkinter import Toplevel, Label, Entry, Button
+import tkinter as tk
+from tkinter import ttk, Toplevel, Label, Entry, Button, LabelFrame, Scrollbar
 from utils.position_window import position_window_at_centre
+from utils.settings import load_settings, save_settings
 
 
-class SettingsWindow:
+class GlobalSettings:
+    def __init__(self, master):
+        self.frame = LabelFrame(master, text="Налаштування")
+        self.frame.pack(fill="x", padx=10, pady=10)
+
+        self.settings = load_settings()
+        self.create_interface()
+
+    def create_interface(self):
+        Label(self.frame, text="Тема інтерфейсу:").grid(
+            row=0, column=0, padx=10, pady=5
+        )
+        self.theme_var = tk.StringVar(value=self.settings["global_settings"]["theme"])
+        theme_menu = ttk.Combobox(
+            self.frame, textvariable=self.theme_var, values=["Світла", "Темна"]
+        )
+        theme_menu.grid(row=0, column=1, padx=10, pady=5)
+        self.theme_var.trace_add("write", self.save_settings)
+
+        Label(self.frame, text="Мова інтерфейсу:").grid(
+            row=1, column=0, padx=10, pady=5
+        )
+        self.language_var = tk.StringVar(
+            value=self.settings["global_settings"]["language"]
+        )
+        language_menu = ttk.Combobox(
+            self.frame,
+            textvariable=self.language_var,
+            values=["Англійська", "Українська"],
+        )
+        language_menu.grid(row=1, column=1, padx=10, pady=5)
+        self.language_var.trace_add("write", self.save_settings)
+
+    def save_settings(self, *args):
+        self.settings["global_settings"]["theme"] = self.theme_var.get()
+        self.settings["global_settings"]["language"] = self.language_var.get()
+
+        save_settings(self.settings)
+
+
+class AngleSelector:
     def __init__(self, master, controller_values, angle_selector):
-        self.master = master
         self.controller_values = controller_values
         self.angle_selector = angle_selector
-        self.window = Toplevel(master)
-        self.window.geometry(
-            position_window_at_centre(self.window, width=500, height=300)
-        )
-        self.window.title("Налаштування")
 
+        self.frame = ttk.Frame(master)
+        self.frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.create_interface()
+
+    def create_interface(self):
         self.controller_list = {}
-        self.create_main_interface()
+        self.controller_frame = LabelFrame(self.frame, text="Контролери")
+        self.controller_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-    def create_main_interface(self):
+        self.scrollbar = Scrollbar(self.controller_frame)
+        self.scrollbar.pack(side="right", fill="y")
+
+        self.canvas = tk.Canvas(
+            self.controller_frame, yscrollcommand=self.scrollbar.set
+        )
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        self.inner_frame = tk.Frame(self.canvas)
+        self.canvas.create_window((0, 0), window=self.inner_frame, anchor="nw")
+
+        self.inner_frame.bind("<Configure>", self.on_frame_configure)
+        self.scrollbar.config(command=self.canvas.yview)
+
+        self.create_controller_interface()
+
+    def on_frame_configure(self, event):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def create_controller_interface(self):
         row = 0
         for index, values in self.controller_values.items():
             self.add_controller_row(index, values, row)
             row += 1
 
         self.add_button = Button(
-            self.window, text="Додати контролер", command=self.add_controller
+            self.inner_frame, text="Додати контролер", command=self.add_controller
         )
         self.add_button.grid(row=row, column=0, columnspan=3, pady=5)
 
     def add_controller_row(self, index, values, row):
-        label = Label(self.window, text=f"{values['name']}")
+        label = Label(self.inner_frame, text=f"{values['name']}")
         label.grid(row=row, column=0, padx=10, pady=5)
 
         settings_button = Button(
-            self.window,
+            self.inner_frame,
             text="Налаштування",
             command=lambda idx=index: self.open_settings(idx),
         )
         settings_button.grid(row=row, column=1, padx=10, pady=5)
 
         delete_button = Button(
-            self.window,
+            self.inner_frame,
             text="Видалити",
             command=lambda idx=index: self.remove_controller(idx),
         )
@@ -53,7 +115,7 @@ class SettingsWindow:
 
     def open_settings(self, index):
         ControllerSettingsWindow(
-            self.master, index, self.controller_values, self.angle_selector
+            self.frame.master, index, self.controller_values, self.angle_selector
         )
 
     def add_controller(self):
@@ -71,18 +133,82 @@ class SettingsWindow:
             "max_tilt": 90,
         }
         self.angle_selector.show_controllers_frame()
+        self.angle_selector.update_controller_values(self.controller_values)
         self.refresh_interface()
 
     def remove_controller(self, index):
         if index in self.controller_values:
             del self.controller_values[index]
+            self.angle_selector.update_controller_values(self.controller_values)
             self.angle_selector.show_controllers_frame()
             self.refresh_interface()
 
     def refresh_interface(self):
-        for widget in self.window.winfo_children():
+        for widget in self.inner_frame.winfo_children():
             widget.destroy()
-        self.create_main_interface()
+        self.create_controller_interface()
+
+
+class Switchboard:
+    def __init__(self, master):
+        self.frame = ttk.Frame(master)
+        self.frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.settings = load_settings()
+
+        self.create_interface()
+
+    def create_interface(self):
+        switchboard_frame = LabelFrame(self.frame, text="Налаштування комутатора")
+        switchboard_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        Label(switchboard_frame, text="Серійний порт:").grid(
+            row=0, column=0, padx=10, pady=5
+        )
+        self.serial_port_entry = Entry(switchboard_frame)
+        self.serial_port_entry.grid(row=0, column=1, padx=10, pady=5)
+        self.serial_port_entry.insert(
+            0, self.settings["switchboard_settings"]["serial_port"]
+        )
+        self.serial_port_entry.bind("<KeyRelease>", self.save_settings)
+
+        # Add additional settings as needed
+
+    def save_settings(self, event):
+        self.settings["switchboard_settings"][
+            "serial_port"
+        ] = self.serial_port_entry.get()
+        save_settings(self.settings)
+
+
+class SettingsWindow:
+    def __init__(self, master, controller_values, angle_selector):
+        self.master = master
+        self.controller_values = controller_values
+        self.angle_selector = angle_selector
+        self.window = Toplevel(master)
+        self.window.geometry(
+            position_window_at_centre(self.window, width=800, height=600)
+        )
+        self.window.title("Налаштування")
+
+        self.global_settings = GlobalSettings(self.window)
+        self.create_tabs()
+
+    def create_tabs(self):
+        tab_control = ttk.Notebook(self.window)
+        tab_control.pack(expand=1, fill="both")
+
+        # AngleSelector Tab
+        angle_selector_tab = ttk.Frame(tab_control)
+        tab_control.add(angle_selector_tab, text="Контролери")
+        self.angle_selector = AngleSelector(
+            angle_selector_tab, self.controller_values, self.angle_selector
+        )
+
+        # Switchboard Tab
+        switchboard_tab = ttk.Frame(tab_control)
+        tab_control.add(switchboard_tab, text="Комутатор")
+        self.switchboard = Switchboard(switchboard_tab)
 
 
 class ControllerSettingsWindow:

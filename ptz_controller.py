@@ -42,7 +42,7 @@ def restore_defaults(
     tilt_speed: float,
 ) -> str:
     rotate_time = get_rotate_time(0, max_angle, LEFT, rotation_speed)
-    tilt_time = get_rotate_time(min_tilt, max_tilt, DOWN, tilt_speed)
+    tilt_time = get_rotate_time(min_tilt, max_tilt, UP, tilt_speed)
 
     turn_ptz_left(controller_serial)
     time.sleep(float(f"{rotate_time:.2f}"))
@@ -61,7 +61,7 @@ def get_rotate_time(
     rotate_direction: bytes,
     rotation_speed: float,
 ) -> float:
-    if rotate_direction == RIGHT or rotate_direction == DOWN:
+    if rotate_direction == RIGHT or rotate_direction == UP:
         rotate_angle = new_angle - previous_angle
     else:
         rotate_angle = previous_angle - new_angle

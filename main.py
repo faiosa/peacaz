@@ -14,7 +14,6 @@ from tkinter import (
     messagebox,
 )
 
-import sv_ttk
 
 import ptz_controller
 from config.ptz_controls_config import (
@@ -39,6 +38,9 @@ from utils.position_window import position_window_at_centre
 from config.ptz_controls_config import ROTATION_SPEED_VERTICALLY_SETTING
 
 
+from apps.switchboard import Switchboard
+
+
 def resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller"""
     try:
@@ -51,11 +53,11 @@ def resource_path(relative_path):
 
 
 class AngleSelector(Canvas):
-    def __init__(self, master, size=200, **kwargs):
+    def __init__(self, master, size=350, **kwargs):
         super().__init__(
             master,
-            width=400,
-            height=480,
+            width=800,
+            height=600,
             bg="#FFFFFF",
             bd=0,
             highlightthickness=0,
@@ -66,7 +68,6 @@ class AngleSelector(Canvas):
         # Load settings at the beginning of the program
         self.settings = load_settings()
         self.restore_window = RestorationProgressWindow(master)
-        self.bind_controller_change()
 
         self.size = size
         self.x = 400
@@ -99,7 +100,7 @@ class AngleSelector(Canvas):
             bg="#FFFFFF",
             fg="black",
         )
-        self.desired_degree_entry.place(x=100, y=90, width=200, height=30)
+        self.desired_degree_entry.place(x=100, y=99, width=200, height=30)
         self.desired_degree_entry.bind("<Return>", self.set_desired_degree)
         self.desired_degree_entry.bind("<FocusIn>", self.on_entry_focus)
         self.desired_degree_entry.bind("<FocusOut>", self.on_entry_focus_out)
@@ -192,7 +193,7 @@ class AngleSelector(Canvas):
             command=self.open_settings_window,
             relief="flat",
         )
-        self.settings_button.place(x=770.0, y=570.0, width=24.0, height=24.0)
+        self.settings_button.place(x=790.0, y=10.0, width=24.0, height=24.0)
 
         # Create slider canvas
         self.slider_canvas = Canvas(
@@ -209,6 +210,7 @@ class AngleSelector(Canvas):
         self.current_slider_value = 0
 
         self.switch_controller(self.selected_controller.get())
+        self.bind_controller_change()
 
     def draw_slider(self):
         self.slider_canvas.delete("all")
@@ -672,25 +674,34 @@ class AngleSelector(Canvas):
             self.stop_ptz()
 
 
-window = Tk()
-app_icon = PhotoImage(file=resource_path("assets\\icon.png"))
-window.iconphoto(False, app_icon)
-window.geometry(position_window_at_centre(window, width=800, height=600))
-window.title("PTZ Controller")
-window.configure(bg="#FFFFFF")
+def main():
+    window = Tk()
+    window.geometry(position_window_at_centre(window, width=825, height=730))
+    window.title("PTZ Controller")
+    window.configure(bg="#FFFFFF")
 
-angle_selector = AngleSelector(window, size=350)
-angle_selector.place(x=0, y=0)
+    main_frame = Frame(window, bg="#FFFFFF")
+    main_frame.pack(fill="both", expand=True)
 
-# Add bindings to control ptz with arrows
-window.bind("<Up>", angle_selector.turn_ptz_up)
-window.bind("<Down>", angle_selector.turn_ptz_down)
-window.bind("<Left>", angle_selector.turn_ptz_left)
-window.bind("<Right>", angle_selector.turn_ptz_right)
-window.bind("<space>", angle_selector.stop_ptz)
-window.bind("<s>", angle_selector.focus_widget)
-window.bind("<r>", angle_selector.handle_restore_defaults_bind)
+    angle_selector = AngleSelector(main_frame)
+    angle_selector.grid(row=0, column=0, padx=10, pady=10)
 
-window.resizable(False, False)
-sv_ttk.set_theme("light")
-window.mainloop()
+    switchboard = Switchboard(main_frame)
+    switchboard.grid(row=1, column=0, padx=10, pady=10)
+
+    # Add bindings to control ptz with arrows
+    window.bind("<Up>", angle_selector.turn_ptz_up)
+    window.bind("<Down>", angle_selector.turn_ptz_down)
+    window.bind("<Left>", angle_selector.turn_ptz_left)
+    window.bind("<Right>", angle_selector.turn_ptz_right)
+    window.bind("<space>", angle_selector.stop_ptz)
+    window.bind("<s>", angle_selector.focus_widget)
+    window.bind("<r>", angle_selector.handle_restore_defaults_bind)
+
+    window.iconphoto(False, PhotoImage(file=resource_path("assets/icon.png")))
+    # window.resizable(False, False)
+    window.mainloop()
+
+
+if __name__ == "__main__":
+    main()
