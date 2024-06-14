@@ -308,7 +308,7 @@ class AngleSelector(Canvas):
                 frame,
                 text=f"{values['name']}",
                 bg=frame["bg"],
-                font=("AnonymousPro Regular", 14),
+                font=("AnonymousPro Regular", 12),
             )
             name_label.pack(side="left", padx=5)
             name_label.bind(
@@ -320,7 +320,7 @@ class AngleSelector(Canvas):
                 frame,
                 text=f"H:{values['current_degree']:.2f}°, V:{values['current_tilt']:.2f}°",
                 bg=frame["bg"],
-                font=("AnonymousPro Regular", 14),
+                font=("AnonymousPro Regular", 12),
             )
             degree_label.pack(side="right", padx=5)
 

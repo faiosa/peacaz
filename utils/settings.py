@@ -4,12 +4,13 @@ from config.settings import SETTINGS_FILE
 
 def load_settings():
     try:
-        with open(SETTINGS_FILE, "r") as f:
+        with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
         return {
-            "global_settings": {"theme": "Light", "language": "English"},
+            "global_settings": {"theme": "Світла", "language": "Українська"},
             "controller_values": {"1": {"name": "Default"}},
+            "switchboard_settings": {"serial_port": "port"},
         }
     except json.JSONDecodeError:
         return {}
