@@ -1,5 +1,15 @@
 import tkinter as tk
-from tkinter import ttk, Toplevel, Label, Entry, Button, LabelFrame, Scrollbar
+from tkinter import (
+    ttk,
+    Toplevel,
+    Label,
+    Entry,
+    Button,
+    LabelFrame,
+    Scrollbar,
+    BooleanVar,
+    Checkbutton,
+)
 from utils.position_window import position_window_at_centre
 from utils.settings import load_settings, save_settings
 
@@ -131,6 +141,9 @@ class AngleSelector:
             "max_angle": 360,
             "min_tilt": 0,
             "max_tilt": 90,
+            "switchboard_pins": "",
+            "switchboard_serial_port": "",
+            "full_controller": False,
         }
         self.angle_selector.show_controllers_frame()
         self.angle_selector.update_controller_values(self.controller_values)
@@ -174,9 +187,9 @@ class Switchboard:
         # Add additional settings as needed
 
     def save_settings(self, event):
-        self.settings["switchboard_settings"][
-            "serial_port"
-        ] = self.serial_port_entry.get()
+        self.settings["switchboard_settings"]["serial_port"] = (
+            self.serial_port_entry.get()
+        )
         save_settings(self.settings)
 
 
@@ -206,9 +219,9 @@ class SettingsWindow:
         )
 
         # Switchboard Tab
-        switchboard_tab = ttk.Frame(tab_control)
-        tab_control.add(switchboard_tab, text="Комутатор")
-        self.switchboard = Switchboard(switchboard_tab)
+        # switchboard_tab = ttk.Frame(tab_control)
+        # tab_control.add(switchboard_tab, text="Комутатор")
+        # self.switchboard = Switchboard(switchboard_tab)
 
 
 class ControllerSettingsWindow:
@@ -219,7 +232,7 @@ class ControllerSettingsWindow:
         self.angle_selector = angle_selector
         self.window = Toplevel(master)
         self.window.geometry(
-            position_window_at_centre(self.window, width=600, height=400)
+            position_window_at_centre(self.window, width=600, height=500)
         )
         self.window.title(f"Налаштування контролера {index}")
         self.window.bind("<Return>", lambda event: self.save_settings())
@@ -283,32 +296,55 @@ class ControllerSettingsWindow:
         self.max_tilt_entry.insert(0, values["max_tilt"])
         self.max_tilt_entry.grid(row=7, column=1, padx=10, pady=5)
 
+        Label(self.window, text="Піни комутатора").grid(
+            row=8, column=0, padx=10, pady=5
+        )
+        self.switchboard_pins_entry = Entry(self.window)
+        self.switchboard_pins_entry.insert(0, values["switchboard_pins"])
+        self.switchboard_pins_entry.grid(row=8, column=1, padx=10, pady=5)
+
+        Label(self.window, text="Серійний порт комутатора:").grid(
+            row=9, column=0, padx=10, pady=5
+        )
+        self.switchboard_serial_port_entry = Entry(self.window)
+        self.switchboard_serial_port_entry.insert(0, values["switchboard_serial_port"])
+        self.switchboard_serial_port_entry.grid(row=9, column=1, padx=10, pady=5)
+
+        Label(self.window, text="Великий контролер:").grid(
+            row=10, column=0, padx=10, pady=5
+        )
+
+        # Add checkbox for full controller
+        self.full_controller_var = BooleanVar(
+            value=values.get("full_controller", False)
+        )
+        self.full_controller_checkbox = Checkbutton(
+            self.window, text="", variable=self.full_controller_var
+        )
+        self.full_controller_checkbox.grid(row=10, column=1, columnspan=2, pady=5)
+
         save_button = Button(self.window, text="Зберегти", command=self.save_settings)
-        save_button.grid(row=8, column=0, columnspan=2, pady=10)
+        save_button.grid(row=11, column=0, columnspan=2, pady=10)
 
     def save_settings(self):
-        name = self.name_entry.get()
-        rotation_speed_horizontally = float(
-            self.rotation_speed_horizontally_entry.get()
-        )
-        rotation_speed_vertically = float(self.rotation_speed_vertically_entry.get())
-        serial_port = self.serial_port_entry.get()
-        min_angle = int(self.min_angle_entry.get())
-        max_angle = int(self.max_angle_entry.get())
-        min_tilt = int(self.min_tilt_entry.get())
-        max_tilt = int(self.max_tilt_entry.get())
-
         self.controller_values[self.index] = {
-            "name": name,
-            "rotation_speed_horizontally": rotation_speed_horizontally,
-            "rotation_speed_vertically": rotation_speed_vertically,
-            "serial_port": serial_port,
+            "name": self.name_entry.get(),
+            "rotation_speed_horizontally": float(
+                self.rotation_speed_horizontally_entry.get()
+            ),
+            "rotation_speed_vertically": float(
+                self.rotation_speed_vertically_entry.get()
+            ),
+            "serial_port": self.serial_port_entry.get(),
             "current_degree": self.controller_values[self.index]["current_degree"],
             "current_tilt": self.controller_values[self.index]["current_tilt"],
-            "min_angle": min_angle,
-            "max_angle": max_angle,
-            "min_tilt": min_tilt,
-            "max_tilt": max_tilt,
+            "min_angle": int(self.min_angle_entry.get()),
+            "max_angle": int(self.max_angle_entry.get()),
+            "min_tilt": int(self.min_tilt_entry.get()),
+            "max_tilt": int(self.max_tilt_entry.get()),
+            "switchboard_pins": self.switchboard_pins_entry.get(),
+            "switchboard_serial_port": self.switchboard_serial_port_entry.get(),
+            "full_controller": self.full_controller_var.get(),
         }
 
         self.angle_selector.update_controller_values(self.controller_values)

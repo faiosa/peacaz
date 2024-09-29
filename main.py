@@ -49,7 +49,7 @@ def resource_path(relative_path):
     except Exception:
         base_path = os.path.abspath(".")
 
-    return os.path.join(base_path, relative_path)
+    return os.path.normpath(os.path.join(base_path, relative_path))
 
 
 class AngleSelector(Canvas):
@@ -69,16 +69,18 @@ class AngleSelector(Canvas):
         self.settings = load_settings()
         self.restore_window = RestorationProgressWindow(master)
 
+        self.switchboard = None
+
         self.size = size
         self.x = 400
         self.y = 750
-        self.previous_angle = 0
         self.angle = 0
         self.tilt_angle = 0
+        self.previous_angle = 0
         self.previous_tilt = 0
-        self.arrow_length = size // 2 - 30
         self.arrow = None
-        self.bind("<Button-1>", self._set_angle)
+        self.arrow_length = size // 2 - 30
+        # self.bind("<Button-1>", self._set_angle)
         self.draw_circle()
         self.draw_marks()
         self.draw_arrow()
@@ -115,7 +117,7 @@ class AngleSelector(Canvas):
         self.controllers_frame = Frame(master, bg="#FFFFFF")
         self.controllers_frame.place(x=450, y=70, width=330, height=300)
 
-        self.turn_up_image = PhotoImage(file=resource_path("assets\\turn_up.png"))
+        self.turn_up_image = PhotoImage(file=resource_path("assets/turn_up.png"))
         self.turn_up_button = Button(
             image=self.turn_up_image,
             borderwidth=0,
@@ -125,7 +127,7 @@ class AngleSelector(Canvas):
         )
         self.turn_up_button.place(x=575.0, y=330.0, width=50, height=50)
 
-        self.turn_down_image = PhotoImage(file=resource_path("assets\\turn_down.png"))
+        self.turn_down_image = PhotoImage(file=resource_path("assets/turn_down.png"))
         self.turn_down_button = Button(
             image=self.turn_down_image,
             borderwidth=0,
@@ -135,7 +137,7 @@ class AngleSelector(Canvas):
         )
         self.turn_down_button.place(x=575.0, y=470.0, width=50, height=50)
 
-        self.turn_left_image = PhotoImage(file=resource_path("assets\\turn_left.png"))
+        self.turn_left_image = PhotoImage(file=resource_path("assets/turn_left.png"))
         self.turn_left_button = Button(
             image=self.turn_left_image,
             borderwidth=0,
@@ -145,7 +147,7 @@ class AngleSelector(Canvas):
         )
         self.turn_left_button.place(x=505.0, y=400.0, width=50, height=50)
 
-        self.turn_right_image = PhotoImage(file=resource_path("assets\\turn_right.png"))
+        self.turn_right_image = PhotoImage(file=resource_path("assets/turn_right.png"))
         self.turn_right_button = Button(
             image=self.turn_right_image,
             borderwidth=0,
@@ -155,7 +157,7 @@ class AngleSelector(Canvas):
         )
         self.turn_right_button.place(x=645.0, y=400.0, width=50, height=50)
 
-        self.stop_image = PhotoImage(file=resource_path("assets\\stop.png"))
+        self.stop_image = PhotoImage(file=resource_path("assets/stop.png"))
         self.stop_button = Button(
             image=self.stop_image,
             borderwidth=0,
@@ -269,6 +271,8 @@ class AngleSelector(Canvas):
         self.update_slider(tilt)
 
         self.show_controllers_frame()
+        if self.switchboard:
+            self.switchboard.update_controller(controller_name)
 
     def bind_controller_change(self):
         """Bind controller change to keys 1 to 9"""
@@ -324,9 +328,7 @@ class AngleSelector(Canvas):
             )
             degree_label.pack(side="right", padx=5)
 
-    def restore_defaults(
-        self, controller_name: str
-    ):  # TODO: use R to restore by pressing key
+    def restore_defaults(self, controller_name: str):
         self.restore_window.start()
 
         serial_port = get_controller_serial_by_name(
@@ -654,22 +656,6 @@ class AngleSelector(Canvas):
                     tilt,
                 )
 
-        # if new_angle <= min_angle or new_angle >= max_angle:
-        #     self.stop_ptz()
-        #     messagebox.showwarning("Warning", "Граничний кут досягнуто")
-        #     self.master.focus_force()
-        # else:
-        # # Schedule the next update
-        # self.continuous_update_id = self.after(
-        #     100,
-        #     self.continuous_update_helper,
-        #     rotation_speed,
-        #     time_end,
-        #     min_angle,
-        #     max_angle,
-        #     tilt,
-        # )
-
         if time_end and time.time() >= time_end:
             self.stop_ptz()
 
@@ -686,10 +672,19 @@ def main():
     angle_selector = AngleSelector(main_frame)
     angle_selector.grid(row=0, column=0, padx=10, pady=10)
 
-    switchboard = Switchboard(main_frame)
+    # Create the Switchboard and pass the controller values
+    switchboard = Switchboard(main_frame, angle_selector.controller_values)
     switchboard.grid(row=1, column=0, padx=10, pady=10)
 
-    # Add bindings to control ptz with arrows
+    # Set the switchboard reference in AngleSelector
+    angle_selector.switchboard = switchboard
+
+    # Initialize the switchboard with the current controller
+    switchboard.update_controller(angle_selector.selected_controller_name)
+
+    # switchboard = Switchboard(main_frame)
+    # switchboard.grid(row=1, column=0, padx=10, pady=10)
+
     window.bind("<Up>", angle_selector.turn_ptz_up)
     window.bind("<Down>", angle_selector.turn_ptz_down)
     window.bind("<Left>", angle_selector.turn_ptz_left)

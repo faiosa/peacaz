@@ -14,7 +14,10 @@
             "min_angle": 0,
             "max_angle": 359,
             "min_tilt": 0,
-            "max_tilt": 0
+            "max_tilt": 0,
+            "switchboard_pins": "12, 23",
+            "switchboard_serial_port": "",
+            "full_controller": false
         },
         "2": {
             "name": "Великий контролер",
@@ -26,7 +29,25 @@
             "min_angle": 0,
             "max_angle": 359,
             "min_tilt": -35,
-            "max_tilt": 35
+            "max_tilt": 35,
+            "switchboard_pins": "27, 28, 29, 30",
+            "switchboard_serial_port": "",
+            "full_controller": true
+        },
+        "3": {
+            "name": "Контролер 3",
+            "rotation_speed_horizontally": 0.0,
+            "rotation_speed_vertically": 0.0,
+            "serial_port": "",
+            "current_degree": 0.0,
+            "current_tilt": 0.0,
+            "min_angle": 0,
+            "max_angle": 360,
+            "min_tilt": 0,
+            "max_tilt": 90,
+            "switchboard_pins": "",
+            "switchboard_serial_port": "",
+            "full_controller": false
         }
     },
     "switchboard_settings": {
