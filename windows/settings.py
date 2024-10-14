@@ -54,10 +54,10 @@ class GlobalSettings:
         save_settings(self.settings)
 
 
-class AngleSelector:
-    def __init__(self, master, controller_values, angle_selector):
+class Controllers:
+    def __init__(self, master, controller_values, controllers):
         self.controller_values = controller_values
-        self.angle_selector = angle_selector
+        self.controllers = controllers
 
         self.frame = ttk.Frame(master)
         self.frame.pack(fill="both", expand=True, padx=10, pady=10)
@@ -125,7 +125,7 @@ class AngleSelector:
 
     def open_settings(self, index):
         ControllerSettingsWindow(
-            self.frame.master, index, self.controller_values, self.angle_selector
+            self.frame.master, index, self.controller_values, self.controllers
         )
 
     def add_controller(self):
@@ -145,15 +145,15 @@ class AngleSelector:
             "switchboard_serial_port": "",
             "full_controller": False,
         }
-        self.angle_selector.show_controllers_frame()
-        self.angle_selector.update_controller_values(self.controller_values)
+        self.controllers.show_controllers_frame()
+        self.controllers.update_controller_values(self.controller_values)
         self.refresh_interface()
 
     def remove_controller(self, index):
         if index in self.controller_values:
             del self.controller_values[index]
-            self.angle_selector.update_controller_values(self.controller_values)
-            self.angle_selector.show_controllers_frame()
+            self.controllers.update_controller_values(self.controller_values)
+            self.controllers.show_controllers_frame()
             self.refresh_interface()
 
     def refresh_interface(self):
@@ -194,10 +194,10 @@ class Switchboard:
 
 
 class SettingsWindow:
-    def __init__(self, master, controller_values, angle_selector):
+    def __init__(self, master, controller_values, controllers):
         self.master = master
         self.controller_values = controller_values
-        self.angle_selector = angle_selector
+        self.controllers = controllers
         self.window = Toplevel(master)
         self.window.geometry(
             position_window_at_centre(self.window, width=800, height=600)
@@ -211,11 +211,11 @@ class SettingsWindow:
         tab_control = ttk.Notebook(self.window)
         tab_control.pack(expand=1, fill="both")
 
-        # AngleSelector Tab
-        angle_selector_tab = ttk.Frame(tab_control)
-        tab_control.add(angle_selector_tab, text="Контролери")
-        self.angle_selector = AngleSelector(
-            angle_selector_tab, self.controller_values, self.angle_selector
+        # Controllers Tab
+        controllers_tab = ttk.Frame(tab_control)
+        tab_control.add(controllers_tab, text="Контролери")
+        self.controllers = Controllers(
+            controllers_tab, self.controller_values, self.controllers
         )
 
         # Switchboard Tab
@@ -225,11 +225,11 @@ class SettingsWindow:
 
 
 class ControllerSettingsWindow:
-    def __init__(self, master, index, controller_values, angle_selector):
+    def __init__(self, master, index, controller_values, controllers):
         self.master = master
         self.index = index
         self.controller_values = controller_values
-        self.angle_selector = angle_selector
+        self.controllers = controllers
         self.window = Toplevel(master)
         self.window.geometry(
             position_window_at_centre(self.window, width=600, height=500)
@@ -347,5 +347,5 @@ class ControllerSettingsWindow:
             "full_controller": self.full_controller_var.get(),
         }
 
-        self.angle_selector.update_controller_values(self.controller_values)
+        self.controllers.update_controller_values(self.controller_values)
         self.window.destroy()

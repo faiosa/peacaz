@@ -1,10 +1,12 @@
 import json
-from config.settings import SETTINGS_FILE
+import os
+
+SETTINGS_FILE = os.path.join("config", "settings.json")
 
 
 def load_settings():
     try:
-        with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
+        with open(os.path.abspath(SETTINGS_FILE), "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
         return {
@@ -17,5 +19,5 @@ def load_settings():
 
 
 def save_settings(settings):
-    with open(SETTINGS_FILE, "w", encoding="utf-8") as file:
+    with open(os.path.abspath(SETTINGS_FILE), "w", encoding="utf-8") as file:
         json.dump(settings, file, indent=4, ensure_ascii=False)
