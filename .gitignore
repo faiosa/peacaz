@@ -174,3 +174,6 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
+#intellij idea files
+./idea
+./idea/*
