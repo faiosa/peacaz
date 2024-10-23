@@ -1,6 +1,6 @@
 from tkinter import Frame, Label
-from separ.BaseRollerView import RollerViewHorizontal, RollerViewVertical
-from separ.BaseRoller import BaseRoller
+from separ.roller_view import RollerViewHorizontal, RollerViewVertical
+from separ.roller import BaseRoller
 
 class ControllerView:
     def __init__(self, controller, frame):

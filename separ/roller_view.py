@@ -25,10 +25,17 @@ class BaseRollerView:
         )
         self.desired_angle_entry.grid(column=0, row=1, columnspan=2)
 
+    def disable_buttons(self):
+        self.desired_angle_entry.config(state="disabled")
+
+    def enable_buttons(self):
+        self.desired_angle_entry.config(state="normal")
+
 class RollerViewVertical(BaseRollerView):
     def __init__(self, roller, frame):
         super().__init__(roller, frame)
         self.slider_marker = None
+        self.moving_id = None
         self.slider_canvas = Canvas(
             frame,
             width=60,
@@ -77,14 +84,66 @@ class RollerViewVertical(BaseRollerView):
         self.turn_down_button.grid(column=0, row=2, padx=20, pady=20)
         button_frame.grid(column=1, row=2)
 
+    def disable_buttons(self):
+        super().disable_buttons()
+        self.turn_up_button.config(state="disabled")
+        self.turn_down_button.config(state="disabled")
+
+    def enable_buttons(self):
+        super().enable_buttons()
+        self.turn_up_button.config(state="normal")
+        self.turn_down_button.config(state="normal")
+
+    def check_ptz_up(self):
+        self.roller.ptz_check_up()
+        self.draw_slider_marker()
+        if self.roller.is_moving_increase:
+            self.moving_id = self.frame.after(
+                100,
+                self.check_ptz_up
+            )
+        else:
+            self.moving_id = None
+            self.enable_buttons()
+
+
     def turn_ptz_up(self):
-        print("turn_ptz_up")
+        self.roller.ptz_turn_up()
+        if self.roller.is_moving_increase:
+            self.disable_buttons()
+            self.frame.after(
+                100,
+                self.check_ptz_up
+            )
+
+    def check_ptz_down(self):
+        self.roller.ptz_check_down()
+        self.draw_slider_marker()
+        if self.roller.is_moving_decrease:
+            self.moving_id = self.frame.after(
+                100,
+                self.check_ptz_down
+            )
+        else:
+            self.moving_id = None
+            self.enable_buttons()
 
     def turn_ptz_down(self):
-        print("turn_ptz_down")
+        self.roller.ptz_turn_down()
+        if self.roller.is_moving_decrease:
+            self.disable_buttons()
+            self.frame.after(
+                100,
+                self.check_ptz_down
+            )
 
     def stop_ptz(self):
-        print("stop_ptz")
+        self.roller.ptz_turn_stop()
+        self.draw_slider_marker()
+        if self.moving_id:
+            self.frame.after_cancel(self.moving_id)
+            self.moving_id = None
+            self.enable_buttons()
 
     def draw_slider(self):
         self.slider_canvas.delete("all")
@@ -101,7 +160,7 @@ class RollerViewVertical(BaseRollerView):
             self.slider_canvas.delete(self.slider_marker)
         slider_height = 250
         # Initial marker
-        diff = self.roller.max_angle - self.roller.min_angle
+        #diff = self.roller.max_angle - self.roller.min_angle
         center_y = slider_height / 2 - 12.5 * self.roller.current_angle / 10
         self.slider_marker = self.slider_canvas.create_oval(
             35, center_y - 5, 45, center_y + 5, fill="black"
@@ -111,6 +170,7 @@ class RollerViewHorizontal(BaseRollerView):
     def __init__(self, roller, frame):
         super().__init__(roller, frame)
 
+        self.moving_id = None
         self.arrow = None
 
         button_frame = Frame(frame, bg="#FFFFFF")
@@ -201,11 +261,62 @@ class RollerViewHorizontal(BaseRollerView):
             center_x, center_y, x, y, arrow="last", fill="black"
         )
 
-    def turn_ptz_left(self):
-        print("turn_ptz_left")
+    def disable_buttons(self):
+        super().disable_buttons()
+        self.turn_right_button.config(state="disabled")
+        self.turn_left_button.config(state="disabled")
 
-    def stop_ptz(self):
-        print("stop_ptz")
+    def enable_buttons(self):
+        super().enable_buttons()
+        self.turn_right_button.config(state="normal")
+        self.turn_left_button.config(state="normal")
+
+    def check_ptz_right(self):
+        self.roller.ptz_check_right()
+        self.draw_arrow()
+        if self.roller.is_moving_increase:
+            self.moving_id = self.frame.after(
+                100,
+                self.check_ptz_right
+            )
+        else:
+            self.moving_id = None
+            self.enable_buttons()
 
     def turn_ptz_right(self):
-        print("turn_ptz_right")
+        self.roller.ptz_turn_right()
+        if self.roller.is_moving_increase:
+            self.disable_buttons()
+            self.frame.after(
+                100,
+                self.check_ptz_right
+            )
+
+    def check_ptz_left(self):
+        self.roller.ptz_check_left()
+        self.draw_arrow()
+        if self.roller.is_moving_decrease:
+            self.moving_id = self.frame.after(
+                100,
+                self.check_ptz_left
+            )
+        else:
+            self.moving_id = None
+            self.enable_buttons()
+
+    def turn_ptz_left(self):
+        self.roller.ptz_turn_left()
+        if self.roller.is_moving_decrease:
+            self.disable_buttons()
+            self.frame.after(
+                100,
+                self.check_ptz_left
+            )
+
+    def stop_ptz(self):
+        self.roller.ptz_turn_stop()
+        self.draw_arrow()
+        if self.moving_id:
+            self.frame.after_cancel(self.moving_id)
+            self.moving_id = None
+            self.enable_buttons()

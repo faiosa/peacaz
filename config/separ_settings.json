@@ -53,32 +53,24 @@
         },
         "3": {
             "name": "Контролер 3",
-            "rotation_speed_horizontally": 0.0,
-            "rotation_speed_vertically": 0.0,
             "serial_port": "",
-            "current_degree": 0.0,
-            "current_tilt": 0.0,
-            "min_angle": 0,
-            "max_angle": 360,
-            "min_tilt": 0,
-            "max_tilt": 90,
             "switchboard_pins": "",
             "switchboard_serial_port": "",
             "full_controller": false,
             "rollers": [
                 {
                     "type": "vertical",
-                    "rotation_speed": 2.77,
-                    "min_angle": -35.0,
-                    "max_angle": 35.0,
-                    "current_angle": 0.0
+                    "rotation_speed": 4.77,
+                    "min_angle": -75.0,
+                    "max_angle": 75.0,
+                    "current_angle": 20.0
                 },
                 {
                     "type": "horizontal",
-                    "rotation_speed": 16.0,
+                    "rotation_speed": 10.0,
                     "min_angle": 0.0,
                     "max_angle": 359.0,
-                    "current_angle": 0.0
+                    "current_angle": 50.0
                 }
             ]
         }
