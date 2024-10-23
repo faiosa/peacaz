@@ -2,11 +2,15 @@ import json
 import os
 
 SETTINGS_FILE = os.path.join("config", "settings.json")
-
+SEPAR_SETTINGS_FILE = os.path.join("config", "separ_settings.json")
 
 def load_settings():
+    return load_settings_from_file(SETTINGS_FILE)
+
+
+def load_settings_from_file(settings_file):
     try:
-        with open(os.path.abspath(SETTINGS_FILE), "r", encoding="utf-8") as f:
+        with open(os.path.abspath(settings_file), "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
         return {
