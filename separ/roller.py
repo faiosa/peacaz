@@ -17,11 +17,11 @@ class BaseRoller:
         self.is_moving_decrease = False
         self.start_move_time = 0
 
-    def _start_increase_angle(self, increase_angle_command):
+    def start_increase_angle(self):
         if not (self.is_moving_increase or self.is_moving_decrease):
             self.is_moving_increase = True
             self.start_move_time = time.time()
-            #send_pelco_command(increase_angle_command, self.serial_port)
+            #send_pelco_command(self.increase_angle_command(), self.serial_port)
             
     def __update_increase_angle(self):
         if self.is_moving_increase:
@@ -29,7 +29,7 @@ class BaseRoller:
             self.current_angle = self.current_angle + self.rotation_speed * (cur_time - self.start_move_time)
             self.start_move_time = cur_time
 
-    def _check_increase_angle(self, dest_angle = 360.0):
+    def check_increase_angle(self, dest_angle = 360.0):
         if self.is_moving_increase:
             self.__update_increase_angle()
             target_angle = min(dest_angle, self.max_angle)
@@ -44,11 +44,11 @@ class BaseRoller:
             #send_pelco_command(STOP, self.serial_port)
             self.is_moving_increase = False
 
-    def _start_decrease_angle(self, increase_angle_command):
+    def start_decrease_angle(self):
         if not (self.is_moving_increase or self.is_moving_decrease):
             self.is_moving_decrease = True
             self.start_move_time = time.time()
-            #send_pelco_command(increase_angle_command, self.serial_port)
+            #send_pelco_command(self.decrease_angle_command(), self.serial_port)
 
     def __update_decrease_angle(self):
         if self.is_moving_decrease:
@@ -56,7 +56,7 @@ class BaseRoller:
             self.current_angle = self.current_angle - self.rotation_speed * (cur_time - self.start_move_time)
             self.start_move_time = cur_time
 
-    def _check_decrease_angle(self, dest_angle=-360.0):
+    def check_decrease_angle(self, dest_angle=-360.0):
         if self.is_moving_decrease:
             self.__update_decrease_angle()
             target_angle = max(dest_angle, self.min_angle)
@@ -76,39 +76,35 @@ class BaseRoller:
             self.__stop_increase_angle()
         if self.is_moving_decrease:
             self.__stop_decrease_angle()
+
+    def increase_angle_command(self):
+        return STOP
+
+    def decrease_angle_command(self):
+        return STOP
             
 
 class VerticalRoller(BaseRoller):
     def __init__(self, rotation_speed, min_angle, max_angle, current_angle, serial_port):
         super().__init__(rotation_speed, min_angle, max_angle, current_angle, serial_port, True)
 
-    def ptz_turn_up(self):
-        self._start_increase_angle(UP)
+    def increase_angle_command(self):
+        return UP
 
-    def ptz_check_up(self, dest_angle=360.0):
-        self._check_increase_angle(dest_angle)
+    def decrease_angle_command(self):
+        return DOWN
 
-    def ptz_turn_down(self):
-        self._start_decrease_angle(DOWN)
-
-    def ptz_check_down(self, dest_angle=-360.0):
-        self._check_decrease_angle(dest_angle)
 
 class HorizontalRoller(BaseRoller):
     def __init__(self, rotation_speed, min_angle, max_angle, current_angle, serial_port):
         super().__init__(rotation_speed, min_angle, max_angle, current_angle, serial_port, False)
 
-    def ptz_turn_right(self):
-        self._start_increase_angle(UP)
+    def increase_angle_command(self):
+        return RIGHT
 
-    def ptz_check_right(self, dest_angle=360.0):
-        self._check_increase_angle(dest_angle)
+    def decrease_angle_command(self):
+        return LEFT
 
-    def ptz_turn_left(self):
-        self._start_decrease_angle(DOWN)
-
-    def ptz_check_left(self, dest_angle=-360.0):
-        self._check_decrease_angle(dest_angle)
 
 
 
