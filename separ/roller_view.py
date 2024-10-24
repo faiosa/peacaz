@@ -14,7 +14,7 @@ class BaseRollerView:
         Label(
             frame,
             text="Введіть бажаний кут",
-            #fill="#000000",
+            bg=ui.BG_COLOR,
             font=("AnonymousPro Regular", 14)
         ).grid(column=0, row=0, columnspan=2)
         self.desired_angle_entry = Entry(
@@ -22,11 +22,30 @@ class BaseRollerView:
             bd=1,
             relief="ridge",
             font=("AnonymousPro Regular", 14),
-            bg="#FFFFFF",
+            bg=ui.BG_COLOR,
             fg="black"
         )
         self.desired_angle_entry.grid(column=0, row=1, columnspan=2)
         self.desired_angle_entry.bind("<Return>", self.set_desired_angle)
+
+#        self.restore_defaults_button = Button(
+ #           borderwidth=1,
+  #          highlightthickness=0,
+   #         command=lambda: self.restore_defaults(self.selected_controller.get()),
+    #        text="Відновити початкові значення",
+     #       bg="#FFFFFF",
+      #  )
+       # self.restore_defaults_button.place(x=76.0, y=530.0, width=250.0, height=33.0)
+        self.current_angle_label = Label(
+            frame,
+            bg=ui.BG_COLOR,
+            fg="black",
+            text=f"Поточний кут: {self.roller.current_angle:.0f}",
+            font=("AnonymousPro Regular", 14),
+            bd=1,
+        )
+
+        self.current_angle_label.grid(row=4, column=0, columnspan=2, padx=50, pady=20)
 
     def set_desired_angle(self, event=None):
         try:
@@ -89,7 +108,7 @@ class BaseRollerView:
             self.enable_buttons()
 
     def update_roller_view(self):
-        pass
+        self.current_angle_label.config(text=f"Поточний кут: {self.roller.current_angle:.0f}")
 
     def disable_buttons(self):
         self.desired_angle_entry.config(state="disabled")
@@ -100,11 +119,12 @@ class BaseRollerView:
 class RollerViewVertical(BaseRollerView):
     def __init__(self, roller, frame):
         super().__init__(roller, frame)
+        self.slider_height = 352
         self.slider_marker = None
         self.slider_canvas = Canvas(
             frame,
             width=60,
-            height=250,
+            height=self.slider_height,
             bg=ui.BG_COLOR,
             bd=1,
             highlightthickness=0,
@@ -165,9 +185,9 @@ class RollerViewVertical(BaseRollerView):
 
     def draw_slider(self):
         self.slider_canvas.delete("all")
-        slider_height = 250
+        #slider_height = 250
         for i in range(-9, 10):
-            y = slider_height / 2 - (i * slider_height / 20)
+            y = self.slider_height / 2 - (i * self.slider_height / 20)
             self.slider_canvas.create_line(35, y, 45, y, fill="black")
             self.slider_canvas.create_text(
                 15, y, text=f"{i * 10}", font=("AnonymousPro Regular", 12)
@@ -176,10 +196,10 @@ class RollerViewVertical(BaseRollerView):
     def draw_slider_marker(self):
         if self.slider_marker:
             self.slider_canvas.delete(self.slider_marker)
-        slider_height = 250
+        #slider_height = 250
         # Initial marker
         #diff = self.roller.max_angle - self.roller.min_angle
-        center_y = slider_height / 2 - 12.5 * self.roller.current_angle / 10
+        center_y = self.slider_height / 2 - (self.slider_height / 20) * self.roller.current_angle / 10
         self.slider_marker = self.slider_canvas.create_oval(
             35, center_y - 5, 45, center_y + 5, fill="black"
         )
