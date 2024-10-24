@@ -11,7 +11,7 @@ from utils.position_window import position_window_at_centre
 from utils.path import resource_path
 from config import ui
 from utils.settings import *
-from separ.Manager import Manager
+from separ.control import Manager
 from separ.ManagerView import ManagerView
 
 
@@ -28,7 +28,7 @@ def main():
     manager = Manager(json_settings)
     manager_view = ManagerView(manager, main_frame)
 
-    # window.resizable(False, False)
+    window.iconphoto(False, PhotoImage(file=resource_path("assets/icon.png")))
     window.mainloop()
 
 if __name__ == "__main__":

@@ -14,8 +14,7 @@ class ControllerView:
             roller_frame.grid(column=indx, row=1, padx=5, pady=5)
             roller_view = RollerViewVertical(roller, roller_frame, self, indx) if roller.is_vertical else RollerViewHorizontal(roller, roller_frame, self, indx)
             self.roller_views.append(roller_view)
-        #self.common_frame = Frame(frame, bg=ui.BG_COLOR, highlightbackground="black", highlightthickness=2)
-        #self.common_frame.grid(column=0, row=2, columnspan=2, padx=5, pady=5)
+
         self.restore_defaults_button = Button(
             self.frame,
             borderwidth=1,
@@ -24,7 +23,24 @@ class ControllerView:
             text="Відновити початкові значення",
             bg=ui.BG_COLOR,
         )
-        self.restore_defaults_button.grid(column=0, row=2, padx=40, pady=20)
+        self.restore_defaults_button.grid(column=0, row=2, padx=40, pady=10)
+
+        self.switchboard_frame = Frame(frame, bg=ui.BG_COLOR, highlightbackground="black", highlightthickness=2)
+        self.switchboard_frame.grid(column=1, row=2, columnspan=2, padx=10, pady=10, sticky="nw")
+
+        switch_buttons_len = len(self.controller.switchboard.pins) if self.controller.settings.get("full_controller") else 4
+        for i in range(switch_buttons_len):  # Always create 4 buttons
+            button = Button(
+                self.switchboard_frame,
+                text=f"{i + 1}",
+                bg="#FFFFFF",
+                fg="#000000",
+                border=1,
+                width = 5,
+                height = 3,
+                command=lambda idx=i: self.controller.switchboard.send_command(idx),
+            )
+            button.grid(column=i, row=0, padx=15, pady=15)
 
     def roller_start(self, roller_index):
         for i in range(0, len(self.roller_views)):

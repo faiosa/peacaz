@@ -1,6 +1,4 @@
 import time
-from ptz_controller import send_pelco_command
-import serial
 
 from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
 

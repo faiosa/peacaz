@@ -70,7 +70,7 @@
                     "rotation_speed": 10.0,
                     "min_angle": 0.0,
                     "max_angle": 359.0,
-                    "current_angle": 50.0
+                    "current_angle": 80.0
                 }
             ]
         }
