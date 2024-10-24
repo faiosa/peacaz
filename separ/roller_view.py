@@ -7,9 +7,11 @@ import math
 
 
 class BaseRollerView:
-    def __init__(self, roller, frame):
+    def __init__(self, roller, frame, controller_view, index):
         self.roller = roller
         self.frame = frame
+        self.controller_view = controller_view
+        self.index = index
         self.moving_id = None
         Label(
             frame,
@@ -28,14 +30,6 @@ class BaseRollerView:
         self.desired_angle_entry.grid(column=0, row=1, columnspan=2)
         self.desired_angle_entry.bind("<Return>", self.set_desired_angle)
 
-#        self.restore_defaults_button = Button(
- #           borderwidth=1,
-  #          highlightthickness=0,
-   #         command=lambda: self.restore_defaults(self.selected_controller.get()),
-    #        text="Відновити початкові значення",
-     #       bg="#FFFFFF",
-      #  )
-       # self.restore_defaults_button.place(x=76.0, y=530.0, width=250.0, height=33.0)
         self.current_angle_label = Label(
             frame,
             bg=ui.BG_COLOR,
@@ -50,14 +44,17 @@ class BaseRollerView:
     def set_desired_angle(self, event=None):
         try:
             desired_angle = float(self.desired_angle_entry.get())
-            if self.roller.current_angle < desired_angle:
-                self.turn_ptz_increase(desired_angle)
-            else:
-                self.turn_ptz_decrease(desired_angle)
+            self.roll_desired_angle(desired_angle)
             self.frame.focus()
 
         except ValueError:
             messagebox.showwarning("Warning", "Введіть коректне число")
+
+    def roll_desired_angle(self, desired_angle):
+        if self.roller.current_angle < desired_angle:
+            self.turn_ptz_increase(desired_angle)
+        else:
+            self.turn_ptz_decrease(desired_angle)
 
 
     def check_ptz_increase(self, target_angle=360.0):
@@ -70,13 +67,12 @@ class BaseRollerView:
                 target_angle
             )
         else:
-            self.moving_id = None
-            self.enable_buttons()
+            self.__on_finish_move()
 
     def turn_ptz_increase(self, target_angle=360.0):
         self.roller.start_increase_angle()
         if self.roller.is_moving_increase:
-            self.disable_buttons()
+            self.__on_start_move()
             self.check_ptz_increase(target_angle)
 
     def check_ptz_decrease(self, target_angle=-360.0):
@@ -89,13 +85,12 @@ class BaseRollerView:
                 target_angle
             )
         else:
-            self.moving_id = None
-            self.enable_buttons()
+            self.__on_finish_move()
 
     def turn_ptz_decrease(self, target_angle=-360.0):
         self.roller.start_decrease_angle()
         if self.roller.is_moving_decrease:
-            self.disable_buttons()
+            self.__on_start_move()
             self.check_ptz_decrease(target_angle)
 
 
@@ -104,8 +99,16 @@ class BaseRollerView:
         self.update_roller_view()
         if self.moving_id:
             self.frame.after_cancel(self.moving_id)
-            self.moving_id = None
-            self.enable_buttons()
+            self.__on_finish_move()
+
+    def __on_start_move(self):
+        self.controller_view.roller_start(self.index)
+        self.disable_buttons()
+
+    def __on_finish_move(self):
+        self.moving_id = None
+        self.enable_buttons()
+        self.controller_view.roller_finish(self.index)
 
     def update_roller_view(self):
         self.current_angle_label.config(text=f"Поточний кут: {self.roller.current_angle:.0f}")
@@ -117,8 +120,8 @@ class BaseRollerView:
         self.desired_angle_entry.config(state="normal")
 
 class RollerViewVertical(BaseRollerView):
-    def __init__(self, roller, frame):
-        super().__init__(roller, frame)
+    def __init__(self, roller, frame, controller_view, index):
+        super().__init__(roller, frame, controller_view, index)
         self.slider_height = 352
         self.slider_marker = None
         self.slider_canvas = Canvas(
@@ -204,9 +207,17 @@ class RollerViewVertical(BaseRollerView):
             35, center_y - 5, 45, center_y + 5, fill="black"
         )
 
+    def disable_all_buttons(self):
+        self.disable_buttons()
+        self.stop_button.config(state="disabled")
+
+    def enable_all_buttons(self):
+        self.enable_buttons()
+        self.stop_button.config(state="normal")
+
 class RollerViewHorizontal(BaseRollerView):
-    def __init__(self, roller, frame):
-        super().__init__(roller, frame)
+    def __init__(self, roller, frame, controller_view, index):
+        super().__init__(roller, frame, controller_view, index)
 
         self.arrow = None
 
@@ -311,4 +322,12 @@ class RollerViewHorizontal(BaseRollerView):
         super().enable_buttons()
         self.turn_right_button.config(state="normal")
         self.turn_left_button.config(state="normal")
+
+    def disable_all_buttons(self):
+        self.disable_buttons()
+        self.stop_button.config(state="disabled")
+
+    def enable_all_buttons(self):
+        self.enable_buttons()
+        self.stop_button.config(state="normal")
 

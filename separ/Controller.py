@@ -4,6 +4,7 @@ from separ.roller import HorizontalRoller, VerticalRoller
 class Controller:
     def __init__(self, json_settings):
         self.name = json_settings.get("name")
+        self.settings = json_settings
         self.rollers = [
             VerticalRoller(
                 rotation_speed=json.get("rotation_speed"),
