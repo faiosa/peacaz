@@ -1,6 +1,24 @@
 from tkinter import Frame, Button
 from separ.roller_view import RollerViewHorizontal, RollerViewVertical
 from config import ui
+from tkinter import ttk
+
+class ManagerView:
+    def __init__(self, manager, frame):
+        self.manager = manager
+        #s = ttk.Style()
+        #s.theme_use('default')
+        #s.configure('TNotebook.Tab', background="green3")
+        #s.map("TNotebook.Tab", background=[("selected", ui.BG_COLOR)])
+        self.tab_control = ttk.Notebook(frame)
+
+        self.controllers_views = []
+        for controller in self.manager.controllers:
+            tab = Frame(self.tab_control)
+            self.tab_control.add(tab, text=controller.name)
+            controller_view = ControllerView(controller, tab)
+            self.controllers_views.append(controller_view)
+        self.tab_control.pack(expand=1, fill="both")
 
 class ControllerView:
     def __init__(self, controller, frame):
@@ -25,22 +43,12 @@ class ControllerView:
         )
         self.restore_defaults_button.grid(column=0, row=2, padx=40, pady=10)
 
-        self.switchboard_frame = Frame(frame, bg=ui.BG_COLOR, highlightbackground="black", highlightthickness=2)
-        self.switchboard_frame.grid(column=1, row=2, columnspan=2, padx=10, pady=10, sticky="nw")
+        switchboard_frame = Frame(frame, bg=ui.BG_COLOR, highlightbackground="black", highlightthickness=2)
+        switchboard_frame.grid(column=1, row=2, columnspan=2, padx=10, pady=10, sticky="nw")
 
-        switch_buttons_len = len(self.controller.switchboard.pins) if self.controller.settings.get("full_controller") else 4
-        for i in range(switch_buttons_len):  # Always create 4 buttons
-            button = Button(
-                self.switchboard_frame,
-                text=f"{i + 1}",
-                bg="#FFFFFF",
-                fg="#000000",
-                border=1,
-                width = 5,
-                height = 3,
-                command=lambda idx=i: self.controller.switchboard.send_command(idx),
-            )
-            button.grid(column=i, row=0, padx=15, pady=15)
+        self.switchboard_view = SwitchBoardView(controller.switchboard, switchboard_frame)
+
+
 
     def roller_start(self, roller_index):
         for i in range(0, len(self.roller_views)):
@@ -67,4 +75,33 @@ class ControllerView:
             self.lambda_queue.append(my_lambda)
         self.__check_lambdas()
 
+class SwitchBoardView:
+    def __init__(self, switchboard, frame):
+        self.switchboard = switchboard
+        self.frame = frame
+        self.buttons = []
+        switch_buttons_len = len(switchboard.pins) if self.switchboard.is_full_control else 4
+        for i in range(switch_buttons_len):  # Always create 4 buttons
+            button = Button(
+                self.frame,
+                text=f"{i + 1}",
+                bg="#FFFFFF",
+                fg="#000000",
+                border=1,
+                width=5,
+                height=3,
+                command=lambda idx=i: self.send_command(idx),
+            )
+            button.grid(column=i, row=0, padx=15, pady=15)
+            self.buttons.append(button)
 
+    def send_command(self, idx):
+        self.switchboard.send_command(idx)
+        self.update_button_visuals()
+
+    def update_button_visuals(self):
+        for i, button in enumerate(self.buttons):
+            if self.switchboard.states[i]:
+                button.config(bg="#ADD8E6")  # Light blue for active buttons
+            else:
+                button.config(bg="#FFFFFF")  # White for inactive buttons

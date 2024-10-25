@@ -14,9 +14,9 @@
                 {
                     "type": "vertical",
                     "rotation_speed": 2.77,
-                    "min_angle": 0.0,
-                    "max_angle": 0.0,
-                    "current_angle": 0.0
+                    "min_angle": -50.0,
+                    "max_angle": 50.0,
+                    "current_angle": 20.0
                 },
                 {
                     "type": "horizontal",
@@ -54,7 +54,6 @@
         "3": {
             "name": "Контролер 3",
             "serial_port": "",
-            "switchboard_pins": "",
             "switchboard_serial_port": "",
             "full_controller": false,
             "rollers": [

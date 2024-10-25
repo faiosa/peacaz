@@ -39,10 +39,11 @@ class Controller:
         self.switchboard = FullControlSwitchBoard(switchboard_pins, switchboard_serial_port) if self.settings.get("full_controller") else SimplySwitchBoard(switchboard_pins, switchboard_serial_port)
 
 class SwitchBoard:
-    def __init__(self, pins, switchboard_serial_port):
+    def __init__(self, pins, switchboard_serial_port, is_full_control):
         self.pins = pins
         self.states = []
         self.switchboard_serial_port = switchboard_serial_port
+        self.is_full_control = is_full_control
 
     def _connect_device(self):
         try:
@@ -64,7 +65,7 @@ class SwitchBoard:
 
 class FullControlSwitchBoard(SwitchBoard):
     def __init__(self, pins, switchboard_serial_port):
-        super().__init__(pins, switchboard_serial_port)
+        super().__init__(pins, switchboard_serial_port, True)
         self.states = [False] * len(pins)
 
     def send_command(self, index):
@@ -86,7 +87,7 @@ class FullControlSwitchBoard(SwitchBoard):
 
 class SimplySwitchBoard(SwitchBoard):
     def __init__(self, pins, switchboard_serial_port):
-        super().__init__(pins, switchboard_serial_port)
+        super().__init__(pins, switchboard_serial_port, False)
         self.states = [False] * 4
 
     def send_command(self, index):

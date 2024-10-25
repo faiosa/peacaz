@@ -12,7 +12,7 @@ from utils.path import resource_path
 from config import ui
 from utils.settings import *
 from separ.control import Manager
-from separ.ManagerView import ManagerView
+from separ.control_view import ManagerView
 
 
 def main():
