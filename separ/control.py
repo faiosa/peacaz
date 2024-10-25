@@ -3,10 +3,10 @@ import pyboard
 
 class Manager:
     def __init__(self, json_settings):
-        controller_values = json_settings.get("controller_values")
+        self.controller_values = json_settings.get("controller_values")
         self.controllers = [
-            Controller(controller_values.get(key))
-            for key in controller_values
+            Controller(self.controller_values.get(key))
+            for key in self.controller_values
         ]
 
 class Controller:

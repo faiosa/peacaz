@@ -28,6 +28,7 @@ def main():
     manager = Manager(json_settings)
     manager_view = ManagerView(manager, main_frame)
 
+
     window.iconphoto(False, PhotoImage(file=resource_path("assets/icon.png")))
     window.mainloop()
 

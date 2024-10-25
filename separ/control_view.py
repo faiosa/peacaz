@@ -1,11 +1,14 @@
-from tkinter import Frame, Button
+from tkinter import Frame, Button, PhotoImage
 from separ.roller_view import RollerViewHorizontal, RollerViewVertical
 from config import ui
-from tkinter import ttk
+from tkinter import ttk, LEFT, RIGHT
+from utils.path import resource_path
+from windows.settings import SettingsWindow
 
 class ManagerView:
     def __init__(self, manager, frame):
         self.manager = manager
+        self.frame = frame
         #s = ttk.Style()
         #s.theme_use('default')
         #s.configure('TNotebook.Tab', background="green3")
@@ -18,7 +21,24 @@ class ManagerView:
             self.tab_control.add(tab, text=controller.name)
             controller_view = ControllerView(controller, tab)
             self.controllers_views.append(controller_view)
-        self.tab_control.pack(expand=1, fill="both")
+        self.tab_control.pack(expand=1, fill="both", side=LEFT)
+        #self.tab_control.grid(column=0, row=0, padx=5, pady=5)
+
+        self.settings_image = PhotoImage(file=resource_path("assets/settings.png"))
+        self.settings_button = Button(
+            self.frame,
+            image=self.settings_image,
+            borderwidth=0,
+            highlightthickness=0,
+            command=self.open_settings_window,
+            relief="flat",
+        )
+        #self.settings_button.grid(column=1, row=0, padx=5, pady=5)
+        self.settings_button.pack(expand=0, anchor="ne", side=RIGHT)
+
+    def open_settings_window(self):
+        # Open the settings window
+        SettingsWindow(self.frame, self.manager.controller_values, self.manager)
 
 class ControllerView:
     def __init__(self, controller, frame):
@@ -47,8 +67,6 @@ class ControllerView:
         switchboard_frame.grid(column=1, row=2, columnspan=2, padx=10, pady=10, sticky="nw")
 
         self.switchboard_view = SwitchBoardView(controller.switchboard, switchboard_frame)
-
-
 
     def roller_start(self, roller_index):
         for i in range(0, len(self.roller_views)):
