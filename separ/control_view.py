@@ -1,7 +1,9 @@
-from tkinter import Frame, Button, PhotoImage
+#from tkinter import Frame, Button, PhotoImage
+from PyQt5.QtWidgets import QVBoxLayout
+
 from separ.roller_view import RollerViewHorizontal, RollerViewVertical
 from config import ui
-from tkinter import ttk, LEFT, RIGHT
+#from tkinter import ttk, LEFT, RIGHT
 from utils.path import resource_path
 from windows.settings import SettingsWindow
 
@@ -9,12 +11,8 @@ class ManagerView:
     def __init__(self, manager, frame):
         self.manager = manager
         self.frame = frame
-        #s = ttk.Style()
-        #s.theme_use('default')
-        #s.configure('TNotebook.Tab', background="green3")
-        #s.map("TNotebook.Tab", background=[("selected", ui.BG_COLOR)])
-        self.tab_control = ttk.Notebook(frame)
 
+        layout = QVBoxLayout()
         self.controllers_views = []
         for controller in self.manager.controllers:
             tab = Frame(self.tab_control)

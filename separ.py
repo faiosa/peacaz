@@ -1,36 +1,39 @@
-from tkinter import (
-    Frame,
-    PhotoImage,
-    Tk,
-    ttk
-)
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QWidget, QApplication, QPushButton
+import sys
 
-from apps.controller import Controllers
-from apps.switchboard import Switchboard
 from utils.position_window import position_window_at_centre
 from utils.path import resource_path
+from utils.palette import getPalette
 from config import ui
 from utils.settings import *
 from separ.control import Manager
-from separ.control_view import ManagerView
+from separ.qt5_control_view import ManagerView
+
 
 
 def main():
-    window = Tk()
-    window.geometry(position_window_at_centre(window, width=825, height=730))
-    window.title("PTZ Controller")
-    window.configure(bg=ui.BG_COLOR)
+    app = QApplication(sys.argv)
+    window = QWidget()
 
-    main_frame = Frame(window, bg=ui.BG_COLOR)
-    main_frame.pack(fill="both", expand=True)
+    window.setWindowTitle("PTZ Controller")
+
+    #settings_button = QPushButton("aloha", window)
+    #settings_button.setIcon(QIcon("assets/settings.png"))
+    #settings_button.clicked.connect(lambda : print("aloha Kyiv"))
+
+    window.setGeometry(*position_window_at_centre(app, window_width=825, window_height=730))
+
+    window.setPalette(getPalette())
+
 
     json_settings = load_settings_from_file(SEPAR_SETTINGS_FILE)
     manager = Manager(json_settings)
-    manager_view = ManagerView(manager, main_frame)
+    ManagerView(manager, window)
 
-
-    window.iconphoto(False, PhotoImage(file=resource_path("assets/icon.png")))
-    window.mainloop()
+    app.setWindowIcon(QIcon("assets/icon.png"))
+    window.show()
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()
