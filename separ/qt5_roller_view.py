@@ -1,9 +1,9 @@
-from PyQt5.QtGui import QDoubleValidator, QFont
+from PyQt5 import QtGui, Qt
+from PyQt5.QtCore import QPointF
+from PyQt5.QtGui import QDoubleValidator, QFont, QPainter, QPen, QBrush, QStaticText, QPolygon, QPolygonF, QIcon
 
-from config import ui
-from utils.path import resource_path
+from PyQt5.QtWidgets import QLabel, QLineEdit, QFrame, QWidget, QPushButton
 import math
-from PyQt5.QtWidgets import QLabel, QLineEdit
 
 
 class BaseRollerView:
@@ -13,6 +13,7 @@ class BaseRollerView:
         self.controller_view = controller_view
         self.index = index
         self.moving_id = None
+        self.canvas_height = 252
 
         self.roller_font = QFont("AnonymousPro Regular", 12)
 
@@ -34,6 +35,14 @@ class BaseRollerView:
         current_angle_label.setText(f"Поточний {angle_direction_txt} кут: {self.roller.current_angle:.0f}")
         current_angle_label.setFont(self.roller_font)
         grid.addWidget(current_angle_label, start_row_index + 2, 0)
+
+        stop_button = QPushButton(self.frame)
+        stop_button.setIcon(QIcon("assets/stop.png"))
+        stop_button.clicked.connect(lambda: self.stop_ptz())
+        grid.addWidget(stop_button, 4, 4)
+
+    def stop_ptz(self):
+        print("stopping ptz")
 
     def qt5_set_desired_angle(self):
         desired_angle = self.input_field.text()
@@ -122,23 +131,19 @@ class BaseRollerView:
 class RollerViewVertical(BaseRollerView):
     def __init__(self, roller, frame, grid, controller_view, index):
         super().__init__(roller, frame, grid, controller_view, index)
-    '''    
-        self.slider_height = 352
-        self.slider_marker = None
-        
-        self.slider_canvas = Canvas(
-            frame,
-            width=60,
-            height=self.slider_height,
-            bg=ui.BG_COLOR,
-            bd=1,
-            highlightthickness=0,
-            relief="ridge",
-        )
-        self.slider_canvas.grid(column=0, row=2, padx=40, pady=40)
-        self.draw_slider()
-        self.draw_slider_marker()
 
+        self.slider_height = self.canvas_height
+        self.slider_width = 60
+
+
+
+        self.slider_frame = SliderCanvas(frame, roller)
+        self.slider_frame.setFixedWidth(self.slider_width)
+        self.slider_frame.setFixedHeight(self.slider_height)
+
+        grid.addWidget(self.slider_frame, 0, 1, 8, 1)
+
+    '''
         button_frame = Frame(frame, bg="#FFFFFF")
         self.turn_up_image = PhotoImage(file=resource_path("assets/turn_up.png"))
         self.turn_up_button = Button(
@@ -188,26 +193,7 @@ class RollerViewVertical(BaseRollerView):
         self.turn_up_button.config(state="normal")
         self.turn_down_button.config(state="normal")
 
-    def draw_slider(self):
-        self.slider_canvas.delete("all")
-        #slider_height = 250
-        for i in range(-9, 10):
-            y = self.slider_height / 2 - (i * self.slider_height / 20)
-            self.slider_canvas.create_line(35, y, 45, y, fill="black")
-            self.slider_canvas.create_text(
-                15, y, text=f"{i * 10}", font=("AnonymousPro Regular", 12)
-            )
-
-    def draw_slider_marker(self):
-        if self.slider_marker:
-            self.slider_canvas.delete(self.slider_marker)
-        #slider_height = 250
-        # Initial marker
-        #diff = self.roller.max_angle - self.roller.min_angle
-        center_y = self.slider_height / 2 - (self.slider_height / 20) * self.roller.current_angle / 10
-        self.slider_marker = self.slider_canvas.create_oval(
-            35, center_y - 5, 45, center_y + 5, fill="black"
-        )
+    
 
     def disable_all_buttons(self):
         self.disable_buttons()
@@ -217,9 +203,55 @@ class RollerViewVertical(BaseRollerView):
         self.enable_buttons()
         self.stop_button.config(state="normal")
     '''
+
+class SliderCanvas(QFrame):
+    def __init__(self, widget, roller):
+        super().__init__(widget)
+        self.roller = roller
+
+    def paintEvent(self, event):
+        def drawMark():
+            mqp = QPainter()
+            mqp.begin(self)
+            #mpen = QPen(Qt.QColor(5, 2, 2), 3)
+            mqp.setBrush(QBrush(Qt.QColor(5, 2, 2)))
+            #mqp.setPen(mpen)
+            mheight = self.size().height()
+            mcenter_y = mheight / 2 - (mheight / 20) * self.roller.current_angle / 10
+            mdiff = height / 25
+            mqp.drawEllipse(35, mcenter_y - mdiff / 2, mdiff, mdiff)
+            mqp.end()
+
+        qp = QPainter()
+        qp.begin(self)
+        pen = QPen(Qt.QColor(5, 2, 2), 2)
+        qp.setPen(pen)
+        qp.setFont(QFont("AnonymousPro Regular", 10))
+
+        height = self.size().height()
+
+        for i in range(-9, 10):
+            y = height / 2 - (i * height / 20)
+            qp.drawLine(35, y, 45, y)
+            qp.drawText(15, y + height / 60, f"{i * 10}")
+        qp.end()
+        drawMark()
+
+
+
+
 class RollerViewHorizontal(BaseRollerView):
     def __init__(self, roller, frame, grid, controller_view, index):
         super().__init__(roller, frame, grid, controller_view, index)
+
+        self.slider_height = self.canvas_height
+        self.slider_width = self.canvas_height + 30
+
+        self.canvas_frame = ArrowCanvas(frame, roller)
+        self.canvas_frame.setFixedWidth(self.slider_width)
+        self.canvas_frame.setFixedHeight(self.slider_height)
+
+        grid.addWidget(self.canvas_frame, 0, 2, 8, 1)
     '''
         self.arrow = None
 
@@ -333,3 +365,65 @@ class RollerViewHorizontal(BaseRollerView):
         self.enable_buttons()
         self.stop_button.config(state="normal")
     '''
+
+class ArrowCanvas(QFrame):
+    def __init__(self, widget, roller):
+        super().__init__(widget)
+        self.roller = roller
+
+    def paintEvent(self, event):
+        def draw_direction():
+            mqp = QPainter()
+            mqp.begin(self)
+            mpen = QPen(Qt.QColor(5, 2, 2), 2)
+            mqp.setPen(mpen)
+            mqp.setBrush(QBrush(Qt.QColor(5, 2, 2)))
+
+            msize = self.size()
+
+            mcenter_x = msize.width() // 2
+            mcenter_y = msize.height() // 2
+            marrow_length = msize.height() // 2 - 20
+            madjusted_angle_rad = math.radians(self.roller.current_angle - 90)  # Adjust angle to make 0 at the top
+            mx = mcenter_x + marrow_length * math.cos(madjusted_angle_rad)
+            my = mcenter_y + marrow_length * math.sin(madjusted_angle_rad)
+            mqp.drawLine(mcenter_x, mcenter_y, mx, my)
+            def draw_arrow(fx, fy, angle_diff, len_diff):
+                angle_1 = madjusted_angle_rad + math.radians(angle_diff) + math.pi
+                x_1 = fx + len_diff * math.cos(angle_1)
+                y_1 = fy + len_diff * math.sin(angle_1)
+                angle_2 = madjusted_angle_rad - math.radians(angle_diff) + math.pi
+                x_2 = fx + len_diff * math.cos(angle_2)
+                y_2 = fy + len_diff * math.sin(angle_2)
+                polygon = QPolygonF()
+                polygon.append(QPointF(fx, fy))
+                polygon.append(QPointF(x_1, y_1))
+                polygon.append(QPointF(x_2, y_2))
+                mqp.drawPolygon(polygon)
+            draw_arrow(mx, my, 22, marrow_length / 10)
+            mqp.end()
+
+        qp = QPainter()
+        qp.begin(self)
+        pen = QPen(Qt.QColor(5, 2, 2), 2)
+        qp.setPen(pen)
+        qp.setFont(QFont("AnonymousPro Regular", 10))
+        size = self.size()
+        center_x = size.width() // 2
+        center_y = size.height() // 2
+        radius = center_y - 15
+        for angle in range(0, 360, 10):
+            adjusted_angle = angle - 90  # Adjust angle to make 0 at the top
+            x = center_x + radius * math.cos(math.radians(adjusted_angle))
+            y = center_y + radius * math.sin(math.radians(adjusted_angle))
+            qp.drawEllipse(x, y, 3, 3)
+            text = QStaticText(str(angle))
+            tsize = text.size()
+            tx = center_x + (radius + 2 + tsize.width() / 2) * math.cos(math.radians(adjusted_angle))
+            ty = center_y + (radius + 2 + tsize.height()/ 2) * math.sin(math.radians(adjusted_angle))
+
+            qp.drawStaticText(tx - tsize.width() / 2, ty - tsize.height() / 2, text)
+        qp.end()
+        draw_direction()
+
+
