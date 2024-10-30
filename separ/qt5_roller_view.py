@@ -5,7 +5,6 @@ from PyQt5.QtGui import QDoubleValidator, QFont, QPainter, QPen, QBrush, QStatic
 from PyQt5.QtWidgets import QLabel, QLineEdit, QFrame, QWidget, QPushButton
 import math
 
-
 class BaseRollerView:
     def __init__(self, roller, frame, grid, controller_view, index):
         self.roller = roller
@@ -14,37 +13,39 @@ class BaseRollerView:
         self.index = index
         self.canvas_height = 252
 
-        self.roller_font = QFont("AnonymousPro Regular", 12)
+        self.roller_font = QFont("AnonymousPro Regular", 10)
 
         start_row_index = 5 if self.roller.is_vertical else 1
-        self.angle_direction_txt = "вертикальний" if self.roller.is_vertical else "горизонтальний"
+        angle_direction_txt = "вертикальний" if self.roller.is_vertical else "горизонтальний"
+
+        current_angle_label_text = QLabel(self.frame)
+        current_angle_label_text.setText(f"Поточний  {angle_direction_txt}  кут:")
+        current_angle_label_text.setFont(self.roller_font)
+        grid.addWidget(current_angle_label_text, start_row_index, 0)#{self.roller.current_angle:.0f}
+
+        self.current_angle_label = QLabel(self.frame)
+        self.current_angle_label.setText(f"{self.roller.current_angle:.1f}")
+        self.current_angle_label.setFont(self.roller_font)
+        grid.addWidget(self.current_angle_label, start_row_index, 1)
 
         input_label = QLabel(self.frame)
-        input_label.setText(f"Введіть бажаний {self.angle_direction_txt} кут")
+        input_label.setText(f"Встановіть {angle_direction_txt} кут:")
         input_label.setFont(self.roller_font)
-        grid.addWidget(input_label, start_row_index, 0)
+        grid.addWidget(input_label, start_row_index + 1, 0)
 
         self.input_field = QLineEdit(self.frame)
         self.input_field.setValidator(QDoubleValidator())
-        self.input_field.returnPressed.connect(self.qt5_set_desired_angle)
+        self.input_field.returnPressed.connect(self.set_desired_angle)
         self.input_field.setFont(self.roller_font)
-        grid.addWidget(self.input_field, start_row_index + 1, 0)
+        self.input_field.setFixedWidth(50)
+        grid.addWidget(self.input_field, start_row_index + 1, 1)
 
-        self.current_angle_label = QLabel(self.frame)
-        self.current_angle_label.setText(f"Поточний {self.angle_direction_txt} кут: {self.roller.current_angle:.0f}")
-        self.current_angle_label.setFont(self.roller_font)
-        grid.addWidget(self.current_angle_label, start_row_index + 2, 0)
 
-    def qt5_set_desired_angle(self):
-        desired_angle = self.input_field.text()
-        print(f"disired angle is {desired_angle}")
 
-    '''
     def set_desired_angle(self, event=None):
         try:
-            desired_angle = float(self.desired_angle_entry.get())
+            desired_angle = float(self.input_field.text())
             self.roll_desired_angle(desired_angle)
-            self.frame.focus()
 
         except ValueError:
             print("Введіть коректне число")
@@ -56,7 +57,6 @@ class BaseRollerView:
         else:
             self.turn_ptz_decrease(desired_angle)
 
-    '''
     def check_ptz_increase(self, target_angle=360.0):
         self.roller.check_increase_angle(target_angle)
         self.update_roller_view()
@@ -91,9 +91,12 @@ class BaseRollerView:
             self.__on_start_move()
             self.check_ptz_decrease(target_angle)
 
+    def is_roller_moving(self):
+        return self.roller.is_moving_increase or self.roller.is_moving_decrease
+
 
     def stop_ptz(self):
-        if self.roller.is_moving_increase or self.roller.is_moving_decrease:
+        if self.is_roller_moving():
             self.roller.ptz_turn_stop()
             self.update_roller_view()
             self.__on_finish_move()
@@ -103,12 +106,11 @@ class BaseRollerView:
         self.disable_buttons()
 
     def __on_finish_move(self):
-        self.moving_id = None
         self.enable_buttons()
         self.controller_view.roller_finish(self.index)
 
     def update_roller_view(self):
-        self.current_angle_label.setText(f"Поточний {self.angle_direction_txt} кут: {self.roller.current_angle:.0f}")
+        self.current_angle_label.setText(f"{self.roller.current_angle:.1f}")
 
     def disable_buttons(self):
         self.input_field.setEnabled(False)
@@ -123,25 +125,21 @@ class RollerViewVertical(BaseRollerView):
         self.slider_height = self.canvas_height
         self.slider_width = 60
 
-
-
         self.slider_frame = SliderCanvas(frame, roller)
         self.slider_frame.setFixedWidth(self.slider_width)
         self.slider_frame.setFixedHeight(self.slider_height)
 
-        grid.addWidget(self.slider_frame, 0, 1, 8, 1)
+        grid.addWidget(self.slider_frame, 0, 2, 8, 1)
 
         self.turn_up_button = QPushButton(self.frame)
         self.turn_up_button.setIcon(QIcon("assets/turn_up.png"))
         self.turn_up_button.clicked.connect(lambda: self.turn_ptz_increase())
-        #self.turn_up_button.clicked.connect(lambda: print(f"turn up for roller {self.controller_view.controller.name}"))
-        grid.addWidget(self.turn_up_button, 3, 4)
+        grid.addWidget(self.turn_up_button, 3, 6)
 
         self.turn_down_button = QPushButton(self.frame)
         self.turn_down_button.setIcon(QIcon("assets/turn_down.png"))
         self.turn_down_button.clicked.connect(lambda: self.turn_ptz_decrease())
-        #self.turn_down_button.clicked.connect(lambda: print(f"turn DOWN for controller {self.controller_view.controller.name}"))
-        grid.addWidget(self.turn_down_button, 5, 4)
+        grid.addWidget(self.turn_down_button, 5, 6)
 
 
     def update_roller_view(self):
@@ -158,17 +156,6 @@ class RollerViewVertical(BaseRollerView):
         self.turn_up_button.setEnabled(True)
         self.turn_down_button.setEnabled(True)
 
-    
-'''
-    def disable_all_buttons(self):
-        self.disable_buttons()
-        self.stop_button.config(state="disabled")
-
-    def enable_all_buttons(self):
-        self.enable_buttons()
-        self.stop_button.config(state="normal")
-'''
-
 class SliderCanvas(QFrame):
     def __init__(self, widget, roller):
         super().__init__(widget)
@@ -178,9 +165,7 @@ class SliderCanvas(QFrame):
         def drawMark():
             mqp = QPainter()
             mqp.begin(self)
-            #mpen = QPen(Qt.QColor(5, 2, 2), 3)
             mqp.setBrush(QBrush(Qt.QColor(5, 2, 2)))
-            #mqp.setPen(mpen)
             mheight = self.size().height()
             mcenter_y = mheight / 2 - (mheight / 20) * self.roller.current_angle / 10
             mdiff = height / 25
@@ -216,19 +201,17 @@ class RollerViewHorizontal(BaseRollerView):
         self.canvas_frame.setFixedWidth(self.slider_width)
         self.canvas_frame.setFixedHeight(self.slider_height)
 
-        grid.addWidget(self.canvas_frame, 0, 2, 8, 1)
+        grid.addWidget(self.canvas_frame, 0, 3, 8, 2)
 
         self.turn_left_button = QPushButton(self.frame)
         self.turn_left_button.setIcon(QIcon("assets/turn_left.png"))
         self.turn_left_button.clicked.connect(lambda: self.turn_ptz_decrease())
-        #self.turn_left_button.clicked.connect(lambda: print(f"turn LEFT for roller {self.controller_view.controller.name}"))
-        grid.addWidget(self.turn_left_button, 4, 3)
+        grid.addWidget(self.turn_left_button, 4, 5)
 
         self.turn_right_button = QPushButton(self.frame)
         self.turn_right_button.setIcon(QIcon("assets/turn_right.png"))
         self.turn_right_button.clicked.connect(lambda: self.turn_ptz_increase())
-        #self.turn_right_button.clicked.connect(lambda: print(f"turn RIGHT for controller {self.controller_view.controller.name}"))
-        grid.addWidget(self.turn_right_button, 4, 5)
+        grid.addWidget(self.turn_right_button, 4, 7)
 
         #self.arrow = None
 
@@ -247,16 +230,6 @@ class RollerViewHorizontal(BaseRollerView):
         super().enable_buttons()
         self.turn_right_button.setEnabled(True)
         self.turn_left_button.setEnabled(True)
-
-    '''
-    def disable_all_buttons(self):
-        self.disable_buttons()
-        self.stop_button.config(state="disabled")
-
-    def enable_all_buttons(self):
-        self.enable_buttons()
-        self.stop_button.config(state="normal")
-    '''
 
 class ArrowCanvas(QFrame):
     def __init__(self, widget, roller):

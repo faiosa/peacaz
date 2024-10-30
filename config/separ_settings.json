@@ -58,13 +58,6 @@
             "full_controller": false,
             "rollers": [
                 {
-                    "type": "vertical",
-                    "rotation_speed": 4.77,
-                    "min_angle": -75.0,
-                    "max_angle": 75.0,
-                    "current_angle": 20.0
-                },
-                {
                     "type": "horizontal",
                     "rotation_speed": 10.0,
                     "min_angle": 0.0,
