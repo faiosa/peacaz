@@ -63,6 +63,18 @@ class ControllerView:
             roller = self.controller.rollers[indx]
             roller_view = RollerViewVertical(roller, frame, rollers_layout, self, indx) if roller.is_vertical else RollerViewHorizontal(roller, frame, rollers_layout, self, indx)
             self.roller_views.append(roller_view)
+
+
+        self.stop_button = QPushButton(self.frame)
+        self.stop_button.setIcon(QIcon("assets/stop.png"))
+        self.stop_button.clicked.connect(lambda: self.stop_ptz())
+        rollers_layout.addWidget(self.stop_button, 4, 4)
+
+    def stop_ptz(self):
+        for indx in range(0, len(self.controller.rollers)):
+            roller = self.controller.rollers[indx]
+            if roller.is_moving_increase or roller.is_moving_decrease:
+                self.roller_views[indx].stop_ptz()
         '''
         self.restore_defaults_button = Button(
             self.frame,
@@ -82,12 +94,12 @@ class ControllerView:
     def roller_start(self, roller_index):
         for i in range(0, len(self.roller_views)):
             if i != roller_index:
-                self.roller_views[i].disable_all_buttons()
+                self.roller_views[i].disable_buttons()
 
     def roller_finish(self, roller_index):
         for i in range(0, len(self.roller_views)):
             if i != roller_index:
-                self.roller_views[i].enable_all_buttons()
+                self.roller_views[i].enable_buttons()
         self.__check_lambdas()
 
     def __check_lambdas(self):

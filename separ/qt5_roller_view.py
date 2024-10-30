@@ -1,5 +1,5 @@
 from PyQt5 import QtGui, Qt
-from PyQt5.QtCore import QPointF
+from PyQt5.QtCore import QPointF, QTimer
 from PyQt5.QtGui import QDoubleValidator, QFont, QPainter, QPen, QBrush, QStaticText, QPolygon, QPolygonF, QIcon
 
 from PyQt5.QtWidgets import QLabel, QLineEdit, QFrame, QWidget, QPushButton
@@ -12,16 +12,15 @@ class BaseRollerView:
         self.frame = frame
         self.controller_view = controller_view
         self.index = index
-        self.moving_id = None
         self.canvas_height = 252
 
         self.roller_font = QFont("AnonymousPro Regular", 12)
 
         start_row_index = 5 if self.roller.is_vertical else 1
-        angle_direction_txt = "вертикальний" if self.roller.is_vertical else "горизонтальний"
+        self.angle_direction_txt = "вертикальний" if self.roller.is_vertical else "горизонтальний"
 
         input_label = QLabel(self.frame)
-        input_label.setText(f"Введіть бажаний {angle_direction_txt} кут")
+        input_label.setText(f"Введіть бажаний {self.angle_direction_txt} кут")
         input_label.setFont(self.roller_font)
         grid.addWidget(input_label, start_row_index, 0)
 
@@ -31,18 +30,10 @@ class BaseRollerView:
         self.input_field.setFont(self.roller_font)
         grid.addWidget(self.input_field, start_row_index + 1, 0)
 
-        current_angle_label = QLabel(self.frame)
-        current_angle_label.setText(f"Поточний {angle_direction_txt} кут: {self.roller.current_angle:.0f}")
-        current_angle_label.setFont(self.roller_font)
-        grid.addWidget(current_angle_label, start_row_index + 2, 0)
-
-        stop_button = QPushButton(self.frame)
-        stop_button.setIcon(QIcon("assets/stop.png"))
-        stop_button.clicked.connect(lambda: self.stop_ptz())
-        grid.addWidget(stop_button, 4, 4)
-
-    def stop_ptz(self):
-        print("stopping ptz")
+        self.current_angle_label = QLabel(self.frame)
+        self.current_angle_label.setText(f"Поточний {self.angle_direction_txt} кут: {self.roller.current_angle:.0f}")
+        self.current_angle_label.setFont(self.roller_font)
+        grid.addWidget(self.current_angle_label, start_row_index + 2, 0)
 
     def qt5_set_desired_angle(self):
         desired_angle = self.input_field.text()
@@ -65,15 +56,14 @@ class BaseRollerView:
         else:
             self.turn_ptz_decrease(desired_angle)
 
-
+    '''
     def check_ptz_increase(self, target_angle=360.0):
         self.roller.check_increase_angle(target_angle)
         self.update_roller_view()
         if self.roller.is_moving_increase:
-            self.moving_id = self.frame.after(
+            QTimer.singleShot(
                 100,
-                self.check_ptz_increase,
-                target_angle
+                lambda: self.check_ptz_increase(target_angle)
             )
         else:
             self.__on_finish_move()
@@ -88,10 +78,9 @@ class BaseRollerView:
         self.roller.check_decrease_angle(target_angle)
         self.update_roller_view()
         if self.roller.is_moving_decrease:
-            self.moving_id = self.frame.after(
+            QTimer.singleShot(
                 100,
-                self.check_ptz_decrease,
-                target_angle
+                lambda: self.check_ptz_decrease(target_angle)
             )
         else:
             self.__on_finish_move()
@@ -104,10 +93,9 @@ class BaseRollerView:
 
 
     def stop_ptz(self):
-        self.roller.ptz_turn_stop()
-        self.update_roller_view()
-        if self.moving_id:
-            self.frame.after_cancel(self.moving_id)
+        if self.roller.is_moving_increase or self.roller.is_moving_decrease:
+            self.roller.ptz_turn_stop()
+            self.update_roller_view()
             self.__on_finish_move()
 
     def __on_start_move(self):
@@ -120,14 +108,14 @@ class BaseRollerView:
         self.controller_view.roller_finish(self.index)
 
     def update_roller_view(self):
-        self.current_angle_label.config(text=f"Поточний кут: {self.roller.current_angle:.0f}")
+        self.current_angle_label.setText(f"Поточний {self.angle_direction_txt} кут: {self.roller.current_angle:.0f}")
 
     def disable_buttons(self):
-        self.desired_angle_entry.config(state="disabled")
+        self.input_field.setEnabled(False)
 
     def enable_buttons(self):
-        self.desired_angle_entry.config(state="normal")
-    '''
+        self.input_field.setEnabled(True)
+
 class RollerViewVertical(BaseRollerView):
     def __init__(self, roller, frame, grid, controller_view, index):
         super().__init__(roller, frame, grid, controller_view, index)
@@ -143,58 +131,35 @@ class RollerViewVertical(BaseRollerView):
 
         grid.addWidget(self.slider_frame, 0, 1, 8, 1)
 
-    '''
-        button_frame = Frame(frame, bg="#FFFFFF")
-        self.turn_up_image = PhotoImage(file=resource_path("assets/turn_up.png"))
-        self.turn_up_button = Button(
-            button_frame,
-            image=self.turn_up_image,
-            borderwidth=0,
-            highlightthickness=0,
-            command=self.turn_ptz_increase,
-            relief="flat",
-        )
-        self.turn_up_button.grid(column=0, row=0, padx=20, pady=20)
+        self.turn_up_button = QPushButton(self.frame)
+        self.turn_up_button.setIcon(QIcon("assets/turn_up.png"))
+        self.turn_up_button.clicked.connect(lambda: self.turn_ptz_increase())
+        #self.turn_up_button.clicked.connect(lambda: print(f"turn up for roller {self.controller_view.controller.name}"))
+        grid.addWidget(self.turn_up_button, 3, 4)
 
-        self.stop_image = PhotoImage(file=resource_path("assets/stop.png"))
-        self.stop_button = Button(
-            button_frame,
-            image=self.stop_image,
-            borderwidth=0,
-            highlightthickness=0,
-            command=self.stop_ptz,
-            relief="flat",
-        )
-        self.stop_button.grid(column=0, row=1, padx=20, pady=20)
+        self.turn_down_button = QPushButton(self.frame)
+        self.turn_down_button.setIcon(QIcon("assets/turn_down.png"))
+        self.turn_down_button.clicked.connect(lambda: self.turn_ptz_decrease())
+        #self.turn_down_button.clicked.connect(lambda: print(f"turn DOWN for controller {self.controller_view.controller.name}"))
+        grid.addWidget(self.turn_down_button, 5, 4)
 
-        self.turn_down_image = PhotoImage(file=resource_path("assets/turn_down.png"))
-        self.turn_down_button = Button(
-            button_frame,
-            image=self.turn_down_image,
-            borderwidth=0,
-            highlightthickness=0,
-            command=self.turn_ptz_decrease,
-            relief="flat",
-        )
-        self.turn_down_button.grid(column=0, row=2, padx=20, pady=20)
-        button_frame.grid(column=1, row=2)
 
     def update_roller_view(self):
         super().update_roller_view()
-        self.draw_slider_marker()
+        self.slider_frame.update()
 
     def disable_buttons(self):
         super().disable_buttons()
-        self.turn_up_button.config(state="disabled")
-        self.turn_down_button.config(state="disabled")
+        self.turn_up_button.setEnabled(False)
+        self.turn_down_button.setEnabled(False)
 
     def enable_buttons(self):
         super().enable_buttons()
-        self.turn_up_button.config(state="normal")
-        self.turn_down_button.config(state="normal")
+        self.turn_up_button.setEnabled(True)
+        self.turn_down_button.setEnabled(True)
 
     
-
+'''
     def disable_all_buttons(self):
         self.disable_buttons()
         self.stop_button.config(state="disabled")
@@ -202,7 +167,7 @@ class RollerViewVertical(BaseRollerView):
     def enable_all_buttons(self):
         self.enable_buttons()
         self.stop_button.config(state="normal")
-    '''
+'''
 
 class SliderCanvas(QFrame):
     def __init__(self, widget, roller):
@@ -252,111 +217,38 @@ class RollerViewHorizontal(BaseRollerView):
         self.canvas_frame.setFixedHeight(self.slider_height)
 
         grid.addWidget(self.canvas_frame, 0, 2, 8, 1)
-    '''
-        self.arrow = None
 
-        button_frame = Frame(frame, bg="#FFFFFF")
+        self.turn_left_button = QPushButton(self.frame)
+        self.turn_left_button.setIcon(QIcon("assets/turn_left.png"))
+        self.turn_left_button.clicked.connect(lambda: self.turn_ptz_decrease())
+        #self.turn_left_button.clicked.connect(lambda: print(f"turn LEFT for roller {self.controller_view.controller.name}"))
+        grid.addWidget(self.turn_left_button, 4, 3)
 
-        self.turn_left_image = PhotoImage(file=resource_path("assets/turn_left.png"))
-        self.turn_left_button = Button(
-            button_frame,
-            image=self.turn_left_image,
-            borderwidth=0,
-            highlightthickness=0,
-            command=self.turn_ptz_decrease,
-            relief="flat",
-        )
-        self.turn_left_button.grid(column=0, row=0, padx=20, pady=20)
+        self.turn_right_button = QPushButton(self.frame)
+        self.turn_right_button.setIcon(QIcon("assets/turn_right.png"))
+        self.turn_right_button.clicked.connect(lambda: self.turn_ptz_increase())
+        #self.turn_right_button.clicked.connect(lambda: print(f"turn RIGHT for controller {self.controller_view.controller.name}"))
+        grid.addWidget(self.turn_right_button, 4, 5)
 
-        self.stop_image = PhotoImage(file=resource_path("assets/stop.png"))
-        self.stop_button = Button(
-            button_frame,
-            image=self.stop_image,
-            borderwidth=0,
-            highlightthickness=0,
-            command=self.stop_ptz,
-            relief="flat",
-        )
-        self.stop_button.grid(column=1, row=0, padx=20, pady=20)
+        #self.arrow = None
 
-        self.turn_right_image = PhotoImage(file=resource_path("assets/turn_right.png"))
-        self.turn_right_button = Button(
-            button_frame,
-            image=self.turn_right_image,
-            borderwidth=0,
-            highlightthickness=0,
-            command=self.turn_ptz_increase,
-            relief="flat",
-        )
-        self.turn_right_button.grid(column=2, row=0, padx=20, pady=20)
-
-        button_frame.grid(column=0, row=2, columnspan=2)
-
-        self.circle_canvas = Canvas(
-            frame,
-            width=320,
-            height=300,
-            bg=ui.BG_COLOR,
-            bd=1,
-            highlightthickness=0,
-            relief="ridge",
-        )
-        self.circle_canvas.grid(column=0, row=3, padx=20, pady=20)
-        self.draw_circle()
-        self.draw_marks()
-        self.draw_arrow()
 
     def update_roller_view(self):
         super().update_roller_view()
-        self.draw_arrow()
+        self.canvas_frame.update()
 
-    def draw_circle(self):
-        center_x = 160
-        center_y = 150
-        radius = 140
-
-        for angle in range(0, 360, 10):
-            adjusted_angle = angle - 90  # Adjust angle to make 0 at the top
-            x = center_x + radius * math.cos(math.radians(adjusted_angle))
-            y = center_y + radius * math.sin(math.radians(adjusted_angle))
-            self.circle_canvas.create_oval(x, y, x + 1, y + 1, fill="black")
-
-    def draw_marks(self):
-        center_x = 160
-        center_y = 150
-        radius = 140
-
-        for angle in range(0, 360, 10):
-            adjusted_angle = angle - 90  # Adjust angle to make 0 at the top
-            x = center_x + radius * math.cos(math.radians(adjusted_angle))
-            y = center_y + radius * math.sin(math.radians(adjusted_angle))
-            self.circle_canvas.create_text(
-                x, y, text=str(angle), fill="black", font=("AnonymousPro Regular", 11)
-            )
-
-    def draw_arrow(self):
-        if self.arrow:
-            self.circle_canvas.delete(self.arrow)
-        center_x = 160
-        center_y = 150
-        arrow_length = 130
-        adjusted_angle_rad = math.radians(self.roller.current_angle - 90)  # Adjust angle to make 0 at the top
-        x = center_x + arrow_length * math.cos(adjusted_angle_rad)
-        y = center_y + arrow_length * math.sin(adjusted_angle_rad)
-        self.arrow = self.circle_canvas.create_line(
-            center_x, center_y, x, y, arrow="last", fill="black"
-        )
 
     def disable_buttons(self):
         super().disable_buttons()
-        self.turn_right_button.config(state="disabled")
-        self.turn_left_button.config(state="disabled")
+        self.turn_right_button.setEnabled(False)
+        self.turn_left_button.setEnabled(False)
 
     def enable_buttons(self):
         super().enable_buttons()
-        self.turn_right_button.config(state="normal")
-        self.turn_left_button.config(state="normal")
+        self.turn_right_button.setEnabled(True)
+        self.turn_left_button.setEnabled(True)
 
+    '''
     def disable_all_buttons(self):
         self.disable_buttons()
         self.stop_button.config(state="disabled")
