@@ -187,9 +187,6 @@ class SliderCanvas(QFrame):
         qp.end()
         drawMark()
 
-
-
-
 class RollerViewHorizontal(BaseRollerView):
     def __init__(self, roller, frame, grid, controller_view, index):
         super().__init__(roller, frame, grid, controller_view, index)
@@ -212,9 +209,6 @@ class RollerViewHorizontal(BaseRollerView):
         self.turn_right_button.setIcon(QIcon("assets/turn_right.png"))
         self.turn_right_button.clicked.connect(lambda: self.turn_ptz_increase())
         grid.addWidget(self.turn_right_button, 4, 7)
-
-        #self.arrow = None
-
 
     def update_roller_view(self):
         super().update_roller_view()
@@ -252,7 +246,7 @@ class ArrowCanvas(QFrame):
             madjusted_angle_rad = math.radians(self.roller.current_angle - 90)  # Adjust angle to make 0 at the top
             mx = mcenter_x + marrow_length * math.cos(madjusted_angle_rad)
             my = mcenter_y + marrow_length * math.sin(madjusted_angle_rad)
-            mqp.drawLine(mcenter_x, mcenter_y, mx, my)
+            #mqp.drawLine(mcenter_x, mcenter_y, mx, my)
             def draw_arrow(fx, fy, angle_diff, len_diff):
                 angle_1 = madjusted_angle_rad + math.radians(angle_diff) + math.pi
                 x_1 = fx + len_diff * math.cos(angle_1)
@@ -263,9 +257,10 @@ class ArrowCanvas(QFrame):
                 polygon = QPolygonF()
                 polygon.append(QPointF(fx, fy))
                 polygon.append(QPointF(x_1, y_1))
+                polygon.append(QPointF(mcenter_x, mcenter_y))
                 polygon.append(QPointF(x_2, y_2))
                 mqp.drawPolygon(polygon)
-            draw_arrow(mx, my, 22, marrow_length / 10)
+            draw_arrow(mx, my, 5, 9 * marrow_length / 10)
             mqp.end()
 
         qp = QPainter()
