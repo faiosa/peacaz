@@ -1,7 +1,8 @@
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QWidget, QApplication, QPushButton
+from PyQt5.QtWidgets import QWidget, QApplication, QPushButton, QMainWindow
 import sys
 
+from separ.MainView import MainView
 from utils.position_window import position_window_at_centre
 from utils.path import resource_path
 from utils.palette import getPalette
@@ -14,17 +15,23 @@ from separ.qt5_control_view import ManagerView
 
 def main():
     app = QApplication(sys.argv)
-    window = QWidget()
+    #main_window = QWidget()
+    main_window = MainView()
 
-    window.setWindowTitle("PTZ Controller")
+    main_window.setWindowTitle("PTZ Controller")
+
+
+    window = QWidget(main_window)
+    main_window.setCentralWidget(window)
+    #main_window.addW
 
     #settings_button = QPushButton("aloha", window)
     #settings_button.setIcon(QIcon("assets/settings.png"))
     #settings_button.clicked.connect(lambda : print("aloha Kyiv"))
 
-    window.setGeometry(*position_window_at_centre(app, window_width=825, window_height=730))
+    main_window.setGeometry(*position_window_at_centre(app, window_width=825, window_height=730))
 
-    window.setPalette(getPalette())
+    main_window.setPalette(getPalette())
 
 
     json_settings = load_settings_from_file(SEPAR_SETTINGS_FILE)
@@ -32,7 +39,7 @@ def main():
     ManagerView(manager, window)
 
     app.setWindowIcon(QIcon("assets/icon.png"))
-    window.show()
+    main_window.show()
     sys.exit(app.exec())
 
 if __name__ == "__main__":

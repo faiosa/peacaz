@@ -14,7 +14,7 @@ class ManagerView:
 
         layout = QHBoxLayout()
 
-        controllers_frame = QWidget()
+        controllers_frame = QWidget(self.frame)
         layout.addWidget(controllers_frame)
         controllers_layout = QVBoxLayout()
         self.controllers_views = []
