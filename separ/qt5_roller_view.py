@@ -181,9 +181,9 @@ class SliderCanvas(QFrame):
         height = self.size().height()
 
         for i in range(-9, 10):
-            y = height / 2 - (i * height / 20)
+            y = height // 2 - (i * height // 20)
             qp.drawLine(35, y, 45, y)
-            qp.drawText(15, y + height / 60, f"{i * 10}")
+            qp.drawText(15, y + height // 60, f"{i * 10}")
         qp.end()
         drawMark()
 
