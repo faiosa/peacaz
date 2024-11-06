@@ -1008,6 +1008,7 @@ class SignalFrame(QFrame):
             dialog = SendDialog(
                 project_manager, modulated_data=self.signal.iq_array, parent=self
             )
+            self.ui.add_replay_signal_frame(self, dialog)
         except OSError as e:
             logger.error(repr(e))
             return

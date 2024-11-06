@@ -3,7 +3,7 @@ import time
 
 from PyQt5.QtCore import pyqtSlot, QTimer, pyqtSignal, Qt
 from PyQt5.QtGui import QCloseEvent, QTransform
-from PyQt5.QtWidgets import QDialog, QGraphicsView
+from PyQt5.QtWidgets import QDialog, QGraphicsView, QWidget
 
 from urh import settings
 from urh.controller.widgets.DeviceSettingsWidget import DeviceSettingsWidget
@@ -20,7 +20,7 @@ from urh.util.Logger import logger
 from urh.util.ProjectManager import ProjectManager
 
 
-class SendRecvDialog(QDialog):
+class SendRecvDialog(QWidget):
     device_parameters_changed = pyqtSignal(dict)
 
     def __init__(

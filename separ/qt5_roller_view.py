@@ -260,7 +260,7 @@ class ArrowCanvas(QFrame):
                 polygon.append(QPointF(mcenter_x, mcenter_y))
                 polygon.append(QPointF(x_2, y_2))
                 mqp.drawPolygon(polygon)
-            draw_arrow(mx, my, 5, 9 * marrow_length / 10)
+            draw_arrow(mx, my, 5, 105 * marrow_length // 100)
             mqp.end()
 
         qp = QPainter()
