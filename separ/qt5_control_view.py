@@ -27,18 +27,10 @@ class ManagerView:
             self.controllers_views.append(controller_view)
         controllers_frame.setLayout(controllers_layout)
 
-        settings_button = QPushButton(self.frame)
-        settings_button.setIcon(QIcon("assets/settings.png"))
-        settings_button.clicked.connect(lambda: self.open_settings_window())
-        settings_button.setFixedWidth(25)
-        layout.addWidget(settings_button, stretch=0, alignment=QtCore.Qt.AlignTop)
 
         self.frame.setLayout(layout)
 
-    def open_settings_window(self):
-        print("Opening the settings \n")
-        # Open the settings window
-        #SettingsWindow(self.frame, self.manager.controller_values, self.manager)
+
 
 
 class ControllerView:

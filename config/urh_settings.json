@@ -1,0 +1,26 @@
+{
+    "global_settings": {
+        "theme": "Світла",
+        "language": "Українська"
+    },
+    "controller_values": {
+        "3": {
+            "name": "Контролер 3",
+            "serial_port": "",
+            "switchboard_serial_port": "",
+            "full_controller": false,
+            "rollers": [
+                {
+                    "type": "horizontal",
+                    "rotation_speed": 10.0,
+                    "min_angle": 0.0,
+                    "max_angle": 359.0,
+                    "current_angle": 80.0
+                }
+            ]
+        }
+    },
+    "switchboard_settings": {
+        "serial_port": "/dev/c1"
+    }
+}

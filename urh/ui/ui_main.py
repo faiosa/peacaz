@@ -143,10 +143,6 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setSpacing(0)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
 
-        test_label = QLabel(self.tab_interpretation)
-        test_label.setText("OLEH aloha")
-        self.verticalLayout_2.addWidget(test_label)
-
         self.tabWidget.addTab(self.tab_interpretation, "")
         self.tab_protocol = QtWidgets.QWidget()
         self.tab_protocol.setObjectName("tab_protocol")
@@ -194,7 +190,7 @@ class Ui_MainWindow(object):
         self.menuDefault_noise_threshold.setObjectName("menuDefault_noise_threshold")
         self.menuHelp = QtWidgets.QMenu(self.menubar)
         self.menuHelp.setObjectName("menuHelp")
-        MainWindow.setMenuBar(self.menubar)
+        #MainWindow.setMenuBar(self.menubar)
         self.actionFSK = QtWidgets.QAction(MainWindow)
         self.actionFSK.setCheckable(True)
         self.actionFSK.setObjectName("actionFSK")
