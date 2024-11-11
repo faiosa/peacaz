@@ -141,6 +141,12 @@ class ControllerView:
             self.lambda_queue.append(my_lambda)
         self.__check_lambdas()
 
+    def is_moving(self):
+        for rw in self.roller_views:
+            if rw.is_roller_moving():
+                return True
+        return False
+
 class SwitchBoardView:
     def __init__(self, switchboard, frame, layout):
         self.switchboard = switchboard

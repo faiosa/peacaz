@@ -126,7 +126,7 @@ class RollerViewVertical(BaseRollerView):
         self.slider_height = self.canvas_height
         self.slider_width = 60
 
-        self.slider_frame = SliderCanvas(frame, roller)
+        self.slider_frame = SliderCanvas(frame, self)
         self.slider_frame.setFixedWidth(self.slider_width)
         self.slider_frame.setFixedHeight(self.slider_height)
 
@@ -158,9 +158,9 @@ class RollerViewVertical(BaseRollerView):
         self.turn_down_button.setEnabled(True)
 
 class SliderCanvas(QFrame):
-    def __init__(self, widget, roller):
+    def __init__(self, widget, roller_view):
         super().__init__(widget)
-        self.roller = roller
+        self.roller_view = roller_view
 
     def paintEvent(self, event):
         def drawMark():
@@ -168,7 +168,7 @@ class SliderCanvas(QFrame):
             mqp.begin(self)
             mqp.setBrush(QBrush(Qt.QColor(5, 2, 2)))
             mheight = self.size().height()
-            mcenter_y = mheight / 2 - (mheight / 20) * self.roller.current_angle / 10
+            mcenter_y = mheight / 2 - (mheight / 20) * self.roller_view.roller.current_angle / 10
             mdiff = height / 25
             mqp.drawEllipse(35, mcenter_y - mdiff / 2, mdiff, mdiff)
             mqp.end()
@@ -187,6 +187,22 @@ class SliderCanvas(QFrame):
             qp.drawText(15, y + height // 60, f"{i * 10}")
         qp.end()
         drawMark()
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        if self.roller_view.controller_view.is_moving():
+            return
+        height = self.size().height()
+        dy = height / 2 - event.y()
+        dangle = dy * 10 * 20 / height
+
+        if dangle > self.roller_view.roller.max_angle:
+            dangle = self.roller_view.roller.max_angle
+        if dangle < self.roller_view.roller.min_angle:
+            dangle = self.roller_view.roller.min_angle
+
+        self.roller_view.input_field.setText(f"{dangle:.1f}")
+        self.roller_view.roll_desired_angle(dangle)
 
 class RollerViewHorizontal(BaseRollerView):
     def __init__(self, roller, frame, grid, controller_view, index):
@@ -233,7 +249,7 @@ class ArrowCanvas(QFrame):
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
-        if self.roller_view.is_roller_moving():
+        if self.roller_view.controller_view.is_moving():
             return
         size = self.size()
         dx = event.x() - size.width() / 2
