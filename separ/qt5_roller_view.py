@@ -195,7 +195,7 @@ class RollerViewHorizontal(BaseRollerView):
         self.slider_height = self.canvas_height
         self.slider_width = self.canvas_height + 30
 
-        self.canvas_frame = ArrowCanvas(frame, roller)
+        self.canvas_frame = ArrowCanvas(frame, self)
         self.canvas_frame.setFixedWidth(self.slider_width)
         self.canvas_frame.setFixedHeight(self.slider_height)
 
@@ -227,9 +227,35 @@ class RollerViewHorizontal(BaseRollerView):
         self.turn_left_button.setEnabled(True)
 
 class ArrowCanvas(QFrame):
-    def __init__(self, widget, roller):
+    def __init__(self, widget, roller_view):
         super().__init__(widget)
-        self.roller = roller
+        self.roller_view = roller_view
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        if self.roller_view.is_roller_moving():
+            return
+        size = self.size()
+        dx = event.x() - size.width() / 2
+        dy = event.y() - size.height() / 2
+        sin = dy / math.sqrt(dy * dy + dx * dx)
+        trad = math.asin(sin)
+        if dx < 0:
+            if trad < 0:
+                trad = -math.pi - trad
+            else:
+                trad = math.pi - trad
+
+        trad = trad + math.pi / 2
+        if trad > 2 * math.pi:
+            trad = trad - 2 * math.pi
+        if trad < 0:
+            trad = trad + 2 * math.pi
+
+        tangle = trad * 180 / math.pi
+        self.roller_view.input_field.setText(f"{tangle:.1f}")
+        self.roller_view.roll_desired_angle(tangle)
+
 
     def paintEvent(self, event):
         def draw_direction():
@@ -244,7 +270,7 @@ class ArrowCanvas(QFrame):
             mcenter_x = msize.width() // 2
             mcenter_y = msize.height() // 2
             marrow_length = msize.height() // 2 - 20
-            madjusted_angle_rad = math.radians(self.roller.current_angle - 90)  # Adjust angle to make 0 at the top
+            madjusted_angle_rad = math.radians(self.roller_view.roller.current_angle - 90)  # Adjust angle to make 0 at the top
             mx = mcenter_x + marrow_length * math.cos(madjusted_angle_rad)
             my = mcenter_y + marrow_length * math.sin(madjusted_angle_rad)
             #mqp.drawLine(mcenter_x, mcenter_y, mx, my)
@@ -268,7 +294,7 @@ class ArrowCanvas(QFrame):
         qp.begin(self)
         pen = QPen(Qt.QColor(5, 2, 2), 2)
         qp.setPen(pen)
-        qp.setFont(QFont("AnonymousPro Regular", 10))
+        qp.setFont(QFont("AnonymousPro Regular", 9))
         size = self.size()
         center_x = size.width() // 2
         center_y = size.height() // 2
