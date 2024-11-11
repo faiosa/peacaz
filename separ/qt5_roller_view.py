@@ -11,9 +11,10 @@ class BaseRollerView:
         self.frame = frame
         self.controller_view = controller_view
         self.index = index
-        self.canvas_height = 252
+        self.canvas_height = 232
+        #self.canvas_height = 200
 
-        self.roller_font = QFont("AnonymousPro Regular", 10)
+        self.roller_font = QFont("AnonymousPro Regular", 9)
 
         start_row_index = 5 if self.roller.is_vertical else 1
         angle_direction_txt = "вертикальний" if self.roller.is_vertical else "горизонтальний"
@@ -176,7 +177,7 @@ class SliderCanvas(QFrame):
         qp.begin(self)
         pen = QPen(Qt.QColor(5, 2, 2), 2)
         qp.setPen(pen)
-        qp.setFont(QFont("AnonymousPro Regular", 10))
+        qp.setFont(QFont("AnonymousPro Regular", 9))
 
         height = self.size().height()
 
@@ -282,6 +283,7 @@ class ArrowCanvas(QFrame):
             tx = center_x + (radius + 2 + tsize.width() / 2) * math.cos(math.radians(adjusted_angle))
             ty = center_y + (radius + 2 + tsize.height()/ 2) * math.sin(math.radians(adjusted_angle))
 
+            #qp.drawEllipse(tx, ty, 3, 3)
             qp.drawStaticText(tx - tsize.width() / 2, ty - tsize.height() / 2, text)
         qp.end()
         draw_direction()

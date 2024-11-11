@@ -2,7 +2,8 @@ import json
 import os
 
 SETTINGS_FILE = os.path.join("config", "settings.json")
-SEPAR_SETTINGS_FILE = os.path.join("config", "urh_settings.json")
+#SEPAR_SETTINGS_FILE = os.path.join("config", "urh_settings.json")
+SEPAR_SETTINGS_FILE = os.path.join("config", "separ_settings.json")
 
 def load_settings():
     return load_settings_from_file(SETTINGS_FILE)

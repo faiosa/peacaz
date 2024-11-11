@@ -177,3 +177,4 @@ pyrightconfig.json
 #intellij idea files
 ./idea
 ./idea/*
+.idea/

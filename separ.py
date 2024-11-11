@@ -17,7 +17,6 @@ def main():
     app = QApplication(sys.argv)
 
     #main_window = MainRollerView()
-    #main_window = MainUrhView()
     main_window = WithUrhView()
 
     main_window.setWindowTitle("PTZ Controller")
