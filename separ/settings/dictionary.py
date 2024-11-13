@@ -34,7 +34,9 @@ class DictionarySettings:
             else:
                 self.input_fields[key] = StrItem(frame, value)
 
-            layout.addWidget(self.input_fields[key].widget)
+            layout.addWidget(self.input_fields[key].widget, row, 1)
+            row += 1
+
         self.frame.setLayout(layout)
 
     def get_settings(self):
@@ -151,14 +153,25 @@ class ControllerSettings(SettingsComposer):
         }
         self.controller_settings_view = self.get_dictionary_settings(QFrame(self), self.controller_labels, self.controller_policies)
         self.switchboard_settings_view = self.get_dictionary_settings(QFrame(self), self.switchboard_labels, self.switchboard_policies)
+
         self.vroller_settings_view = None
         self.hroller_settings_view = None
+
+        self.vroller_add_button = QPushButton()
+        self.vroller_add_button.setText("Додати вертикальний ролер")
+        self.vroller_add_button.clicked.connect(lambda: self._new_roller("vertical"))
+
+        self.hroller_add_button = QPushButton()
+        self.hroller_add_button.setText("Додати горизонтальний ролер")
+        self.hroller_add_button.clicked.connect(lambda: self._new_roller("horizontal"))
+
         if "rollers" in self.settings:
             for roller in self.settings["rollers"]:
                 if roller["type"] == "vertical":
                     self.vroller_settings_view = DictionarySettings(QFrame(self), self.roller_labels, roller, self.roller_policies)
                 elif roller["type"] == "horizontal":
                     self.hroller_settings_view = DictionarySettings(QFrame(self), self.roller_labels, roller, self.roller_policies)
+        self.pack_layout()
 
     def _new_roller(self, roller_type):
         roller_settings = {
@@ -170,27 +183,38 @@ class ControllerSettings(SettingsComposer):
         }
         if roller_type == "vertical":
             self.vroller_settings_view = DictionarySettings(QFrame(self), self.roller_labels, roller_settings, self.roller_policies)
+            self.vertical_roller_layout.removeWidget(self.vroller_add_button)
+            self.vroller_add_button.deleteLater()
+            self.vertical_roller_layout.addWidget(self.vroller_settings_view.frame)
         else:
             self.hroller_settings_view = DictionarySettings(QFrame(self), self.roller_labels, roller_settings, self.roller_policies)
+            self.horizontal_roller_layout.removeWidget(self.hroller_add_button)
+            self.hroller_add_button.deleteLater()
+            self.horizontal_roller_layout.addWidget(self.hroller_settings_view.frame)
 
-    def paintEvent(self, event):
+    def pack_layout(self):
         self.layout.addWidget(self.controller_settings_view.frame)
-        self.layout.addWidget(self.switchboard_settings_view)
-        if self.vroller_settings_view:
-            self.layout.addWidget(self.vroller_settings_view.frame)
-        else:
-            add_button = QPushButton(self)
-            add_button.setText("Додати вертикальний ролер")
-            add_button.clicked.connect(lambda: self._new_roller("vertical"))
-            self.layout.addWidget(add_button)
-        if self.hroller_settings_view:
-            self.layout.addWidget(self.hroller_settings_view)
+        self.layout.addWidget(self.switchboard_settings_view.frame)
 
+        vertical_roller_frame = QFrame(self)
+        self.vertical_roller_layout = QVBoxLayout(vertical_roller_frame)
+        vertical_roller_frame.setLayout(self.vertical_roller_layout)
+        self.layout.addWidget(vertical_roller_frame)
+
+        horizontal_roller_frame = QFrame(self)
+        self.horizontal_roller_layout = QVBoxLayout(horizontal_roller_frame)
+        horizontal_roller_frame.setLayout(self.horizontal_roller_layout)
+        self.layout.addWidget(horizontal_roller_frame)
+
+        if self.vroller_settings_view:
+            self.vertical_roller_layout.addWidget(self.vroller_settings_view.frame)
         else:
-            add_button = QPushButton(self)
-            add_button.setText("Додати горизонтальний ролер")
-            add_button.clicked.connect(lambda: self._new_roller("horizontal"))
-            self.layout.addWidget(add_button)
+            self.vertical_roller_layout.addWidget(self.vroller_add_button)
+
+        if self.hroller_settings_view:
+            self.horizontal_roller_layout.addWidget(self.hroller_settings_view.frame)
+        else:
+            self.horizontal_roller_layout.addWidget(self.hroller_add_button)
 
     def get_settings(self):
         settings = {}

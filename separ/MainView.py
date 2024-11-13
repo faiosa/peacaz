@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import pyqtSlot, QDir, Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox, qApp, QAction, \
-    QDialog
+    QDialog, QLabel
 
 from separ.control import Manager
 from separ.qt5_control_view import ManagerView
@@ -70,6 +70,11 @@ class MainRollerView(QMainWindow):
         dlg_layout = QVBoxLayout(dlg)
         dlg.setLayout(dlg_layout)
         dlg_layout.addWidget(settings_view)
+
+        elabel = QLabel(dlg)
+        elabel.setText("OLEH help me with this")
+        dlg_layout.addWidget(elabel)
+
         dlg.setWindowModality(Qt.ApplicationModal)
         dlg.exec_()
 
