@@ -4,10 +4,12 @@ import os
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import pyqtSlot, QDir, Qt
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox, qApp, QAction
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox, qApp, QAction, \
+    QDialog
 
 from separ.control import Manager
 from separ.qt5_control_view import ManagerView
+from separ.settings.dialog import TotalSettings
 from urh import settings
 from urh.controller.CompareFrameController import CompareFrameController
 from urh.controller.MainController import MainController
@@ -61,9 +63,15 @@ class MainRollerView(QMainWindow):
         self.roller_manager_view = ManagerView(self.roller_manager, self.left_top_frame)
 
     def open_settings_window(self):
-        print("Opening the settings \n")
-        # Open the settings window
-        #SettingsWindow(self.frame, self.manager.controller_values, self.manager)
+        dlg = QDialog()
+        dlg.setWindowTitle("Налаштування")
+        settings = load_settings_from_file(SEPAR_SETTINGS_FILE)
+        settings_view = TotalSettings(dlg, settings)
+        dlg_layout = QVBoxLayout(dlg)
+        dlg.setLayout(dlg_layout)
+        dlg_layout.addWidget(settings_view)
+        dlg.setWindowModality(Qt.ApplicationModal)
+        dlg.exec_()
 
 class WithUrhView(MainRollerView):
     def __init__(self, *args):

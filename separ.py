@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QPushButton, QMainWindow
 import sys
 
 from separ.MainView import MainRollerView, WithUrhView
-from utils.position_window import position_window_at_centre
+from utils.position_window import position_window
 from utils.path import resource_path
 from utils.palette import getPalette
 from config import ui
@@ -21,7 +21,7 @@ def main():
 
     main_window.setWindowTitle("PTZ Controller")
 
-    main_window.setGeometry(*position_window_at_centre(app, window_width=825, window_height=730))
+    main_window.setGeometry(*position_window(app, window_width=825, window_height=730))
 
     main_window.setPalette(getPalette())
 
