@@ -1,3 +1,5 @@
+from PyQt5 import QtCore
+from PyQt5.QtCore import QLocale
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
 from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QFrame, QVBoxLayout, QPushButton, QComboBox, \
     QGroupBox
@@ -6,10 +8,6 @@ from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QFrame, Q
 class DictionarySettings:
     def __init__(self, frame, labels, json_settings, policies):
         self.frame = frame
-        self.frame.setObjectName("ds")
-        #self.group_box = QGroupBox("some name")
-        #self.frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
-        #self.frame.setStyleSheet("#ds {border: 2px solid black;}")
         self.frame.setStyleSheet('''
             QGroupBox {
                 background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
@@ -99,7 +97,12 @@ class DoubleItem(InputItem):
 class StrItem(InputItem):
     def __init__(self, parent_frame, value, enabled = True):
         super().__init__(QLineEdit(parent_frame))
-        self.widget.setValidator(QDoubleValidator())
+        validator = QDoubleValidator(0.1,9990,2)
+        locale = QtCore.QLocale(QLocale.English, QLocale.UnitedStates)
+        #locale.setNumberOptions(QLocale.RejectGroupSeparator)
+        validator.setLocale(locale)
+        validator.setNotation(QDoubleValidator.StandardNotation)
+        self.widget.setValidator(validator)
         self.widget.setText(value)
         self.widget.setEnabled(enabled)
 

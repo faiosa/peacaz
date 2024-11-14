@@ -1,13 +1,15 @@
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QTabWidget, QGroupBox
+import json
+import os
+
+from PyQt5.QtWidgets import QFrame, QVBoxLayout, QTabWidget, QGroupBox, QHBoxLayout, QGridLayout, QPushButton
 
 from separ.settings.dictionary import ControllerSettings, SettingsComposer, DictionarySettings
+from utils.settings import SEPAR_SETTINGS_FILE
 
 
 class TotalSettings(SettingsComposer):
     def __init__(self, parent_frame, json_settings):
         super().__init__(parent_frame, json_settings)
-        #self.layout = QVBoxLayout(self)
-        #self.setLayout(self.layout)
         self.global_labels = {
             "theme": "Тема інтерфейсу",
             "language": "Мова інтерфейсу"
@@ -20,14 +22,41 @@ class TotalSettings(SettingsComposer):
         self.controllers_settings = {}
         for num, c_settings in self.settings["controller_values"].items():
             self.controllers_settings[num] = ControllerSettings(self, c_settings)
-        self.pack_layout()
 
-    def pack_layout(self):
-        self.layout.addWidget(self.global_settings_view.frame)
+
+        top_frame = QFrame(self)
+        top_layout = QGridLayout(top_frame)
+        top_frame.setLayout(top_layout)
+        self.layout.addWidget(top_frame)
+
+        top_layout.addWidget(self.global_settings_view.frame, 0, 0, 5, 1)
+
+        save_button = QPushButton("Зберегти зміни", self)
+        save_button.clicked.connect(lambda: self.__write_settings_to_file(os.path.join("config", "separ_settings_test.json")))
+        top_layout.addWidget(save_button, 1, 2)
+
         self.controller_tabs = QTabWidget(self)
         for c_setting in self.controllers_settings.values():
             self.controller_tabs.addTab(c_setting, c_setting.settings["name"])
         self.layout.addWidget(self.controller_tabs)
 
-    #def paintEvent(self, event):
-        #print("painting TotalSettings...")
+    def __write_settings_to_file(self, file_name):
+        self.save_settings()
+        with open(os.path.abspath(file_name), "w", encoding="utf-8") as file:
+            json.dump(self.settings, file, indent=4, ensure_ascii=False)
+
+
+    def get_settings(self):
+        settings = {}
+        settings["global_settings"] = self.global_settings_view.get_settings()
+        if len(self.controllers_settings) > 0:
+            settings["controller_values"] = {}
+            num = 1
+            for cs in self.controllers_settings.values():
+                settings[str(num)] = cs.get_settings()
+                num += 1
+        return settings
+
+    def save_settings(self):
+        self.settings = self.get_settings()
+
