@@ -1,24 +1,42 @@
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
-from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QFrame, QVBoxLayout, QPushButton, QComboBox
+from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QFrame, QVBoxLayout, QPushButton, QComboBox, \
+    QGroupBox
 
 
 class DictionarySettings:
     def __init__(self, frame, labels, json_settings, policies):
         self.frame = frame
+        self.frame.setObjectName("ds")
+        #self.group_box = QGroupBox("some name")
+        #self.frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+        #self.frame.setStyleSheet("#ds {border: 2px solid black;}")
+        self.frame.setStyleSheet('''
+            QGroupBox {
+                background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                  stop: 0 #E0E0E0, stop: 1 #FFFFFF);
+                border: 2px solid #999999;
+                border-radius: 5px;
+                margin-top: 1ex;  /*leave space at the top for the title */
+                font-size: 13px;
+                color: black;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top left;    /* position at the top center */
+                padding: 0 3px;
+                font-size: 13px;
+                color: black;
+            }
+        ''')
         self.input_fields = {}
         self.settings = json_settings
-        layout = QGridLayout(frame)
+        self.layout = QGridLayout(frame)
         row = 0
-        if "header" in labels:
-            header_label = QLabel(frame)
-            header_label.setText(labels["header"])
-            layout.addItem(header_label, row, 0, 1, 2)
-            row += 1
 
         for key, value in json_settings.items():
             label = QLabel(frame)
             label.setText(labels.get(key) if key in labels else key)
-            layout.addWidget(label, row, 0)
+            self.layout.addWidget(label, row, 0)
 
             policy = policies[key] if key in policies else "str"
             if policy == "immutable":
@@ -34,10 +52,14 @@ class DictionarySettings:
             else:
                 self.input_fields[key] = StrItem(frame, value)
 
-            layout.addWidget(self.input_fields[key].widget, row, 1)
+            self.layout.addWidget(self.input_fields[key].widget, row, 1)
             row += 1
 
-        self.frame.setLayout(layout)
+        self.frame.setLayout(self.layout)
+
+    def add_bottom_widget(self, widget):
+        self.layout.addWidget(widget, len(self.settings), 0, 1, 2)
+
 
     def get_settings(self):
         settings = {}
@@ -151,48 +173,22 @@ class ControllerSettings(SettingsComposer):
             "max_angle": "double",
             "current_angle": "double"
         }
-        self.controller_settings_view = self.get_dictionary_settings(QFrame(self), self.controller_labels, self.controller_policies)
-        self.switchboard_settings_view = self.get_dictionary_settings(QFrame(self), self.switchboard_labels, self.switchboard_policies)
+        self.controller_settings_view = self.get_dictionary_settings(QGroupBox("general"), self.controller_labels, self.controller_policies)
+        self.switchboard_settings_view = self.get_dictionary_settings(QGroupBox("switchboard"), self.switchboard_labels, self.switchboard_policies)
 
         self.vroller_settings_view = None
         self.hroller_settings_view = None
 
-        self.vroller_add_button = QPushButton()
-        self.vroller_add_button.setText("Додати вертикальний ролер")
-        self.vroller_add_button.clicked.connect(lambda: self._new_roller("vertical"))
-
-        self.hroller_add_button = QPushButton()
-        self.hroller_add_button.setText("Додати горизонтальний ролер")
-        self.hroller_add_button.clicked.connect(lambda: self._new_roller("horizontal"))
+        self.vroller_add_button = None
+        self.hroller_add_button = None
 
         if "rollers" in self.settings:
             for roller in self.settings["rollers"]:
                 if roller["type"] == "vertical":
-                    self.vroller_settings_view = DictionarySettings(QFrame(self), self.roller_labels, roller, self.roller_policies)
+                    self.vroller_settings_view = self.__create_roller(roller)
                 elif roller["type"] == "horizontal":
-                    self.hroller_settings_view = DictionarySettings(QFrame(self), self.roller_labels, roller, self.roller_policies)
-        self.pack_layout()
+                    self.hroller_settings_view = self.__create_roller(roller)
 
-    def _new_roller(self, roller_type):
-        roller_settings = {
-            "type": roller_type,
-            "rotation_speed": 0.0,
-            "min_angle": 0.0,
-            "max_angle": 0.0,
-            "current_angle": 0.0
-        }
-        if roller_type == "vertical":
-            self.vroller_settings_view = DictionarySettings(QFrame(self), self.roller_labels, roller_settings, self.roller_policies)
-            self.vertical_roller_layout.removeWidget(self.vroller_add_button)
-            self.vroller_add_button.deleteLater()
-            self.vertical_roller_layout.addWidget(self.vroller_settings_view.frame)
-        else:
-            self.hroller_settings_view = DictionarySettings(QFrame(self), self.roller_labels, roller_settings, self.roller_policies)
-            self.horizontal_roller_layout.removeWidget(self.hroller_add_button)
-            self.hroller_add_button.deleteLater()
-            self.horizontal_roller_layout.addWidget(self.hroller_settings_view.frame)
-
-    def pack_layout(self):
         self.layout.addWidget(self.controller_settings_view.frame)
         self.layout.addWidget(self.switchboard_settings_view.frame)
 
@@ -209,12 +205,63 @@ class ControllerSettings(SettingsComposer):
         if self.vroller_settings_view:
             self.vertical_roller_layout.addWidget(self.vroller_settings_view.frame)
         else:
+            self.vroller_add_button = QPushButton()
+            self.vroller_add_button.setText("Додати вертикальний ролер")
+            self.vroller_add_button.clicked.connect(lambda: self._new_roller("vertical"))
             self.vertical_roller_layout.addWidget(self.vroller_add_button)
 
         if self.hroller_settings_view:
             self.horizontal_roller_layout.addWidget(self.hroller_settings_view.frame)
         else:
+            self.hroller_add_button = QPushButton()
+            self.hroller_add_button.setText("Додати горизонтальний ролер")
+            self.hroller_add_button.clicked.connect(lambda: self._new_roller("horizontal"))
             self.horizontal_roller_layout.addWidget(self.hroller_add_button)
+
+    def _new_roller(self, roller_type):
+        roller_settings = {
+            "type": roller_type,
+            "rotation_speed": 0.0,
+            "min_angle": 0.0,
+            "max_angle": 0.0,
+            "current_angle": 0.0
+        }
+        if roller_type == "vertical":
+            self.vroller_settings_view = self.__create_roller(roller_settings)
+            self.vertical_roller_layout.removeWidget(self.vroller_add_button)
+            self.vroller_add_button.deleteLater()
+            self.vertical_roller_layout.addWidget(self.vroller_settings_view.frame)
+            self.vroller_add_button = None
+        else:
+            self.hroller_settings_view = self.__create_roller(roller_settings)
+            self.horizontal_roller_layout.removeWidget(self.hroller_add_button)
+            self.hroller_add_button.deleteLater()
+            self.horizontal_roller_layout.addWidget(self.hroller_settings_view.frame)
+            self.hroller_add_button = None
+
+    def __create_roller(self, roller_settings):
+        settings_view = DictionarySettings(QGroupBox(f"{roller_settings['type']} roller"), self.roller_labels, roller_settings, self.roller_policies)
+        del_button = QPushButton("Видалити", self)
+        del_button.clicked.connect(lambda: self.__remove_roller(settings_view))
+        settings_view.add_bottom_widget(del_button)
+        return settings_view
+
+    def __remove_roller(self, roller_view):
+        target_layout = self.vertical_roller_layout if roller_view.settings['type'] == "vertical" else self.horizontal_roller_layout
+        target_layout.removeWidget(roller_view.frame)
+        roller_view.frame.deleteLater()
+        if roller_view.settings['type'] == "vertical":
+            self.vroller_add_button = QPushButton()
+            self.vroller_add_button.setText("Додати вертикальний ролер")
+            self.vroller_add_button.clicked.connect(lambda: self._new_roller("vertical"))
+            target_layout.addWidget(self.vroller_add_button)
+            self.vroller_settings_view = None
+        else:
+            self.hroller_add_button = QPushButton()
+            self.hroller_add_button.setText("Додати горизонтальний ролер")
+            self.hroller_add_button.clicked.connect(lambda: self._new_roller("horizontal"))
+            target_layout.addWidget(self.hroller_add_button)
+            self.hroller_settings_view = None
 
     def get_settings(self):
         settings = {}

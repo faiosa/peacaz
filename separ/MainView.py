@@ -71,9 +71,9 @@ class MainRollerView(QMainWindow):
         dlg.setLayout(dlg_layout)
         dlg_layout.addWidget(settings_view)
 
-        elabel = QLabel(dlg)
-        elabel.setText("OLEH help me with this")
-        dlg_layout.addWidget(elabel)
+        #elabel = QLabel(dlg)
+        #elabel.setText("OLEH help me with this")
+        #dlg_layout.addWidget(elabel)
 
         dlg.setWindowModality(Qt.ApplicationModal)
         dlg.exec_()

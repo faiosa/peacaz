@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QTabWidget
+from PyQt5.QtWidgets import QFrame, QVBoxLayout, QTabWidget, QGroupBox
 
-from separ.settings.dictionary import ControllerSettings, SettingsComposer
+from separ.settings.dictionary import ControllerSettings, SettingsComposer, DictionarySettings
 
 
 class TotalSettings(SettingsComposer):
@@ -16,7 +16,7 @@ class TotalSettings(SettingsComposer):
             "theme": ["Світла", "Темна"],
             "language": ["Українська", "English"]
         }
-        self.global_settings_view = self.get_dictionary_settings(QFrame(self), self.global_labels, self.global_policies)
+        self.global_settings_view = DictionarySettings(QGroupBox("global settings"), self.global_labels, self.settings["global_settings"], self.global_policies)
         self.controllers_settings = {}
         for num, c_settings in self.settings["controller_values"].items():
             self.controllers_settings[num] = ControllerSettings(self, c_settings)
