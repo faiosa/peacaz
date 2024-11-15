@@ -25,9 +25,10 @@ from utils.settings import load_settings_from_file, SEPAR_SETTINGS_FILE
 
 
 class MainRollerView(QMainWindow):
-    def __init__(self, *args):
+    def __init__(self, settings,  *args):
         super().__init__(*args)
 
+        self.settings = settings
         window = QWidget(self)
         self.setCentralWidget(window)
 
@@ -58,8 +59,7 @@ class MainRollerView(QMainWindow):
 
 
     def _set_ui(self):
-        json_settings = load_settings_from_file(SEPAR_SETTINGS_FILE)
-        self.roller_manager = Manager(json_settings)
+        self.roller_manager = Manager(self.settings)
         self.roller_manager_view = ManagerView(self.roller_manager, self.left_top_frame)
 
     def open_settings_window(self):
@@ -71,16 +71,12 @@ class MainRollerView(QMainWindow):
         dlg.setLayout(dlg_layout)
         dlg_layout.addWidget(settings_view)
 
-        #elabel = QLabel(dlg)
-        #elabel.setText("OLEH help me with this")
-        #dlg_layout.addWidget(elabel)
-
         dlg.setWindowModality(Qt.ApplicationModal)
         dlg.exec_()
 
 class WithUrhView(MainRollerView):
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, settings, *args):
+        super().__init__(settings, *args)
         self.urh_controller = MainController()
         self.left_layout.addWidget(self.urh_controller)
         self.setMenuBar(self.urh_controller.ui.menubar)

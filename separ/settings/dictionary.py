@@ -1,6 +1,6 @@
 from PyQt5 import QtCore
-from PyQt5.QtCore import QLocale
-from PyQt5.QtGui import QIntValidator, QDoubleValidator
+from PyQt5.QtCore import QLocale, QRegExp
+from PyQt5.QtGui import QIntValidator, QDoubleValidator, QRegExpValidator
 from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QFrame, QVBoxLayout, QPushButton, QComboBox, \
     QGroupBox
 
@@ -31,10 +31,11 @@ class DictionarySettings:
         self.layout = QGridLayout(frame)
         row = 0
 
-        for key, value in json_settings.items():
+        for key in labels:
             label = QLabel(frame)
             label.setText(labels.get(key) if key in labels else key)
             self.layout.addWidget(label, row, 0)
+            value = self.settings[key] if key in self.settings else None
 
             policy = policies[key] if key in policies else "str"
             if policy == "immutable":
@@ -45,6 +46,8 @@ class DictionarySettings:
                 self.input_fields[key] = DoubleItem(frame, value)
             elif policy == "bool":
                 self.input_fields[key] = BoolItem(frame, value)
+            elif policy == "pins":
+                self.input_fields[key] = PinListItem(frame, value)
             elif type(policy) is list:
                 self.input_fields[key] = ComboItem(frame, policy, value)
             else:
@@ -88,7 +91,10 @@ class IntItem(InputItem):
 class DoubleItem(InputItem):
     def __init__(self, parent_frame, value):
         super().__init__(QLineEdit(parent_frame))
-        self.widget.setValidator(QDoubleValidator())
+        validator = QDoubleValidator()
+        locale = QtCore.QLocale(QLocale.English, QLocale.UnitedStates)
+        validator.setLocale(locale)
+        self.widget.setValidator(validator)
         self.widget.setText(str(value))
 
     def value(self):
@@ -97,22 +103,28 @@ class DoubleItem(InputItem):
 class StrItem(InputItem):
     def __init__(self, parent_frame, value, enabled = True):
         super().__init__(QLineEdit(parent_frame))
-        validator = QDoubleValidator(0.1,9990,2)
-        locale = QtCore.QLocale(QLocale.English, QLocale.UnitedStates)
-        #locale.setNumberOptions(QLocale.RejectGroupSeparator)
-        validator.setLocale(locale)
-        validator.setNotation(QDoubleValidator.StandardNotation)
-        self.widget.setValidator(validator)
+
+        #regex = QRegExp("[0-9]+.?[0-9]{,2}")
+        #validator = QRegExpValidator(regex, self.widget)
+        #self.widget.setValidator(validator)
         self.widget.setText(value)
         self.widget.setEnabled(enabled)
 
     def value(self):
         return str(self.widget.text())
 
+class PinListItem(StrItem):
+    def __init__(self, parent_frame, value):
+        super().__init__(parent_frame, value)
+        regex = QRegExp("[0-9]{1,3}([ ]*,[ ]*[0-9]{1,3})*")
+        validator = QRegExpValidator(regex, self.widget)
+        self.widget.setValidator(validator)
+
+
 class BoolItem(InputItem):
     def __init__(self, parent_frame, value):
         super().__init__(QCheckBox(parent_frame))
-        self.widget.setChecked(value)
+        self.widget.setChecked(bool(value))
 
     def value(self):
         return self.widget.isChecked()
@@ -152,7 +164,8 @@ class ControllerSettings(SettingsComposer):
             "full_controller": "Повний контроль"
         }
         self.switchboard_policies = {
-            "full_controller": "bool"
+            "full_controller": "bool",
+            "switchboard_pins": "pins"
         }
         self.controller_labels = {
             "name": "Назва контроллера",

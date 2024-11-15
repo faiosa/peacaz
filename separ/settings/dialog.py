@@ -12,11 +12,13 @@ class TotalSettings(SettingsComposer):
         super().__init__(parent_frame, json_settings)
         self.global_labels = {
             "theme": "Тема інтерфейсу",
-            "language": "Мова інтерфейсу"
+            "language": "Мова інтерфейсу",
+            "urh": "Enabble Radio Hacker"
         }
         self.global_policies = {
             "theme": ["Світла", "Темна"],
-            "language": ["Українська", "English"]
+            "language": ["Українська", "English"],
+            "urh": "bool"
         }
         self.global_settings_view = DictionarySettings(QGroupBox("global settings"), self.global_labels, self.settings["global_settings"], self.global_policies)
         self.controllers_settings = {}
@@ -32,7 +34,7 @@ class TotalSettings(SettingsComposer):
         top_layout.addWidget(self.global_settings_view.frame, 0, 0, 5, 1)
 
         save_button = QPushButton("Зберегти зміни", self)
-        save_button.clicked.connect(lambda: self.__write_settings_to_file(os.path.join("config", "separ_settings_test.json")))
+        save_button.clicked.connect(lambda: self.__write_settings_to_file(SEPAR_SETTINGS_FILE))
         top_layout.addWidget(save_button, 1, 2)
 
         self.controller_tabs = QTabWidget(self)
@@ -53,7 +55,7 @@ class TotalSettings(SettingsComposer):
             settings["controller_values"] = {}
             num = 1
             for cs in self.controllers_settings.values():
-                settings[str(num)] = cs.get_settings()
+                settings["controller_values"][str(num)] = cs.get_settings()
                 num += 1
         return settings
 
