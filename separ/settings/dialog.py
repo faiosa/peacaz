@@ -14,7 +14,7 @@ class TotalSettings(SettingsComposer):
         self.global_labels = {
             "theme": "Тема інтерфейсу",
             "language": "Мова інтерфейсу",
-            "urh": "Enabble Radio Hacker"
+            "urh": "Enable Radio Hacker"
         }
         self.global_policies = {
             "theme": ["Світла", "Темна"],
@@ -22,9 +22,6 @@ class TotalSettings(SettingsComposer):
             "urh": "bool"
         }
         self.global_settings_view = DictionarySettings(QGroupBox("global settings"), self.global_labels, self.settings["global_settings"], self.global_policies)
-        self.controllers_settings = []
-        for num, c_settings in self.settings["controller_values"].items():
-            self.controllers_settings.append(ControllerSettings(self, c_settings))
 
 
         top_frame = QFrame(self)
@@ -38,22 +35,33 @@ class TotalSettings(SettingsComposer):
         save_button.clicked.connect(lambda: self.__write_settings_to_file(SEPAR_SETTINGS_FILE))
         top_layout.addWidget(save_button, 1, 2)
 
+        add_controller_button = QPushButton("Додати контролер", self)
+        add_controller_button.clicked.connect(lambda: self.__add_settings_controller({}))
+        top_layout.addWidget(add_controller_button, 3, 2)
+
         self.controller_tabs = QTabWidget(self)
-        right_side = self.controller_tabs.tabBar().RightSide
-        index = 0
-        for c_setting in self.controllers_settings:
-            #print(f"type of c_settings is {type(c_setting)}")
-            self.controller_tabs.addTab(c_setting, c_setting.settings["name"])
-            del_button = QPushButton()
-            del_button.setIcon(self.style().standardIcon(getattr(QStyle, "SP_BrowserStop")))
-            del_button.clicked.connect((lambda cs=c_setting: lambda: self.__delete_controller(cs))())
-            self.controller_tabs.tabBar().setTabButton(index, right_side, del_button)
-            index += 1
+        self.right_side = self.controller_tabs.tabBar().RightSide
+
+        self.controllers_settings = []
+        for c_settings in self.settings["controller_values"].values():
+            self.__add_settings_controller(c_settings)
 
         self.layout.addWidget(self.controller_tabs)
 
+    def __add_settings_controller(self, settings):
+        index = len(self.controllers_settings)
+        controller = ControllerSettings(self, settings)
+        if not 'name' in controller.settings:
+            controller.settings['name'] = f"Контролер {index + 1}"
+            controller.controller_settings_view.input_fields["name"].widget.setText(controller.settings['name'])
+        self.controllers_settings.append(controller)
+        self.controller_tabs.addTab(controller, controller.settings["name"])
+        del_button = QPushButton()
+        del_button.setIcon(self.style().standardIcon(getattr(QStyle, "SP_BrowserStop")))
+        del_button.clicked.connect((lambda cs=controller: lambda: self.__delete_controller(cs))())
+        self.controller_tabs.tabBar().setTabButton(index, self.right_side, del_button)
+
     def __delete_controller(self, c_settings):
-        #print(f"deleting controller {c_settings.settings['name']}, len={len(self.controllers_settings)}")
         for index in range(len(self.controllers_settings)):
             if c_settings == self.controllers_settings[index]:
                 self.controllers_settings.pop(index)
@@ -64,6 +72,8 @@ class TotalSettings(SettingsComposer):
         self.save_settings()
         with open(os.path.abspath(file_name), "w", encoding="utf-8") as file:
             json.dump(self.settings, file, indent=4, ensure_ascii=False)
+
+
 
 
     def get_settings(self):
@@ -78,4 +88,8 @@ class TotalSettings(SettingsComposer):
         return settings
 
     def save_settings(self):
+        for index in range(len(self.controllers_settings)):
+            self.controllers_settings[index].save_settings()
+            self.controller_tabs.setTabText(index, self.controllers_settings[index].settings['name'])
         self.settings = self.get_settings()
+
