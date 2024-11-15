@@ -1,7 +1,8 @@
 import json
 import os
 
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QTabWidget, QGroupBox, QHBoxLayout, QGridLayout, QPushButton
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QFrame, QVBoxLayout, QTabWidget, QGroupBox, QHBoxLayout, QGridLayout, QPushButton, QStyle
 
 from separ.settings.dictionary import ControllerSettings, SettingsComposer, DictionarySettings
 from utils.settings import SEPAR_SETTINGS_FILE
@@ -21,9 +22,9 @@ class TotalSettings(SettingsComposer):
             "urh": "bool"
         }
         self.global_settings_view = DictionarySettings(QGroupBox("global settings"), self.global_labels, self.settings["global_settings"], self.global_policies)
-        self.controllers_settings = {}
+        self.controllers_settings = []
         for num, c_settings in self.settings["controller_values"].items():
-            self.controllers_settings[num] = ControllerSettings(self, c_settings)
+            self.controllers_settings.append(ControllerSettings(self, c_settings))
 
 
         top_frame = QFrame(self)
@@ -38,9 +39,26 @@ class TotalSettings(SettingsComposer):
         top_layout.addWidget(save_button, 1, 2)
 
         self.controller_tabs = QTabWidget(self)
-        for c_setting in self.controllers_settings.values():
+        right_side = self.controller_tabs.tabBar().RightSide
+        index = 0
+        for c_setting in self.controllers_settings:
+            #print(f"type of c_settings is {type(c_setting)}")
             self.controller_tabs.addTab(c_setting, c_setting.settings["name"])
+            del_button = QPushButton()
+            del_button.setIcon(self.style().standardIcon(getattr(QStyle, "SP_BrowserStop")))
+            del_button.clicked.connect((lambda cs=c_setting: lambda: self.__delete_controller(cs))())
+            self.controller_tabs.tabBar().setTabButton(index, right_side, del_button)
+            index += 1
+
         self.layout.addWidget(self.controller_tabs)
+
+    def __delete_controller(self, c_settings):
+        #print(f"deleting controller {c_settings.settings['name']}, len={len(self.controllers_settings)}")
+        for index in range(len(self.controllers_settings)):
+            if c_settings == self.controllers_settings[index]:
+                self.controllers_settings.pop(index)
+                self.controller_tabs.removeTab(index)
+                return
 
     def __write_settings_to_file(self, file_name):
         self.save_settings()
@@ -54,11 +72,10 @@ class TotalSettings(SettingsComposer):
         if len(self.controllers_settings) > 0:
             settings["controller_values"] = {}
             num = 1
-            for cs in self.controllers_settings.values():
+            for cs in self.controllers_settings:
                 settings["controller_values"][str(num)] = cs.get_settings()
                 num += 1
         return settings
 
     def save_settings(self):
         self.settings = self.get_settings()
-

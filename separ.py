@@ -16,8 +16,8 @@ from separ.qt5_control_view import ManagerView
 def main():
     app = QApplication(sys.argv)
 
-    #main_window = MainRollerView()
-    main_window = WithUrhView()
+    json_settings = load_settings_from_file(SEPAR_SETTINGS_FILE)
+    main_window = WithUrhView(json_settings) if json_settings["global_settings"]["urh"] else MainRollerView(json_settings)
 
     main_window.setWindowTitle("PTZ Controller")
 
