@@ -60,11 +60,12 @@ class MainRollerView(QMainWindow):
 
     def _set_ui(self):
         self.roller_manager = Manager(self.settings)
-        self.roller_manager_view = ManagerView(self.roller_manager, self.left_top_frame)
+        self.roller_manager_view = ManagerView(self.roller_manager, self.left_top_frame, self.settings["global_settings"]["urh"])
 
     def open_settings_window(self):
         dlg = QDialog()
         dlg.setWindowTitle("Налаштування")
+        dlg.setFixedWidth(750)
         settings = load_settings_from_file(SEPAR_SETTINGS_FILE)
         settings_view = TotalSettings(dlg, settings)
         dlg_layout = QVBoxLayout(dlg)

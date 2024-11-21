@@ -8,66 +8,68 @@ from windows.settings import SettingsWindow
 from separ.qt5_roller_view import RollerViewVertical, RollerViewHorizontal
 
 class ManagerView:
-    def __init__(self, manager, frame):
+    def __init__(self, manager, frame, vertical_with_urh = True):
         self.manager = manager
         self.frame = frame
-        layout = QHBoxLayout(self.frame)
 
-        splitter = QSplitter(self.frame)
+        layout = None
 
-        splitter.setStyleSheet(
-            "QSplitter::handle:horizontal {\n"
-            "margin: 4px 0px;\n"
-            "    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, \n"
-            "stop:0 rgba(255, 255, 255, 0), \n"
-            "stop:0.5 rgba(100, 100, 100, 100), \n"
-            "stop:1 rgba(255, 255, 255, 0));\n"
-            "image: url(:/icons/icons/splitter_handle_vertical.svg);\n"
-            "}"
-        )
+        if vertical_with_urh:
+            layout = QHBoxLayout(self.frame)
+            splitter = QSplitter(self.frame)
 
-        splitter.setHandleWidth(6)
-        splitter.setObjectName("splitter")
-        self.controllers_views = []
-        for controller in self.manager.controllers:
-            tab = QFrame(frame)
-            tab.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
-            tab.setLineWidth(4)
-            #tab.setMinimumSize(100,100)
-            #tab.setFixedHeight(300)
-            scroll_area =  QScrollArea()
-            scroll_area.setFixedHeight(300)
-            #scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-            scroll_area.setWidgetResizable(True)
-            scroll_area.setWidget(tab)
-            scroll_area.setVerticalScrollBarPolicy(1)
-            #splitter.addWidget(tab)
-            splitter.addWidget(scroll_area)
-            controller_view = ControllerView(controller, tab)
-            self.controllers_views.append(controller_view)
-        splitter.setSizes([250, 250, 250])
-        layout.addWidget(splitter)
+            splitter.setStyleSheet(
+                "QSplitter::handle:horizontal {\n"
+                "margin: 4px 0px;\n"
+                "    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, \n"
+                "stop:0 rgba(255, 255, 255, 0), \n"
+                "stop:0.5 rgba(100, 100, 100, 100), \n"
+                "stop:1 rgba(255, 255, 255, 0));\n"
+                "image: url(:/icons/icons/splitter_handle_vertical.svg);\n"
+                "}"
+            )
 
-        widget = splitter.widget(0)
-        policy = widget.sizePolicy()
-        policy.setHorizontalStretch(1)
-        widget.setSizePolicy(policy)
-        #self.frame.setGeometry(0, 0, 800, 400)
-        '''
+            splitter.setHandleWidth(6)
+            splitter.setObjectName("splitter")
+            self.controllers_views = []
+            for controller in self.manager.controllers:
+                tab = QFrame(frame)
+                tab.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+                tab.setLineWidth(4)
+                #tab.setMinimumSize(100,100)
+                #tab.setFixedHeight(300)
+                scroll_area =  QScrollArea()
+                scroll_area.setFixedHeight(300)
+                #scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+                scroll_area.setWidgetResizable(True)
+                scroll_area.setWidget(tab)
+                scroll_area.setVerticalScrollBarPolicy(1)
+                #splitter.addWidget(tab)
+                splitter.addWidget(scroll_area)
+                controller_view = ControllerView(controller, tab)
+                self.controllers_views.append(controller_view)
+            splitter.setSizes([250, 250, 250])
+            layout.addWidget(splitter)
 
-        controllers_frame = QWidget(self.frame)
-        layout.addWidget(controllers_frame)
-        controllers_layout = QVBoxLayout()
-        self.controllers_views = []
-        for controller in self.manager.controllers:
-            tab = QFrame(frame)
-            tab.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
-            tab.setLineWidth(4)
-            controllers_layout.addWidget(tab)
-            controller_view = ControllerView(controller, tab)
-            self.controllers_views.append(controller_view)
-        controllers_frame.setLayout(controllers_layout)
-        '''
+            widget = splitter.widget(0)
+            policy = widget.sizePolicy()
+            policy.setHorizontalStretch(1)
+            widget.setSizePolicy(policy)
+        else:
+            layout = QVBoxLayout(self.frame)
+            controllers_frame = QWidget(self.frame)
+            layout.addWidget(controllers_frame)
+            controllers_layout = QVBoxLayout()
+            self.controllers_views = []
+            for controller in self.manager.controllers:
+                tab = QFrame(frame)
+                tab.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+                tab.setLineWidth(4)
+                controllers_layout.addWidget(tab)
+                controller_view = ControllerView(controller, tab)
+                self.controllers_views.append(controller_view)
+            controllers_frame.setLayout(controllers_layout)
+
         self.frame.setLayout(layout)
 
 
