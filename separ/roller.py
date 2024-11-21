@@ -1,6 +1,8 @@
 import time
 
 from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
+from ptz_controller import send_pelco_command
+
 
 class BaseRoller:
     def __init__(self, rotation_speed, min_angle, max_angle, current_angle, serial_port, is_vertical):
