@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QFrame, Q
 class DictionarySettings:
     def __init__(self, frame, labels, json_settings, policies):
         self.frame = frame
+        self.labels = labels
         self.frame.setStyleSheet('''
             QGroupBox {
                 background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
@@ -59,7 +60,7 @@ class DictionarySettings:
         self.frame.setLayout(self.layout)
 
     def add_bottom_widget(self, widget):
-        self.layout.addWidget(widget, len(self.settings), 0, 1, 2)
+        self.layout.addWidget(widget, len(self.labels), 0, 1, 2)
 
 
     def get_settings(self):
@@ -82,7 +83,7 @@ class IntItem(InputItem):
     def __init__(self, parent_frame, value):
         super().__init__(QLineEdit(parent_frame))
         self.widget.setValidator(QIntValidator())
-        self.widget.setText(str(value))
+        self.widget.setText(str(0 if value is None else value))
 
     def value(self):
         return int(self.widget.text())
@@ -95,7 +96,7 @@ class DoubleItem(InputItem):
         locale = QtCore.QLocale(QLocale.English, QLocale.UnitedStates)
         validator.setLocale(locale)
         self.widget.setValidator(validator)
-        self.widget.setText(str(value))
+        self.widget.setText(str(0.0 if value is None else value))
 
     def value(self):
         return float(self.widget.text())
@@ -180,14 +181,18 @@ class ControllerSettings(SettingsComposer):
             "rotation_speed": "Швидкість повертання (градус/с)",
             "min_angle": "Мін кут",
             "max_angle": "Макс кут",
-            "current_angle": "Поточний кут"
+            "current_angle": "Поточний кут",
+            "is_stepper": "кроковий",
+            "steps": "кроків в оберті"
         }
         self.roller_policies = {
             "type": "immutable",
             "rotation_speed": "double",
             "min_angle": "double",
             "max_angle": "double",
-            "current_angle": "double"
+            "current_angle": "double",
+            "is_stepper": "bool",
+            "steps": "int"
         }
         self.controller_settings_view = self.get_dictionary_settings(QGroupBox("general"), self.controller_labels, self.controller_policies)
         self.switchboard_settings_view = self.get_dictionary_settings(QGroupBox("switchboard"), self.switchboard_labels, self.switchboard_policies)

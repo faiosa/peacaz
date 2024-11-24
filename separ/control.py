@@ -1,4 +1,4 @@
-from separ.roller import HorizontalRoller, VerticalRoller
+from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
 import pyboard
 
 class Manager:
@@ -13,22 +13,7 @@ class Controller:
     def __init__(self, json_settings):
         self.name = json_settings.get("name")
         self.settings = json_settings
-        self.rollers = [
-            VerticalRoller(
-                rotation_speed=json.get("rotation_speed"),
-                min_angle=json.get("min_angle"),
-                max_angle=json.get("max_angle"),
-                current_angle=json.get("current_angle"),
-                serial_port=json_settings.get("serial_port")
-            ) if json.get("type") == "vertical" else HorizontalRoller(
-                rotation_speed=json.get("rotation_speed"),
-                min_angle=json.get("min_angle"),
-                max_angle=json.get("max_angle"),
-                current_angle=json.get("current_angle"),
-                serial_port=json_settings.get("serial_port")
-            )
-            for json in json_settings.get("rollers")
-        ]
+        self.rollers = [ self.create_roller(json, json_settings.get("serial_port")) for json in json_settings.get("rollers") ]
         switchboard_pins = [
             pin.strip()
             for pin in self.settings.get("switchboard_pins", "28, 29").split(
@@ -37,6 +22,34 @@ class Controller:
         ]
         switchboard_serial_port = self.settings.get("switchboard_serial_port")
         self.switchboard = FullControlSwitchBoard(switchboard_pins, switchboard_serial_port) if self.settings.get("full_controller") else SimplySwitchBoard(switchboard_pins, switchboard_serial_port)
+
+    def create_roller(self, json, serial_port):
+        is_vertical = json.get("type") == "vertical"
+        if json.get("is_stepper"):
+            return StepperRoller(
+                steps=json.get("steps"),
+                min_angle=json.get("min_angle"),
+                max_angle=json.get("max_angle"),
+                current_angle=json.get("current_angle"),
+                serial_port=serial_port,
+                is_vertical = is_vertical
+            )
+        elif is_vertical:
+            return VerticalRoller(
+                rotation_speed=json.get("rotation_speed"),
+                min_angle=json.get("min_angle"),
+                max_angle=json.get("max_angle"),
+                current_angle=json.get("current_angle"),
+                serial_port=serial_port
+            )
+        else:
+            return HorizontalRoller(
+                rotation_speed=json.get("rotation_speed"),
+                min_angle=json.get("min_angle"),
+                max_angle=json.get("max_angle"),
+                current_angle=json.get("current_angle"),
+                serial_port=serial_port
+            )
 
 class SwitchBoard:
     def __init__(self, pins, switchboard_serial_port, is_full_control):

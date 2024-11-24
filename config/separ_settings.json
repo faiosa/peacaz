@@ -1,29 +1,34 @@
 {
     "global_settings": {
         "theme": "Світла",
-        "language": "Українська"
+        "language": "Українська",
+        "urh": false
     },
     "controller_values": {
         "1": {
             "name": "Маленький контролер",
             "serial_port": "/dev/cu.usbserial-21210",
             "switchboard_pins": "12, 23",
-            "switchboard_serial_port": "",
+            "switchboard_serial_port": "/dev/ttyUSB0",
             "full_controller": false,
             "rollers": [
-                {
-                    "type": "vertical",
-                    "rotation_speed": 2.77,
-                    "min_angle": -50.0,
-                    "max_angle": 50.0,
-                    "current_angle": 20.0
-                },
                 {
                     "type": "horizontal",
                     "rotation_speed": 4.87,
                     "min_angle": 0.0,
                     "max_angle": 359.0,
-                    "current_angle": 0.0
+                    "current_angle": 0.0,
+                    "is_stepper": false,
+                    "steps": 0
+                },
+                {
+                    "type": "vertical",
+                    "rotation_speed": 2.77,
+                    "min_angle": -50.0,
+                    "max_angle": 50.0,
+                    "current_angle": 20.0,
+                    "is_stepper": false,
+                    "steps": 0
                 }
             ]
         },
@@ -35,39 +40,42 @@
             "full_controller": true,
             "rollers": [
                 {
-                    "type": "vertical",
-                    "rotation_speed": 2.77,
-                    "min_angle": -90.0,
-                    "max_angle": 90.0,
-                    "current_angle": -65.5
-                },
-                {
                     "type": "horizontal",
                     "rotation_speed": 16.0,
                     "min_angle": 0.0,
                     "max_angle": 359.0,
-                    "current_angle": 42.0
+                    "current_angle": 42.0,
+                    "is_stepper": false,
+                    "steps": 0
+                },
+                {
+                    "type": "vertical",
+                    "rotation_speed": 2.77,
+                    "min_angle": -90.0,
+                    "max_angle": 90.0,
+                    "current_angle": -65.5,
+                    "is_stepper": false,
+                    "steps": 0
                 }
             ]
-
         },
         "3": {
             "name": "Контролер 3",
-            "serial_port": "",
-            "switchboard_serial_port": "",
-            "full_controller": false,
+            "serial_port": "/dev/ttyUSB0",
+            "switchboard_pins": "23,45",
+            "switchboard_serial_port": "/dev/ttyUSB0",
+            "full_controller": true,
             "rollers": [
                 {
                     "type": "horizontal",
-                    "rotation_speed": 10.0,
+                    "rotation_speed": 20.0,
                     "min_angle": 0.0,
-                    "max_angle": 359.0,
-                    "current_angle": 80.0
+                    "max_angle": 359.9999,
+                    "current_angle": 0.0,
+                    "is_stepper": true,
+                    "steps": 512
                 }
             ]
         }
-    },
-    "switchboard_settings": {
-        "serial_port": "/dev/c1"
     }
 }

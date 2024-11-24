@@ -58,7 +58,7 @@ class BaseRollerView:
         else:
             self.turn_ptz_decrease(desired_angle)
 
-    def check_ptz_increase(self, target_angle=360.0):
+    def check_ptz_increase(self, target_angle):
         self.roller.check_increase_angle(target_angle)
         self.update_roller_view()
         if self.roller.is_moving_increase:
@@ -69,13 +69,13 @@ class BaseRollerView:
         else:
             self.__on_finish_move()
 
-    def turn_ptz_increase(self, target_angle=360.0):
-        self.roller.start_increase_angle()
+    def turn_ptz_increase(self, target_angle):
+        self.roller.start_increase_angle(target_angle)
         if self.roller.is_moving_increase:
             self.__on_start_move()
             self.check_ptz_increase(target_angle)
 
-    def check_ptz_decrease(self, target_angle=-360.0):
+    def check_ptz_decrease(self, target_angle):
         self.roller.check_decrease_angle(target_angle)
         self.update_roller_view()
         if self.roller.is_moving_decrease:
@@ -86,8 +86,8 @@ class BaseRollerView:
         else:
             self.__on_finish_move()
 
-    def turn_ptz_decrease(self, target_angle=-360.0):
-        self.roller.start_decrease_angle()
+    def turn_ptz_decrease(self, target_angle):
+        self.roller.start_decrease_angle(target_angle)
         if self.roller.is_moving_decrease:
             self.__on_start_move()
             self.check_ptz_decrease(target_angle)
@@ -134,12 +134,12 @@ class RollerViewVertical(BaseRollerView):
 
         self.turn_up_button = QPushButton(self.frame)
         self.turn_up_button.setIcon(QIcon("assets/turn_up.png"))
-        self.turn_up_button.clicked.connect(lambda: self.turn_ptz_increase())
+        self.turn_up_button.clicked.connect(lambda: self.turn_ptz_increase(self.roller.max_angle))
         grid.addWidget(self.turn_up_button, 3, 6)
 
         self.turn_down_button = QPushButton(self.frame)
         self.turn_down_button.setIcon(QIcon("assets/turn_down.png"))
-        self.turn_down_button.clicked.connect(lambda: self.turn_ptz_decrease())
+        self.turn_down_button.clicked.connect(lambda: self.turn_ptz_decrease(self.roller.min_angle))
         grid.addWidget(self.turn_down_button, 5, 6)
 
 
@@ -219,12 +219,12 @@ class RollerViewHorizontal(BaseRollerView):
 
         self.turn_left_button = QPushButton(self.frame)
         self.turn_left_button.setIcon(QIcon("assets/turn_left.png"))
-        self.turn_left_button.clicked.connect(lambda: self.turn_ptz_decrease())
+        self.turn_left_button.clicked.connect(lambda: self.turn_ptz_decrease(self.roller.min_angle))
         grid.addWidget(self.turn_left_button, 4, 5)
 
         self.turn_right_button = QPushButton(self.frame)
         self.turn_right_button.setIcon(QIcon("assets/turn_right.png"))
-        self.turn_right_button.clicked.connect(lambda: self.turn_ptz_increase())
+        self.turn_right_button.clicked.connect(lambda: self.turn_ptz_increase(self.roller.max_angle))
         grid.addWidget(self.turn_right_button, 4, 7)
 
     def update_roller_view(self):
