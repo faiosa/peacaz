@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, QLabel, QFrame, QSplitter, QScrollArea, QScrollBar
+from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, QLabel, QFrame, QSplitter, QScrollArea, QScrollBar, \
+    QStyle
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout
 from PyQt5.QtGui import QIcon, QFont, QPalette, QColor
 from PyQt5 import Qt, QtCore
@@ -100,9 +101,11 @@ class ControllerView:
         rollers_layout.addWidget(self.stop_button, 4, 6)
 
         self.restore_button = QPushButton(self.frame)
-        self.restore_button.setText("Відновити початкові значення")
+        self.restore_button.setIcon(self.restore_button.style().standardIcon(getattr(QStyle, "SP_BrowserReload")))
+        #self.restore_button.setText("Відновити початкові значення")
         self.restore_button.clicked.connect(self.__tune_angles)
-        rollers_layout.addWidget(self.restore_button, 8, 4, 1, 4)
+        #rollers_layout.addWidget(self.restore_button, 8, 4, 1, 4)
+        rollers_layout.addWidget(self.restore_button, 0, 6)
 
         switchboard_frame = QFrame(self.frame)
         switchboard_layout = QHBoxLayout()

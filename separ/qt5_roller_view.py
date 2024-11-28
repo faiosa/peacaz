@@ -131,7 +131,7 @@ class RollerViewVertical(BaseRollerView):
         self.slider_frame.setFixedHeight(self.slider_height)
 
         grid.addWidget(self.slider_frame, 0, 2, 8, 1)
-
+        '''
         self.turn_up_button = QPushButton(self.frame)
         self.turn_up_button.setIcon(QIcon("assets/turn_up.png"))
         self.turn_up_button.clicked.connect(lambda: self.turn_ptz_increase(self.roller.max_angle))
@@ -141,12 +141,13 @@ class RollerViewVertical(BaseRollerView):
         self.turn_down_button.setIcon(QIcon("assets/turn_down.png"))
         self.turn_down_button.clicked.connect(lambda: self.turn_ptz_decrease(self.roller.min_angle))
         grid.addWidget(self.turn_down_button, 5, 6)
-
+        '''
 
     def update_roller_view(self):
         super().update_roller_view()
         self.slider_frame.update()
 
+    '''
     def disable_buttons(self):
         super().disable_buttons()
         self.turn_up_button.setEnabled(False)
@@ -156,7 +157,7 @@ class RollerViewVertical(BaseRollerView):
         super().enable_buttons()
         self.turn_up_button.setEnabled(True)
         self.turn_down_button.setEnabled(True)
-
+    '''
 class SliderCanvas(QFrame):
     def __init__(self, widget, roller_view):
         super().__init__(widget)
@@ -216,7 +217,7 @@ class RollerViewHorizontal(BaseRollerView):
         self.canvas_frame.setFixedHeight(self.slider_height)
 
         grid.addWidget(self.canvas_frame, 0, 3, 8, 2)
-
+        '''
         self.turn_left_button = QPushButton(self.frame)
         self.turn_left_button.setIcon(QIcon("assets/turn_left.png"))
         self.turn_left_button.clicked.connect(lambda: self.turn_ptz_decrease(self.roller.min_angle))
@@ -226,12 +227,12 @@ class RollerViewHorizontal(BaseRollerView):
         self.turn_right_button.setIcon(QIcon("assets/turn_right.png"))
         self.turn_right_button.clicked.connect(lambda: self.turn_ptz_increase(self.roller.max_angle))
         grid.addWidget(self.turn_right_button, 4, 7)
-
+        '''
     def update_roller_view(self):
         super().update_roller_view()
         self.canvas_frame.update()
 
-
+    '''
     def disable_buttons(self):
         super().disable_buttons()
         self.turn_right_button.setEnabled(False)
@@ -241,7 +242,7 @@ class RollerViewHorizontal(BaseRollerView):
         super().enable_buttons()
         self.turn_right_button.setEnabled(True)
         self.turn_left_button.setEnabled(True)
-
+    '''
 class ArrowCanvas(QFrame):
     def __init__(self, widget, roller_view):
         super().__init__(widget)

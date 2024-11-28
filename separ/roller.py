@@ -92,7 +92,8 @@ class StepperRoller(BaseRoller):
         self.steps = steps
         self.cur_step = self.angle_to_step(self.current_angle)
         self.trg_step = self.cur_step
-        self.arduino = None#serial.Serial(port=self.serial_port, baudrate=9600)
+        self.arduino = None
+        #self.arduino = serial.Serial(port=self.serial_port, baudrate=9600)
 
     def ensure_arduino(self):
         if self.arduino:
@@ -100,6 +101,7 @@ class StepperRoller(BaseRoller):
         else:
             try:
                 self.arduino = serial.Serial(port=self.serial_port, baudrate=9600)
+                time.sleep(2)#Can't work immediately without a pause (
                 return True
             except SerialException as e:
                 msg = QMessageBox()
