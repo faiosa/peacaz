@@ -93,23 +93,29 @@ class StepperRoller(BaseRoller):
         self.cur_step = self.angle_to_step(self.current_angle)
         self.trg_step = self.cur_step
         self.arduino = None
+        self.ensure_arduino(False)
         #self.arduino = serial.Serial(port=self.serial_port, baudrate=9600)
 
-    def ensure_arduino(self):
+    def ensure_arduino(self, show_message = True):
         if self.arduino:
             return True
         else:
             try:
                 self.arduino = serial.Serial(port=self.serial_port, baudrate=9600)
-                time.sleep(2)#Can't work immediately without a pause (
+                if show_message:
+                    time.sleep(2)#Can't work immediately without a pause (
                 return True
-            except SerialException as e:
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Critical)
-                msg.setText("Не підключено серійний порт контролера")
-                msg.setInformativeText(f"Не вдається підключитись до серійного порта контролера {self.serial_port}. Підключіть девайс або змініть адресу порта в налаштуваннях.")
-                msg.setWindowTitle("Помилка конфігурації")
-                msg.exec_()
+            except SerialException:
+                text = f"Не вдається підключитись до серійного порта контролера {self.serial_port}. Підключіть девайс або змініть адресу порта в налаштуваннях."
+                if show_message:
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Critical)
+                    msg.setText("Не підключено серійний порт контролера")
+                    msg.setInformativeText(text)
+                    msg.setWindowTitle("Помилка конфігурації")
+                    msg.exec_()
+                else:
+                    print(text)
                 return False
 
     def angle_to_step(self, angle):
