@@ -1,5 +1,8 @@
 import time
 
+from PyQt5.QtWidgets import QMessageBox
+from serial.serialutil import SerialException
+
 from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
 from ptz_controller import send_pelco_command
 import serial, time
@@ -89,7 +92,23 @@ class StepperRoller(BaseRoller):
         self.steps = steps
         self.cur_step = self.angle_to_step(self.current_angle)
         self.trg_step = self.cur_step
-        self.arduino = serial.Serial(port=self.serial_port, baudrate=9600)
+        self.arduino = None#serial.Serial(port=self.serial_port, baudrate=9600)
+
+    def ensure_arduino(self):
+        if self.arduino:
+            return True
+        else:
+            try:
+                self.arduino = serial.Serial(port=self.serial_port, baudrate=9600)
+                return True
+            except SerialException as e:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Critical)
+                msg.setText("Не підключено серійний порт контролера")
+                msg.setInformativeText(f"Не вдається підключитись до серійного порта контролера {self.serial_port}. Підключіть девайс або змініть адресу порта в налаштуваннях.")
+                msg.setWindowTitle("Помилка конфігурації")
+                msg.exec_()
+                return False
 
     def angle_to_step(self, angle):
         return int(angle * self.steps / 360)
@@ -121,7 +140,7 @@ class StepperRoller(BaseRoller):
 
 
     def start_increase_angle(self, dst_angle):
-        if not (self.is_moving_increase or self.is_moving_decrease):
+        if self.ensure_arduino() and not (self.is_moving_increase or self.is_moving_decrease):
             self.is_moving_increase = True
             self.trg_step = self.angle_to_step(dst_angle)
             self.send_move_command(self.trg_step)
@@ -147,7 +166,7 @@ class StepperRoller(BaseRoller):
             self.is_moving_increase = False
 
     def start_decrease_angle(self, trg_angle):
-        if not (self.is_moving_increase or self.is_moving_decrease):
+        if self.ensure_arduino() and not (self.is_moving_increase or self.is_moving_decrease):
             self.is_moving_decrease = True
             self.trg_step = self.angle_to_step(trg_angle)
             self.send_move_command(self.trg_step)
