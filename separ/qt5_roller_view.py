@@ -289,7 +289,7 @@ class ArrowCanvas(QFrame):
             madjusted_angle_rad = math.radians(self.roller_view.roller.current_angle - 90)  # Adjust angle to make 0 at the top
             mx = mcenter_x + marrow_length * math.cos(madjusted_angle_rad)
             my = mcenter_y + marrow_length * math.sin(madjusted_angle_rad)
-            #mqp.drawLine(mcenter_x, mcenter_y, mx, my)
+            mqp.drawLine(mcenter_x, mcenter_y, mx, my)
             def draw_arrow(fx, fy, angle_diff, len_diff):
                 angle_1 = madjusted_angle_rad + math.radians(angle_diff) + math.pi
                 x_1 = fx + len_diff * math.cos(angle_1)
@@ -300,10 +300,10 @@ class ArrowCanvas(QFrame):
                 polygon = QPolygonF()
                 polygon.append(QPointF(fx, fy))
                 polygon.append(QPointF(x_1, y_1))
-                polygon.append(QPointF(mcenter_x, mcenter_y))
+                #polygon.append(QPointF(mcenter_x, mcenter_y))
                 polygon.append(QPointF(x_2, y_2))
                 mqp.drawPolygon(polygon)
-            draw_arrow(mx, my, 5, 105 * marrow_length // 100)
+            draw_arrow(mx, my, 25, 10 * marrow_length // 100)
             mqp.end()
 
         qp = QPainter()
@@ -320,13 +320,14 @@ class ArrowCanvas(QFrame):
             x = center_x + radius * math.cos(math.radians(adjusted_angle))
             y = center_y + radius * math.sin(math.radians(adjusted_angle))
             qp.drawEllipse(x, y, 3, 3)
-            text = QStaticText(str(angle))
-            tsize = text.size()
-            tx = center_x + (radius + 2 + tsize.width() / 2) * math.cos(math.radians(adjusted_angle))
-            ty = center_y + (radius + 2 + tsize.height()/ 2) * math.sin(math.radians(adjusted_angle))
+            if angle % 30 == 0:
+                text = QStaticText(str(angle))
+                tsize = text.size()
+                tx = center_x + (radius + 2 + tsize.width() / 2) * math.cos(math.radians(adjusted_angle))
+                ty = center_y + (radius + 2 + tsize.height()/ 2) * math.sin(math.radians(adjusted_angle))
 
-            #qp.drawEllipse(tx, ty, 3, 3)
-            qp.drawStaticText(tx - tsize.width() / 2, ty - tsize.height() / 2, text)
+                #qp.drawEllipse(tx, ty, 3, 3)
+                qp.drawStaticText(tx - tsize.width() / 2, ty - tsize.height() / 2, text)
         qp.end()
         draw_direction()
 
