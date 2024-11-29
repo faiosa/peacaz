@@ -25,7 +25,7 @@ class Controller:
 
     def create_roller(self, json, serial_port):
         is_vertical = json.get("type") == "vertical"
-        if json.get("is_stepper"):
+        if json.get("engine") == "stepper":
             return StepperRoller(
                 steps=json.get("steps"),
                 min_angle=json.get("min_angle"),

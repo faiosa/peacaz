@@ -108,7 +108,7 @@ class StrItem(InputItem):
         #regex = QRegExp("[0-9]+.?[0-9]{,2}")
         #validator = QRegExpValidator(regex, self.widget)
         #self.widget.setValidator(validator)
-        self.widget.setText(value)
+        self.widget.setText(str(value))
         self.widget.setEnabled(enabled)
 
     def value(self):
@@ -176,24 +176,39 @@ class ControllerSettings(SettingsComposer):
             "name": "str",
             "serial_port": "str"
         }
-        self.roller_labels = {
+        roller_labels = {
             "type": "тип ролера",
-            "rotation_speed": "Швидкість повертання (градус/с)",
+            "engine": "тип двигуна",
             "min_angle": "Мін кут",
             "max_angle": "Макс кут",
-            "current_angle": "Поточний кут",
-            "is_stepper": "кроковий",
-            "steps": "кроків в оберті"
+            "current_angle": "Поточний кут"
         }
-        self.roller_policies = {
+        roller_policies = {
             "type": "immutable",
-            "rotation_speed": "double",
+            "engine": "immutable",
             "min_angle": "double",
             "max_angle": "double",
-            "current_angle": "double",
-            "is_stepper": "bool",
-            "steps": "int"
+            "current_angle": "double"
         }
+        self.line_roller_labels = {
+            "rotation_speed": "Швидкість повертання (градус/с)"
+        }
+        self.line_roller_labels.update(roller_labels)
+        self.line_roller_policies = {
+            "rotation_speed": "double",
+        }
+        self.line_roller_policies.update(roller_policies)
+        self.stepper_roller_labels = {
+            "steps": "кроків в повному оберті",
+            "step_delay": "затримка кроку (мілісекунди)"
+        }
+        self.stepper_roller_labels.update(roller_labels)
+        self.stepper_roller_policies = {
+            "steps": "int",
+            "step_delay": "immutable"
+        }
+        self.stepper_roller_policies.update(roller_policies)
+
         self.controller_settings_view = self.get_dictionary_settings(QGroupBox("general"), self.controller_labels, self.controller_policies)
         self.switchboard_settings_view = self.get_dictionary_settings(QGroupBox("switchboard"), self.switchboard_labels, self.switchboard_policies)
 
@@ -213,32 +228,33 @@ class ControllerSettings(SettingsComposer):
         self.layout.addWidget(self.controller_settings_view.frame)
         self.layout.addWidget(self.switchboard_settings_view.frame)
 
-        vertical_roller_frame = QFrame(self)
-        self.vertical_roller_layout = QVBoxLayout(vertical_roller_frame)
-        vertical_roller_frame.setLayout(self.vertical_roller_layout)
-        self.layout.addWidget(vertical_roller_frame)
-
-        horizontal_roller_frame = QFrame(self)
-        self.horizontal_roller_layout = QVBoxLayout(horizontal_roller_frame)
-        horizontal_roller_frame.setLayout(self.horizontal_roller_layout)
-        self.layout.addWidget(horizontal_roller_frame)
-
         if self.vroller_settings_view:
+            vertical_roller_frame = QFrame(self)
+            self.vertical_roller_layout = QVBoxLayout(vertical_roller_frame)
+            vertical_roller_frame.setLayout(self.vertical_roller_layout)
+            self.layout.addWidget(vertical_roller_frame)
             self.vertical_roller_layout.addWidget(self.vroller_settings_view.frame)
+        '''
         else:
             self.vroller_add_button = QPushButton()
             self.vroller_add_button.setText("Додати вертикальний ролер")
             self.vroller_add_button.clicked.connect(lambda: self._new_roller("vertical"))
             self.vertical_roller_layout.addWidget(self.vroller_add_button)
-
+        '''
         if self.hroller_settings_view:
+            horizontal_roller_frame = QFrame(self)
+            self.horizontal_roller_layout = QVBoxLayout(horizontal_roller_frame)
+            horizontal_roller_frame.setLayout(self.horizontal_roller_layout)
+            self.layout.addWidget(horizontal_roller_frame)
             self.horizontal_roller_layout.addWidget(self.hroller_settings_view.frame)
+        '''
         else:
             self.hroller_add_button = QPushButton()
             self.hroller_add_button.setText("Додати горизонтальний ролер")
             self.hroller_add_button.clicked.connect(lambda: self._new_roller("horizontal"))
             self.horizontal_roller_layout.addWidget(self.hroller_add_button)
-
+        '''
+    '''
     def _new_roller(self, roller_type):
         roller_settings = {
             "type": roller_type,
@@ -259,14 +275,17 @@ class ControllerSettings(SettingsComposer):
             self.hroller_add_button.deleteLater()
             self.horizontal_roller_layout.addWidget(self.hroller_settings_view.frame)
             self.hroller_add_button = None
-
+    '''
     def __create_roller(self, roller_settings):
-        settings_view = DictionarySettings(QGroupBox(f"{roller_settings['type']} roller"), self.roller_labels, roller_settings, self.roller_policies)
-        del_button = QPushButton("Видалити", self)
-        del_button.clicked.connect(lambda: self.__remove_roller(settings_view))
-        settings_view.add_bottom_widget(del_button)
+        labels = self.stepper_roller_labels if roller_settings["engine"] == "stepper" else self.line_roller_labels
+        policies = self.stepper_roller_policies if roller_settings["engine"] == "stepper" else self.line_roller_policies
+        settings_view = DictionarySettings(QGroupBox(f"{roller_settings['type']} roller"), labels, roller_settings, policies)
+        #del_button = QPushButton("Видалити", self)
+        #del_button.clicked.connect(lambda: self.__remove_roller(settings_view))
+        #settings_view.add_bottom_widget(del_button)
         return settings_view
 
+    '''
     def __remove_roller(self, roller_view):
         target_layout = self.vertical_roller_layout if roller_view.settings['type'] == "vertical" else self.horizontal_roller_layout
         target_layout.removeWidget(roller_view.frame)
@@ -283,7 +302,7 @@ class ControllerSettings(SettingsComposer):
             self.hroller_add_button.clicked.connect(lambda: self._new_roller("horizontal"))
             target_layout.addWidget(self.hroller_add_button)
             self.hroller_settings_view = None
-
+    '''
     def get_settings(self):
         settings = {}
         settings.update(self.controller_settings_view.get_settings())

@@ -35,9 +35,9 @@ class TotalSettings(SettingsComposer):
         save_button.clicked.connect(lambda: self.__write_settings_to_file(SEPAR_SETTINGS_FILE))
         top_layout.addWidget(save_button, 1, 2)
 
-        add_controller_button = QPushButton("Додати контролер", self)
-        add_controller_button.clicked.connect(lambda: self.__add_settings_controller({}))
-        top_layout.addWidget(add_controller_button, 3, 2)
+        #add_controller_button = QPushButton("Додати контролер", self)
+        #add_controller_button.clicked.connect(lambda: self.__add_settings_controller({}))
+        #top_layout.addWidget(add_controller_button, 3, 2)
 
         self.controller_tabs = QTabWidget(self)
         self.right_side = self.controller_tabs.tabBar().RightSide
@@ -56,18 +56,18 @@ class TotalSettings(SettingsComposer):
             controller.controller_settings_view.input_fields["name"].widget.setText(controller.settings['name'])
         self.controllers_settings.append(controller)
         self.controller_tabs.addTab(controller, controller.settings["name"])
-        del_button = QPushButton()
-        del_button.setIcon(self.style().standardIcon(getattr(QStyle, "SP_BrowserStop")))
-        del_button.clicked.connect((lambda cs=controller: lambda: self.__delete_controller(cs))())
-        self.controller_tabs.tabBar().setTabButton(index, self.right_side, del_button)
-
+        #del_button = QPushButton()
+        #del_button.setIcon(self.style().standardIcon(getattr(QStyle, "SP_BrowserStop")))
+        #del_button.clicked.connect((lambda cs=controller: lambda: self.__delete_controller(cs))())
+        #self.controller_tabs.tabBar().setTabButton(index, self.right_side, del_button)
+    '''
     def __delete_controller(self, c_settings):
         for index in range(len(self.controllers_settings)):
             if c_settings == self.controllers_settings[index]:
                 self.controllers_settings.pop(index)
                 self.controller_tabs.removeTab(index)
                 return
-
+    '''
     def __write_settings_to_file(self, file_name):
         self.save_settings()
         with open(os.path.abspath(file_name), "w", encoding="utf-8") as file:
