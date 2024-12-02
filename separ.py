@@ -2,7 +2,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget, QApplication, QPushButton, QMainWindow
 import sys
 
-from separ.MainView import MainRollerView, WithUrhView
+from separ.MainView import MainRollerView
 from utils.position_window import position_window
 from utils.path import resource_path
 from utils.palette import getPalette
@@ -17,7 +17,7 @@ def main():
     app = QApplication(sys.argv)
 
     json_settings = load_settings_from_file(SEPAR_SETTINGS_FILE)
-    main_window = WithUrhView(json_settings) if json_settings["global_settings"]["urh"] else MainRollerView(json_settings)
+    main_window = MainRollerView(json_settings)
 
     main_window.setWindowTitle("PTZ Controller")
 
