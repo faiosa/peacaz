@@ -2,7 +2,7 @@
     "global_settings": {
         "theme": "Світла",
         "language": "Українська",
-        "urh": false
+        "urh": true
     },
     "controller_values": {
         "1": {
@@ -25,9 +25,9 @@
         },
         "2": {
             "name": "Великий контролер",
-            "serial_port": "/dev/cu.usbserial-21240",
-            "switchboard_pins": "27, 28, 29, 30",
-            "switchboard_serial_port": "",
+            "serial_port": "/dev/ttyUSB0",
+            "switchboard_pins": "8,13,14",
+            "switchboard_serial_port": "/dev/ttyACM0",
             "full_controller": true,
             "rollers": [
                 {
@@ -35,16 +35,16 @@
                     "type": "horizontal",
                     "engine": "line",
                     "min_angle": 0.0,
-                    "max_angle": 359.0,
-                    "current_angle": 42.0
+                    "max_angle": 359.999,
+                    "current_angle": 0.0
                 },
                 {
                     "rotation_speed": 2.77,
                     "type": "vertical",
                     "engine": "line",
-                    "min_angle": -90.0,
-                    "max_angle": 90.0,
-                    "current_angle": -65.5
+                    "min_angle": 0.0,
+                    "max_angle": 75.0,
+                    "current_angle": 0.0
                 }
             ]
         },

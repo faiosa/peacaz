@@ -23,7 +23,7 @@ class BaseRoller:
         if not (self.is_moving_increase or self.is_moving_decrease):
             self.is_moving_increase = True
             self.start_move_time = time.time()
-            #send_pelco_command(self.increase_angle_command(), self.serial_port)
+            send_pelco_command(self.increase_angle_command(), self.serial_port)
             
     def __update_increase_angle(self):
         if self.is_moving_increase:
@@ -43,14 +43,14 @@ class BaseRoller:
         if self.is_moving_increase:
             if update:
                 self.__update_increase_angle()
-            #send_pelco_command(STOP, self.serial_port)
+            send_pelco_command(STOP, self.serial_port)
             self.is_moving_increase = False
 
     def start_decrease_angle(self, dst_angle):
         if not (self.is_moving_increase or self.is_moving_decrease):
             self.is_moving_decrease = True
             self.start_move_time = time.time()
-            #send_pelco_command(self.decrease_angle_command(), self.serial_port)
+            send_pelco_command(self.decrease_angle_command(), self.serial_port)
 
     def __update_decrease_angle(self):
         if self.is_moving_decrease:
@@ -70,7 +70,7 @@ class BaseRoller:
         if self.is_moving_decrease:
             if update:
                 self.__update_decrease_angle()
-            #send_pelco_command(STOP, self.serial_port)
+            send_pelco_command(STOP, self.serial_port)
             self.is_moving_decrease = False
 
     def ptz_turn_stop(self):
@@ -216,7 +216,7 @@ class TimeRoller(BaseRoller):
         if not (self.is_moving_increase or self.is_moving_decrease):
             self.is_moving_increase = True
             self.start_move_time = time.time()
-            # send_pelco_command(self.increase_angle_command(), self.serial_port)
+            send_pelco_command(self.increase_angle_command(), self.serial_port)
 
     def __update_increase_angle(self):
         if self.is_moving_increase:
@@ -236,14 +236,14 @@ class TimeRoller(BaseRoller):
         if self.is_moving_increase:
             if update:
                 self.__update_increase_angle()
-            # send_pelco_command(STOP, self.serial_port)
+            send_pelco_command(STOP, self.serial_port)
             self.is_moving_increase = False
 
     def start_decrease_angle(self, dst_angle):
         if not (self.is_moving_increase or self.is_moving_decrease):
             self.is_moving_decrease = True
             self.start_move_time = time.time()
-            # send_pelco_command(self.decrease_angle_command(), self.serial_port)
+            send_pelco_command(self.decrease_angle_command(), self.serial_port)
 
     def __update_decrease_angle(self):
         if self.is_moving_decrease:
@@ -263,7 +263,7 @@ class TimeRoller(BaseRoller):
         if self.is_moving_decrease:
             if update:
                 self.__update_decrease_angle()
-            # send_pelco_command(STOP, self.serial_port)
+            send_pelco_command(STOP, self.serial_port)
             self.is_moving_decrease = False
 
     def ptz_turn_stop(self):
