@@ -9,7 +9,6 @@ from utils.palette import getPalette
 from config import ui
 from utils.settings import *
 from separ.control import Manager
-from separ.qt5_control_view import ManagerView
 
 
 

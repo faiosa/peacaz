@@ -8,6 +8,7 @@ from utils.path import resource_path
 from windows.settings import SettingsWindow
 from separ.qt5_roller_view import RollerViewVertical, RollerViewHorizontal
 
+'''
 class ManagerView:
     def __init__(self, manager, frame, vertical_with_urh = True):
         self.manager = manager
@@ -72,7 +73,7 @@ class ManagerView:
             controllers_frame.setLayout(controllers_layout)
 
         self.frame.setLayout(layout)
-
+'''
 
 
 class ControllerView:

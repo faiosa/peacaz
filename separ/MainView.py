@@ -7,8 +7,8 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox, qApp, QAction, \
     QDialog, QLabel
 
+from separ.BluePrint import BluePrint
 from separ.control import Manager
-from separ.qt5_control_view import ManagerView
 from separ.settings.dialog import TotalSettings
 from urh import settings
 from urh.controller.CompareFrameController import CompareFrameController
@@ -34,6 +34,8 @@ class MainRollerView(QMainWindow):
         window = QWidget(self)
         self.setCentralWidget(window)
 
+        self.blue_print = BluePrint(window)
+        '''
         main_layout = QHBoxLayout(window)
         window.setLayout(main_layout)
 
@@ -47,31 +49,26 @@ class MainRollerView(QMainWindow):
 
         right_column = QWidget(window)
         main_layout.addWidget(right_column)
-
+        '''
         settings_button = QPushButton(window)
         settings_button.setIcon(QIcon("assets/settings.png"))
         settings_button.clicked.connect(lambda: self.open_settings_window())
         settings_button.setFixedWidth(25)
-        main_layout.addWidget(settings_button, stretch=0, alignment=QtCore.Qt.AlignTop)
+        #main_layout.addWidget(settings_button, stretch=0, alignment=QtCore.Qt.AlignTop)
+        self.blue_print.add_settings_button(settings_button)
 
         self.roller_manager = None
         self.roller_manager_view = None
 
-        self._set_ui()
+        self.roller_manager = Manager(self.settings)
+        self.blue_print.set_up_rollers(self.roller_manager)
 
         self.urh_controller = None
         if self.settings["global_settings"]["urh"]:
-            self.set_urh()
+            self.urh_controller = MainController()
+            self.blue_print.set_urh(self.urh_controller)
+            self.setMenuBar(self.urh_controller.ui.menubar)
 
-
-    def _set_ui(self):
-        self.roller_manager = Manager(self.settings)
-        self.roller_manager_view = ManagerView(self.roller_manager, self.left_top_frame, self.settings["global_settings"]["urh"])
-
-    def set_urh(self):
-        self.urh_controller = MainController()
-        self.left_layout.addWidget(self.urh_controller)
-        self.setMenuBar(self.urh_controller.ui.menubar)
 
     def open_settings_window(self):
         dlg = QDialog()
