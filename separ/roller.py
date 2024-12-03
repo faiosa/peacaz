@@ -85,6 +85,9 @@ class BaseRoller:
     def decrease_angle_command(self):
         return STOP
 
+    def is_moving(self):
+        return self.is_moving_increase or self.is_moving_decrease
+
 
 class StepperRoller(BaseRoller):
     def __init__(self, steps, min_angle, max_angle, current_angle, serial_port, is_vertical):

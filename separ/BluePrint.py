@@ -26,11 +26,20 @@ class BluePrint:
     def set_urh(self, urh_controller):
         self.left_layout.addWidget(urh_controller)
 
+    def reload_roller_slots(self):
+        self.__unset_rollers_slots()
+        self.__set_rollers_slots()
+
+    def __unset_rollers_slots(self):
+        self.left_layout.removeWidget(self.rollers_frame)
+        self.rollers_frame.deleteLater()
+        self.rollers_frame = None
 
     def __set_rollers_slots(self):
 
         self.rollers_frame = QWidget(self.left_column)
-        self.left_layout.addWidget(self.rollers_frame)
+        #self.left_layout.addWidget(self.rollers_frame)
+        self.left_layout.insertWidget(0, self.rollers_frame)
 
         layout = QHBoxLayout(self.rollers_frame)
         self.roller_splitter = QSplitter(self.rollers_frame)

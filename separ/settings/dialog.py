@@ -2,15 +2,17 @@ import json
 import os
 
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QTabWidget, QGroupBox, QHBoxLayout, QGridLayout, QPushButton, QStyle
+from PyQt5.QtWidgets import QFrame, QVBoxLayout, QTabWidget, QGroupBox, QHBoxLayout, QGridLayout, QPushButton, QStyle, \
+    QMessageBox
 
 from separ.settings.dictionary import ControllerSettings, SettingsComposer, DictionarySettings
 from utils.settings import SEPAR_SETTINGS_FILE
 
 
 class TotalSettings(SettingsComposer):
-    def __init__(self, parent_frame, json_settings):
-        super().__init__(parent_frame, json_settings)
+    def __init__(self, parent_frame, main_view):
+        super().__init__(parent_frame, main_view.settings)
+        self.main_view = main_view
         self.global_labels = {
             "theme": "Тема інтерфейсу",
             "language": "Мова інтерфейсу",
@@ -69,12 +71,19 @@ class TotalSettings(SettingsComposer):
                 return
     '''
     def __write_settings_to_file(self, file_name):
-        self.save_settings()
-        with open(os.path.abspath(file_name), "w", encoding="utf-8") as file:
-            json.dump(self.settings, file, indent=4, ensure_ascii=False)
-
-
-
+        if self.main_view.roller_manager.is_moving():
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setText("Не можна зберегти")
+            msg.setInformativeText("Деякі з антен все ще в русі! Для успішного сберігання дочекайтесь повної зупинки поворотних двигунів.")
+            msg.setWindowTitle("Помилка зберігання")
+            msg.exec_()
+        else:
+            self.save_settings()
+            with open(os.path.abspath(file_name), "w", encoding="utf-8") as file:
+                json.dump(self.settings, file, indent=4, ensure_ascii=False)
+            self.main_view.reload_settings(file_name)
+            self.main_view.reload_print()
 
     def get_settings(self):
         settings = {}

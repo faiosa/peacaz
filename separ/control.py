@@ -9,6 +9,12 @@ class Manager:
             for key in self.controller_values
         ]
 
+    def is_moving(self):
+        for controller in self.controllers:
+            if controller.is_moving():
+                return True
+        return False
+
 class Controller:
     def __init__(self, json_settings):
         self.name = json_settings.get("name")
@@ -50,6 +56,12 @@ class Controller:
                 current_angle=json.get("current_angle"),
                 serial_port=serial_port
             )
+
+    def is_moving(self):
+        for roller in self.rollers:
+            if roller.is_moving():
+                return True
+        return False
 
 class SwitchBoard:
     def __init__(self, pins, switchboard_serial_port, is_full_control):

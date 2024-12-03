@@ -27,10 +27,9 @@ from utils.settings import load_settings_from_file, SEPAR_SETTINGS_FILE
 
 
 class MainRollerView(QMainWindow):
-    def __init__(self, settings,  *args):
+    def __init__(self, *args):
         super().__init__(*args)
 
-        self.settings = settings
         window = QWidget(self)
         self.setCentralWidget(window)
 
@@ -60,7 +59,7 @@ class MainRollerView(QMainWindow):
         self.roller_manager = None
         self.roller_manager_view = None
 
-        self.roller_manager = Manager(self.settings)
+        self.reload_settings(SEPAR_SETTINGS_FILE)
         for index in range(len(self.roller_manager.controllers)):
             self.blue_print.add_roller(self.roller_manager.controllers[index], index)
 
@@ -70,13 +69,21 @@ class MainRollerView(QMainWindow):
             self.blue_print.set_urh(self.urh_controller)
             self.setMenuBar(self.urh_controller.ui.menubar)
 
+    def reload_settings(self, file):
+        self.settings = load_settings_from_file(file)
+        self.roller_manager = Manager(self.settings)
+
+    def reload_print(self):
+        self.blue_print.reload_roller_slots()
+        for index in range(len(self.roller_manager.controllers)):
+            self.blue_print.add_roller(self.roller_manager.controllers[index], index)
+
 
     def open_settings_window(self):
         dlg = QDialog()
         dlg.setWindowTitle("Налаштування")
         dlg.setFixedWidth(750)
-        settings = load_settings_from_file(SEPAR_SETTINGS_FILE)
-        settings_view = TotalSettings(dlg, settings)
+        settings_view = TotalSettings(dlg, self)
         dlg_layout = QVBoxLayout(dlg)
         dlg.setLayout(dlg_layout)
         dlg_layout.addWidget(settings_view)
