@@ -61,7 +61,8 @@ class MainRollerView(QMainWindow):
         self.roller_manager_view = None
 
         self.roller_manager = Manager(self.settings)
-        self.blue_print.set_up_rollers(self.roller_manager)
+        for index in range(len(self.roller_manager.controllers)):
+            self.blue_print.add_roller(self.roller_manager.controllers[index], index)
 
         self.urh_controller = None
         if self.settings["global_settings"]["urh"]:
