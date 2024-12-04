@@ -20,70 +20,37 @@ class BaseRoller:
         self.is_moving_decrease = False
 
     def start_increase_angle(self, dst_angle):
-        if not (self.is_moving_increase or self.is_moving_decrease):
-            self.is_moving_increase = True
-            self.start_move_time = time.time()
-            send_pelco_command(self.increase_angle_command(), self.serial_port)
+        pass
             
     def __update_increase_angle(self):
-        if self.is_moving_increase:
-            cur_time = time.time()
-            self.current_angle = self.current_angle + self.rotation_speed * (cur_time - self.start_move_time)
-            self.start_move_time = cur_time
+        pass
 
     def check_increase_angle(self, dest_angle):
-        if self.is_moving_increase:
-            self.__update_increase_angle()
-            target_angle = min(dest_angle, self.max_angle)
-            if self.current_angle >= target_angle:
-                self.current_angle = target_angle
-                self.__stop_increase_angle(False)
+        pass
 
     def __stop_increase_angle(self, update = True):
-        if self.is_moving_increase:
-            if update:
-                self.__update_increase_angle()
-            send_pelco_command(STOP, self.serial_port)
-            self.is_moving_increase = False
+        pass
 
     def start_decrease_angle(self, dst_angle):
-        if not (self.is_moving_increase or self.is_moving_decrease):
-            self.is_moving_decrease = True
-            self.start_move_time = time.time()
-            send_pelco_command(self.decrease_angle_command(), self.serial_port)
+        pass
 
     def __update_decrease_angle(self):
-        if self.is_moving_decrease:
-            cur_time = time.time()
-            self.current_angle = self.current_angle - self.rotation_speed * (cur_time - self.start_move_time)
-            self.start_move_time = cur_time
+        pass
 
     def check_decrease_angle(self, dest_angle):
-        if self.is_moving_decrease:
-            self.__update_decrease_angle()
-            target_angle = max(dest_angle, self.min_angle)
-            if self.current_angle <= target_angle:
-                self.current_angle = target_angle
-                self.__stop_decrease_angle(False)
+        pass
 
     def __stop_decrease_angle(self, update=True):
-        if self.is_moving_decrease:
-            if update:
-                self.__update_decrease_angle()
-            send_pelco_command(STOP, self.serial_port)
-            self.is_moving_decrease = False
+        pass
 
     def ptz_turn_stop(self):
-        if self.is_moving_increase:
-            self.__stop_increase_angle()
-        if self.is_moving_decrease:
-            self.__stop_decrease_angle()
+        pass
 
     def increase_angle_command(self):
-        return STOP
+        pass
 
     def decrease_angle_command(self):
-        return STOP
+        pass
 
     def is_moving(self):
         return self.is_moving_increase or self.is_moving_decrease
@@ -105,8 +72,8 @@ class StepperRoller(BaseRoller):
         else:
             try:
                 self.arduino = serial.Serial(port=self.serial_port, baudrate=9600)
-                if show_message:
-                    time.sleep(2)#Can't work immediately without a pause (
+                time.sleep(2)#Can't work immediately without a pause (
+                self.set_current_command(self.cur_step)
                 return True
             except SerialException:
                 text = f"Не вдається підключитись до серійного порта контролера {self.serial_port}. Підключіть девайс або змініть адресу порта в налаштуваннях."
@@ -133,20 +100,14 @@ class StepperRoller(BaseRoller):
     def send_stop_command(self):
         self.arduino.write("sQ".encode())
 
+    def set_current_command(self, cur_step):
+        self.arduino.write(f"c{cur_step}Q".encode())
+
     def read_current_step(self):
         self.arduino.write("gQ".encode())
-        #self.arduino.close()
-        #print("arduino closed")
-        #self.arduino.open()
-        #print("arduino opened")
-        #time.sleep(0.05)
         while True:
             bytes = self.arduino.readline()
-            #print(f"Read bytes type={type(bytes)} len={len(bytes)} data='{bytes}'")
             if bytes:
-                #response = int.from_bytes(bytes, "big")
-                #print(f"Reading current step is '{int(bytes)}'")
-                #self.arduino.close()
                 return int(bytes)
 
 

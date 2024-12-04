@@ -70,6 +70,19 @@ class TotalSettings(SettingsComposer):
                 self.controller_tabs.removeTab(index)
                 return
     '''
+    def __update_current_angles(self):
+        for controller in self.main_view.roller_manager.controllers:
+            for c_key, controller_settings in self.settings["controller_values"].items():
+                if controller.name == controller_settings["name"]:
+                    for roller in controller.rollers:
+                        for r_index, roller_settings in enumerate(controller_settings["rollers"]):
+                            if roller_settings["type"] == "vertical" and roller.is_vertical:
+                                self.settings["controller_values"][c_key]["rollers"][r_index]["current_angle"] = roller.current_angle
+                            elif roller_settings["type"] == "horizontal" and not roller.is_vertical:
+                                self.settings["controller_values"][c_key]["rollers"][r_index]["current_angle"] = roller.current_angle
+
+
+
     def __write_settings_to_file(self, file_name):
         if self.main_view.roller_manager.is_moving():
             msg = QMessageBox()
@@ -80,6 +93,7 @@ class TotalSettings(SettingsComposer):
             msg.exec_()
         else:
             self.save_settings()
+            self.__update_current_angles()
             with open(os.path.abspath(file_name), "w", encoding="utf-8") as file:
                 json.dump(self.settings, file, indent=4, ensure_ascii=False)
             self.main_view.reload_settings(file_name)
