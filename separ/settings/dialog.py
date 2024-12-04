@@ -16,12 +16,12 @@ class TotalSettings(SettingsComposer):
         self.global_labels = {
             "theme": "Тема інтерфейсу",
             "language": "Мова інтерфейсу",
-            "urh": "Enable Radio Hacker"
+            #"urh": "Enable Radio Hacker"
         }
         self.global_policies = {
             "theme": ["Світла", "Темна"],
             "language": ["Українська", "English"],
-            "urh": "bool"
+            #"urh": "bool"
         }
         self.global_settings_view = DictionarySettings(QGroupBox("global settings"), self.global_labels, self.settings["global_settings"], self.global_policies)
 

@@ -114,6 +114,5 @@ def send_pelco_command(command: bytes, selected_controller: str) -> None:
         ) as ser:
             ser.write(full_command)
             ser.read(size=8)
-            print(f"Sent command: {command.hex()}")
     except serial.SerialException as e:
         print(f"Serial error: {e}")

@@ -11,17 +11,25 @@ class BluePrint:
         self.main_layout = QHBoxLayout(window)
         window.setLayout(self.main_layout)
 
-        self.left_column = QWidget(window)
-        self.left_layout = QVBoxLayout(self.left_column)
-        self.left_column.setLayout(self.left_layout)
+        self.__set_left_frame()
 
-        self.main_layout.addWidget(self.left_column)
 
         right_column = QWidget(window)
         self.main_layout.addWidget(right_column)
 
+
+    def __set_left_frame(self):
+        self.left_column = QWidget(self.window)
+        self.left_layout = QVBoxLayout(self.left_column)
+        self.left_column.setLayout(self.left_layout)
+        self.main_layout.addWidget(self.left_column)
         self.__set_rollers_slots()
 
+    def __unset_left_frame(self):
+        self.main_layout.removeWidget(self.left_column)
+        self.left_column.deleteLater()
+        self.left_column = None
+        self.left_layout = None
 
     def set_urh(self, urh_controller):
         self.left_layout.addWidget(urh_controller)
@@ -84,3 +92,52 @@ class BluePrint:
 
     def add_settings_button(self, settings_button):
         self.main_layout.addWidget(settings_button, stretch=0, alignment=QtCore.Qt.AlignTop)
+
+class GridBluePrint:
+    def __init__(self, window):
+        self.window = window
+        '''
+        layout = QVBoxLayout(self.frame)
+        controllers_frame = QWidget(self.frame)
+        layout.addWidget(controllers_frame)
+        controllers_layout = QVBoxLayout()
+        self.controllers_views = []
+        for controller in self.manager.controllers:
+            tab = QFrame(frame)
+            tab.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+            tab.setLineWidth(4)
+            controllers_layout.addWidget(tab)
+            controller_view = ControllerView(controller, tab)
+            self.controllers_views.append(controller_view)
+        controllers_frame.setLayout(controllers_layout)
+        '''
+        self.main_layout = QHBoxLayout(self.window)
+        window.setLayout(self.main_layout)
+
+        self.left_column = QWidget(window)
+        self.left_layout = QVBoxLayout(self.left_column)
+        self.left_column.setLayout(self.left_layout)
+
+        self.main_layout.addWidget(self.left_column)
+
+        right_column = QWidget(window)
+        self.main_layout.addWidget(right_column)
+
+    def set_urh(self, urh_controller):
+        pass
+
+    def reload_roller_slots(self):
+        self.__unset_rollers_slots()
+        self.__set_rollers_slots()
+
+
+    def add_roller(self, controller, index):
+        tab = QFrame(self.rollers_frame)
+        controller_view = ControllerView(controller, tab)
+
+        widget = self.roller_splitter.widget(index)
+        policy = widget.sizePolicy()
+        policy.setHorizontalStretch(1)
+        widget.setSizePolicy(policy)
+
+        return controller_view
