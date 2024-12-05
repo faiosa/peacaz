@@ -117,6 +117,7 @@ class GridBluePrint(BluePrint):
         frame = QFrame(self.rollers_frame)
         frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
         frame.setLineWidth(4)
+        frame.setMaximumWidth(480)
         controller_view = ControllerView(controller, frame)
 
         self.roller_layout.addWidget(frame, index, 0)

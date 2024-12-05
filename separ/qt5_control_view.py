@@ -8,72 +8,6 @@ from utils.path import resource_path
 from windows.settings import SettingsWindow
 from separ.qt5_roller_view import RollerViewVertical, RollerViewHorizontal
 
-'''
-class ManagerView:
-    def __init__(self, manager, frame, vertical_with_urh = True):
-        self.manager = manager
-        self.frame = frame
-
-        layout = None
-
-        if vertical_with_urh:
-            layout = QHBoxLayout(self.frame)
-            splitter = QSplitter(self.frame)
-
-            splitter.setStyleSheet(
-                "QSplitter::handle:horizontal {\n"
-                "margin: 4px 0px;\n"
-                "    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, \n"
-                "stop:0 rgba(255, 255, 255, 0), \n"
-                "stop:0.5 rgba(100, 100, 100, 100), \n"
-                "stop:1 rgba(255, 255, 255, 0));\n"
-                "image: url(:/icons/icons/splitter_handle_vertical.svg);\n"
-                "}"
-            )
-
-            splitter.setHandleWidth(6)
-            splitter.setObjectName("splitter")
-            self.controllers_views = []
-            for controller in self.manager.controllers:
-                tab = QFrame(frame)
-                tab.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
-                tab.setLineWidth(4)
-                #tab.setMinimumSize(100,100)
-                #tab.setFixedHeight(300)
-                scroll_area =  QScrollArea()
-                scroll_area.setFixedHeight(300)
-                #scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-                scroll_area.setWidgetResizable(True)
-                scroll_area.setWidget(tab)
-                scroll_area.setVerticalScrollBarPolicy(1)
-                #splitter.addWidget(tab)
-                splitter.addWidget(scroll_area)
-                controller_view = ControllerView(controller, tab)
-                self.controllers_views.append(controller_view)
-            splitter.setSizes([250, 250, 250])
-            layout.addWidget(splitter)
-
-            widget = splitter.widget(0)
-            policy = widget.sizePolicy()
-            policy.setHorizontalStretch(1)
-            widget.setSizePolicy(policy)
-        else:
-            layout = QVBoxLayout(self.frame)
-            controllers_frame = QWidget(self.frame)
-            layout.addWidget(controllers_frame)
-            controllers_layout = QVBoxLayout()
-            self.controllers_views = []
-            for controller in self.manager.controllers:
-                tab = QFrame(frame)
-                tab.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
-                tab.setLineWidth(4)
-                controllers_layout.addWidget(tab)
-                controller_view = ControllerView(controller, tab)
-                self.controllers_views.append(controller_view)
-            controllers_frame.setLayout(controllers_layout)
-
-        self.frame.setLayout(layout)
-'''
 
 
 class ControllerView:
@@ -99,14 +33,14 @@ class ControllerView:
         self.stop_button = QPushButton(self.frame)
         self.stop_button.setIcon(QIcon("assets/stop.png"))
         self.stop_button.clicked.connect(lambda: self.stop_ptz())
-        rollers_layout.addWidget(self.stop_button, 4, 6)
+        rollers_layout.addWidget(self.stop_button, 8, 4)
 
         self.restore_button = QPushButton(self.frame)
         self.restore_button.setIcon(self.restore_button.style().standardIcon(getattr(QStyle, "SP_BrowserReload")))
         #self.restore_button.setText("Відновити початкові значення")
         self.restore_button.clicked.connect(self.__tune_angles)
         #rollers_layout.addWidget(self.restore_button, 8, 4, 1, 4)
-        rollers_layout.addWidget(self.restore_button, 0, 6)
+        rollers_layout.addWidget(self.restore_button, 8, 5)
 
         switchboard_frame = QFrame(self.frame)
         switchboard_layout = QHBoxLayout()

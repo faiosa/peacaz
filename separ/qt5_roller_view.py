@@ -17,29 +17,34 @@ class BaseRollerView:
         self.roller_font = QFont("AnonymousPro Regular", 9)
 
         start_row_index = 5 if self.roller.is_vertical else 1
-        angle_direction_txt = "вертикальний" if self.roller.is_vertical else "горизонтальний"
+        angle_direction_txt = "Вертикальний" if self.roller.is_vertical else "Горизонтальний"
+
+        angle_label_text = QLabel(self.frame)
+        angle_label_text.setText(f"{angle_direction_txt}  кут")
+        angle_label_text.setFont(self.roller_font)
+        grid.addWidget(angle_label_text, start_row_index, 0, 1, 2)#{self.roller.current_angle:.0f}
 
         current_angle_label_text = QLabel(self.frame)
-        current_angle_label_text.setText(f"Поточний  {angle_direction_txt}  кут:")
+        current_angle_label_text.setText(f"поточний:")
         current_angle_label_text.setFont(self.roller_font)
-        grid.addWidget(current_angle_label_text, start_row_index, 0)#{self.roller.current_angle:.0f}
+        grid.addWidget(current_angle_label_text, start_row_index + 1, 0)  # {self.roller.current_angle:.0f}
 
         self.current_angle_label = QLabel(self.frame)
         self.current_angle_label.setText(f"{self.roller.current_angle:.1f}")
         self.current_angle_label.setFont(self.roller_font)
-        grid.addWidget(self.current_angle_label, start_row_index, 1)
+        grid.addWidget(self.current_angle_label, start_row_index + 1, 1)
 
         input_label = QLabel(self.frame)
-        input_label.setText(f"Встановіть {angle_direction_txt} кут:")
+        input_label.setText(f"встановити:")
         input_label.setFont(self.roller_font)
-        grid.addWidget(input_label, start_row_index + 1, 0)
+        grid.addWidget(input_label, start_row_index + 2, 0)
 
         self.input_field = QLineEdit(self.frame)
         self.input_field.setValidator(QDoubleValidator())
         self.input_field.returnPressed.connect(self.set_desired_angle)
         self.input_field.setFont(self.roller_font)
         self.input_field.setFixedWidth(50)
-        grid.addWidget(self.input_field, start_row_index + 1, 1)
+        grid.addWidget(self.input_field, start_row_index + 2, 1)
 
 
 
@@ -216,7 +221,8 @@ class RollerViewHorizontal(BaseRollerView):
         self.canvas_frame.setFixedWidth(self.slider_width)
         self.canvas_frame.setFixedHeight(self.slider_height)
 
-        grid.addWidget(self.canvas_frame, 0, 3, 8, 2)
+        start_canvas_col = 1 + len(self.controller_view.controller.rollers)
+        grid.addWidget(self.canvas_frame, 0, start_canvas_col, 8, 3)
         '''
         self.turn_left_button = QPushButton(self.frame)
         self.turn_left_button.setIcon(QIcon("assets/turn_left.png"))
