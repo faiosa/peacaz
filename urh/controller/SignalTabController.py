@@ -36,9 +36,9 @@ class SignalTabController(QWidget):
     def signal_undo_stack(self):
         return self.undo_stack
 
-    def __init__(self, ptz_blue_print, project_manager, parent=None):
+    def __init__(self, ptz_view, project_manager, parent=None):
         super().__init__(parent)
-        self.ptz_blue_print = ptz_blue_print
+        self.ptz_view = ptz_view
         self.ui = Ui_Interpretation()
         self.ui.setupUi(self)
 
@@ -88,8 +88,8 @@ class SignalTabController(QWidget):
 
         index = self.num_frames if index == -1 else index
         #self.ui.splitter.insertWidget(index, sig_frame)
-        if self.ptz_blue_print:
-            self.ptz_blue_print.open_signal_frame(sig_frame, index)
+        if self.ptz_view:
+            self.ptz_view.open_signal_frame(sig_frame)
         else:
             self.ui.splitter.insertWidget(index, sig_frame)
         sig_frame.blockSignals(False)

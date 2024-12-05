@@ -79,6 +79,7 @@ class SignalFrame(QFrame):
     ):
         super().__init__(parent)
         self.signal_controller = parent
+        self.ptz_index = self.signal_controller.ptz_view.open_index
         self.undo_stack = undo_stack
 
         self.ui = Ui_SignalFrame()
@@ -825,6 +826,11 @@ class SignalFrame(QFrame):
 
         self.setParent(None)
         self.deleteLater()
+
+        self.del_from_ptz()
+
+    def del_from_ptz(self):
+        self.signal_controller.ptz_view.setup_open_button(self.ptz_index)
 
     def __handle_graphic_view_zoomed(self, graphic_view):
         self.ui.lSamplesInView.setText(

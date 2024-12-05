@@ -16,6 +16,9 @@ class BluePrint:
 
         right_column = QWidget(window)
         self.main_layout.addWidget(right_column)
+        self.open_index = -1
+
+        self.buttons = [None, None, None]
 
 
     def __set_left_frame(self):
@@ -44,7 +47,6 @@ class BluePrint:
         self.rollers_frame = None
 
     def __set_rollers_slots(self):
-        print("BluePrint.__set_rollers_slots")
         self.rollers_frame = QWidget(self.left_column)
         #self.left_layout.addWidget(self.rollers_frame)
         self.left_layout.insertWidget(0, self.rollers_frame)
@@ -120,15 +122,25 @@ class GridBluePrint(BluePrint):
         frame.setMaximumWidth(480)
         controller_view = ControllerView(controller, frame)
 
-        self.roller_layout.addWidget(frame, index, 0)
+        self.roller_layout.addWidget(frame, index, 0, alignment=QtCore.Qt.AlignLeft)
 
         return controller_view
+
+    def add_open_signal_button(self, button, index):
+        self.buttons[index] = button
+        self.roller_layout.addWidget(button, index, 1, alignment=QtCore.Qt.AlignCenter)
+
+    def del_open_signal_button(self, index):
+        self.roller_layout.removeWidget(self.buttons[index])
+        self.buttons[index].deleteLater()
+        self.buttons[index] = None
 
     def open_signal_frame(self, sig_frame, index):
         sig_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
         sig_frame.setLineWidth(4)
-        self.roller_layout.addWidget(sig_frame, 0, 1)
+        sig_frame.setMaximumWidth(500)
+        self.roller_layout.addWidget(sig_frame, index, 1)
 
     def open_signal_replay_frame(self, repl_frame, index):
-        print("HEre is replay frame")
+        repl_frame.setMaximumWidth(500)
         self.roller_layout.addWidget(repl_frame, 0, 2)

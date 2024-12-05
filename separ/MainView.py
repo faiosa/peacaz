@@ -52,10 +52,33 @@ class MainRollerView(QMainWindow):
 
         self.urh_controller = None
         if True:#self.settings["global_settings"]["urh"]:
-            self.urh_controller = MainController(self.blue_print)
+            self.urh_controller = MainController(self)
             #self.urh_controller = MainController(None)
             #self.blue_print.set_urh(self.urh_controller)
             self.setMenuBar(self.urh_controller.ui.menubar)
+        self.open_index = -1
+        for i in range(3):
+            self.setup_open_button(i)
+
+    def setup_open_button(self, ind):
+        open_button = self.__get_open_button(ind)
+        self.blue_print.add_open_signal_button(open_button, ind)
+
+    def __get_open_button(self, index):
+        open_button = QPushButton()
+        open_button.setIcon(QtGui.QIcon.fromTheme("document-open"))
+        open_button.clicked.connect((lambda i = index: lambda: self.open_signal_file(i))())
+        open_button.setFixedWidth(25)
+        return open_button
+
+    def open_signal_frame(self, sig_frame):
+        self.blue_print.del_open_signal_button(self.open_index)
+        self.blue_print.open_signal_frame(sig_frame, self.open_index)
+
+    def open_signal_file(self, index):
+        self.open_index = index
+        self.urh_controller.on_open_file_action_triggered()
+        self.open_index = -1
 
     def reload_settings(self, file):
         self.settings = load_settings_from_file(file)

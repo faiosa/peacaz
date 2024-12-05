@@ -42,10 +42,10 @@ from urh.util.ProjectManager import ProjectManager
 
 
 class MainController(QMainWindow):
-    def __init__(self, ptz_blue_print, *args):
+    def __init__(self, ptz_view, *args):
         super().__init__(*args)
 
-        self.ptz_blue_print = ptz_blue_print
+        self.ptz_view = ptz_view
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -58,7 +58,7 @@ class MainController(QMainWindow):
         self.project_manager = ProjectManager(self)
         self.plugin_manager = PluginManager()
         self.signal_tab_controller = SignalTabController(
-            self.ptz_blue_print, self.project_manager#, parent=self.ui.tab_interpretation
+            self.ptz_view, self.project_manager#, parent=self.ui.tab_interpretation
         )
         self.ui.tab_interpretation.layout().addWidget(self.signal_tab_controller)
         self.compare_frame_controller = CompareFrameController(
@@ -505,6 +505,7 @@ class MainController(QMainWindow):
         except Exception as e:
             Errors.exception(e)
             self.unsetCursor()
+
 
     def add_files(self, filepaths, group_id=0, enforce_sample_rate=None):
         num_files = len(filepaths)
