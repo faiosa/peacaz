@@ -1,5 +1,5 @@
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout, QFrame, QSplitter, QScrollArea
+from PyQt5.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout, QFrame, QSplitter, QScrollArea, QGridLayout
 
 from separ.qt5_control_view import ControllerView
 
@@ -23,7 +23,7 @@ class BluePrint:
         self.left_layout = QVBoxLayout(self.left_column)
         self.left_column.setLayout(self.left_layout)
         self.main_layout.addWidget(self.left_column)
-        self.__set_rollers_slots()
+        #self.__set_rollers_slots()
 
     def __unset_left_frame(self):
         self.main_layout.removeWidget(self.left_column)
@@ -36,7 +36,7 @@ class BluePrint:
 
     def reload_roller_slots(self):
         self.__unset_rollers_slots()
-        self.__set_rollers_slots()
+        #self.__set_rollers_slots()
 
     def __unset_rollers_slots(self):
         self.left_layout.removeWidget(self.rollers_frame)
@@ -44,7 +44,7 @@ class BluePrint:
         self.rollers_frame = None
 
     def __set_rollers_slots(self):
-
+        print("BluePrint.__set_rollers_slots")
         self.rollers_frame = QWidget(self.left_column)
         #self.left_layout.addWidget(self.rollers_frame)
         self.left_layout.insertWidget(0, self.rollers_frame)
@@ -71,6 +71,8 @@ class BluePrint:
         self.rollers_frame.setLayout(layout)
 
     def add_roller(self, controller, index):
+        if (not hasattr(self, "rollers_frame")) or self.rollers_frame == None:
+            self.__set_rollers_slots()
         tab = QFrame(self.rollers_frame)
         tab.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
         tab.setLineWidth(4)
@@ -93,51 +95,39 @@ class BluePrint:
     def add_settings_button(self, settings_button):
         self.main_layout.addWidget(settings_button, stretch=0, alignment=QtCore.Qt.AlignTop)
 
-class GridBluePrint:
+class GridBluePrint(BluePrint):
     def __init__(self, window):
-        self.window = window
-        '''
-        layout = QVBoxLayout(self.frame)
-        controllers_frame = QWidget(self.frame)
-        layout.addWidget(controllers_frame)
-        controllers_layout = QVBoxLayout()
-        self.controllers_views = []
-        for controller in self.manager.controllers:
-            tab = QFrame(frame)
-            tab.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
-            tab.setLineWidth(4)
-            controllers_layout.addWidget(tab)
-            controller_view = ControllerView(controller, tab)
-            self.controllers_views.append(controller_view)
-        controllers_frame.setLayout(controllers_layout)
-        '''
-        self.main_layout = QHBoxLayout(self.window)
-        window.setLayout(self.main_layout)
+        super().__init__(window)
 
-        self.left_column = QWidget(window)
-        self.left_layout = QVBoxLayout(self.left_column)
-        self.left_column.setLayout(self.left_layout)
-
-        self.main_layout.addWidget(self.left_column)
-
-        right_column = QWidget(window)
-        self.main_layout.addWidget(right_column)
 
     def set_urh(self, urh_controller):
         pass
 
-    def reload_roller_slots(self):
-        self.__unset_rollers_slots()
-        self.__set_rollers_slots()
+    def __set_rollers_slots(self):
+        self.rollers_frame = QWidget(self.left_column)
+        self.left_layout.insertWidget(0, self.rollers_frame)
+
+        self.roller_layout = QGridLayout(self.rollers_frame)
+        self.rollers_frame.setLayout(self.roller_layout)
 
 
     def add_roller(self, controller, index):
-        tab = QFrame(self.rollers_frame)
-        controller_view = ControllerView(controller, tab)
+        if (not hasattr(self, "rollers_frame")) or self.rollers_frame == None:
+            self.__set_rollers_slots()
+        frame = QFrame(self.rollers_frame)
+        frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+        frame.setLineWidth(4)
+        controller_view = ControllerView(controller, frame)
 
-        widget = self.roller_splitter.widget(index)
-        policy = widget.sizePolicy()
-        policy.setHorizontalStretch(1)
-        widget.setSizePolicy(policy)
+        self.roller_layout.addWidget(frame, index, 0)
 
         return controller_view
+
+    def open_signal_frame(self, sig_frame, index):
+        sig_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+        sig_frame.setLineWidth(4)
+        self.roller_layout.addWidget(sig_frame, 0, 1)
+
+    def open_signal_replay_frame(self, repl_frame, index):
+        print("HEre is replay frame")
+        self.roller_layout.addWidget(repl_frame, 0, 2)

@@ -14,8 +14,6 @@ from separ.control import Manager
 
 def main():
     app = QApplication(sys.argv)
-
-    #json_settings = load_settings_from_file(SEPAR_SETTINGS_FILE)
     main_window = MainRollerView()
 
     main_window.setWindowTitle("PTZ Controller")

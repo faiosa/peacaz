@@ -7,7 +7,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox, qApp, QAction, \
     QDialog, QLabel
 
-from separ.BluePrint import BluePrint
+from separ.BluePrint import BluePrint, GridBluePrint
 from separ.control import Manager
 from separ.settings.dialog import TotalSettings
 from urh import settings
@@ -30,25 +30,12 @@ class MainRollerView(QMainWindow):
     def __init__(self, *args):
         super().__init__(*args)
 
+
         window = QWidget(self)
         self.setCentralWidget(window)
 
-        self.blue_print = BluePrint(window)
-        '''
-        main_layout = QHBoxLayout(window)
-        window.setLayout(main_layout)
-
-        self.left_column = QWidget(window)
-        self.left_layout = QVBoxLayout(self.left_column)
-        self.left_column.setLayout(self.left_layout)
-        self.left_top_frame = QWidget(self.left_column)
-        self.left_layout.addWidget(self.left_top_frame)
-
-        main_layout.addWidget(self.left_column)
-
-        right_column = QWidget(window)
-        main_layout.addWidget(right_column)
-        '''
+        #self.blue_print = BluePrint(window)
+        self.blue_print = GridBluePrint(window)
         settings_button = QPushButton(window)
         settings_button.setIcon(QIcon("assets/settings.png"))
         settings_button.clicked.connect(lambda: self.open_settings_window())
@@ -64,9 +51,10 @@ class MainRollerView(QMainWindow):
             self.blue_print.add_roller(self.roller_manager.controllers[index], index)
 
         self.urh_controller = None
-        if self.settings["global_settings"]["urh"]:
-            self.urh_controller = MainController()
-            self.blue_print.set_urh(self.urh_controller)
+        if True:#self.settings["global_settings"]["urh"]:
+            self.urh_controller = MainController(self.blue_print)
+            #self.urh_controller = MainController(None)
+            #self.blue_print.set_urh(self.urh_controller)
             self.setMenuBar(self.urh_controller.ui.menubar)
 
     def reload_settings(self, file):
