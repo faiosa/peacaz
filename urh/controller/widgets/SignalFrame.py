@@ -78,7 +78,7 @@ class SignalFrame(QFrame):
         parent=None,
     ):
         super().__init__(parent)
-
+        self.signal_controller = parent
         self.undo_stack = undo_stack
 
         self.ui = Ui_SignalFrame()

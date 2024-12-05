@@ -42,8 +42,11 @@ from urh.util.ProjectManager import ProjectManager
 
 
 class MainController(QMainWindow):
-    def __init__(self, *args):
+    def __init__(self, ptz_blue_print, *args):
         super().__init__(*args)
+
+        self.ptz_blue_print = ptz_blue_print
+
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
@@ -55,7 +58,7 @@ class MainController(QMainWindow):
         self.project_manager = ProjectManager(self)
         self.plugin_manager = PluginManager()
         self.signal_tab_controller = SignalTabController(
-            self.project_manager, parent=self.ui.tab_interpretation
+            self.ptz_blue_print, self.project_manager#, parent=self.ui.tab_interpretation
         )
         self.ui.tab_interpretation.layout().addWidget(self.signal_tab_controller)
         self.compare_frame_controller = CompareFrameController(

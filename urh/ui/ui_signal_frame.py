@@ -859,12 +859,15 @@ class Ui_SignalFrame(object):
     def add_replay_signal_frame(self, SignalFrame, dialog):
         oleh_frame = QtWidgets.QFrame(SignalFrame)
         oleh_frame.setFixedWidth(1000)
-        self.horizontalLayout.addWidget(oleh_frame)
         oleh_layout = QtWidgets.QHBoxLayout(oleh_frame)
         oleh_frame.setLayout(oleh_layout)
         oleh_frame.setFrameStyle(QtWidgets.QFrame.StyledPanel | QtWidgets.QFrame.Plain)
         oleh_frame.setLineWidth(4)
         oleh_layout.addWidget(dialog)
+        if SignalFrame.signal_controller and SignalFrame.signal_controller.ptz_blue_print:
+            SignalFrame.signal_controller.ptz_blue_print.open_signal_replay_frame(oleh_frame, -1)
+        else:
+            self.horizontalLayout.addWidget(oleh_frame)
 
 
 
