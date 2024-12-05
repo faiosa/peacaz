@@ -355,7 +355,8 @@ class Ui_SignalFrame(object):
         self.lBitsPerSymbol.setObjectName("lBitsPerSymbol")
         self.gridLayout_2.addWidget(self.lBitsPerSymbol, 11, 0, 1, 1)
         self.horizontalLayout.addLayout(self.gridLayout_2)
-        self.splitter = QtWidgets.QSplitter(SignalFrame)
+        #self.splitter = QtWidgets.QSplitter(SignalFrame)
+        self.splitter = QtWidgets.QSplitter()
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
         )
@@ -435,6 +436,7 @@ class Ui_SignalFrame(object):
         self.gvSignal.setObjectName("gvSignal")
         self.horizontalLayout_6.addWidget(self.gvSignal)
         self.stackedWidget.addWidget(self.pageSignal)
+
         self.pageSpectrogram = QtWidgets.QWidget()
         self.pageSpectrogram.setObjectName("pageSpectrogram")
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout(self.pageSpectrogram)
@@ -458,6 +460,7 @@ class Ui_SignalFrame(object):
         self.gvSpectrogram.setObjectName("gvSpectrogram")
         self.horizontalLayout_4.addWidget(self.gvSpectrogram)
         self.stackedWidget.addWidget(self.pageSpectrogram)
+
         self.pageLoading = QtWidgets.QWidget()
         self.pageLoading.setObjectName("pageLoading")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.pageLoading)
@@ -623,7 +626,8 @@ class Ui_SignalFrame(object):
         self.txtEdProto.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
         self.txtEdProto.setAcceptDrops(False)
         self.txtEdProto.setObjectName("txtEdProto")
-        self.horizontalLayout.addWidget(self.splitter)
+        #PTZ dont need this for PTZ
+        #self.horizontalLayout.addWidget(self.splitter)
 
         self.retranslateUi(SignalFrame)
         self.stackedWidget.setCurrentIndex(0)
