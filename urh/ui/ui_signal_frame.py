@@ -356,6 +356,7 @@ class Ui_SignalFrame(object):
         self.gridLayout_2.addWidget(self.lBitsPerSymbol, 11, 0, 1, 1)
         self.horizontalLayout.addLayout(self.gridLayout_2)
         #self.splitter = QtWidgets.QSplitter(SignalFrame)
+
         self.splitter = QtWidgets.QSplitter()
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
@@ -626,6 +627,7 @@ class Ui_SignalFrame(object):
         self.txtEdProto.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
         self.txtEdProto.setAcceptDrops(False)
         self.txtEdProto.setObjectName("txtEdProto")
+
         #PTZ dont need this for PTZ
         #self.horizontalLayout.addWidget(self.splitter)
 
@@ -634,8 +636,8 @@ class Ui_SignalFrame(object):
         SignalFrame.setTabOrder(self.btnSaveSignal, self.btnReplay)
         SignalFrame.setTabOrder(self.btnReplay, self.btnInfo)
         SignalFrame.setTabOrder(self.btnInfo, self.btnCloseSignal)
-        SignalFrame.setTabOrder(self.btnCloseSignal, self.gvSignal)
-        SignalFrame.setTabOrder(self.gvSignal, self.lineEditSignalName)
+        #SignalFrame.setTabOrder(self.btnCloseSignal, self.gvSignal)
+        #SignalFrame.setTabOrder(self.gvSignal, self.lineEditSignalName)
         SignalFrame.setTabOrder(self.lineEditSignalName, self.spinBoxNoiseTreshold)
         SignalFrame.setTabOrder(self.spinBoxNoiseTreshold, self.spinBoxCenterOffset)
         SignalFrame.setTabOrder(self.spinBoxCenterOffset, self.spinBoxCenterSpacing)
@@ -646,24 +648,24 @@ class Ui_SignalFrame(object):
         SignalFrame.setTabOrder(
             self.spinBoxBitsPerSymbol, self.btnAdvancedModulationSettings
         )
-        SignalFrame.setTabOrder(
-            self.btnAdvancedModulationSettings, self.btnShowHideStartEnd
-        )
-        SignalFrame.setTabOrder(self.btnShowHideStartEnd, self.btnAutoDetect)
-        SignalFrame.setTabOrder(self.btnAutoDetect, self.txtEdProto)
-        SignalFrame.setTabOrder(self.txtEdProto, self.cbSignalView)
+        #SignalFrame.setTabOrder(
+        #    self.btnAdvancedModulationSettings, self.btnShowHideStartEnd
+        #)
+        #SignalFrame.setTabOrder(self.btnShowHideStartEnd, self.btnAutoDetect)
+        #SignalFrame.setTabOrder(self.btnAutoDetect, self.txtEdProto)
+        #SignalFrame.setTabOrder(self.txtEdProto, self.cbSignalView)
         SignalFrame.setTabOrder(self.cbSignalView, self.sliderFFTWindowSize)
         SignalFrame.setTabOrder(self.sliderFFTWindowSize, self.sliderSpectrogramMin)
         SignalFrame.setTabOrder(self.sliderSpectrogramMin, self.sliderSpectrogramMax)
         SignalFrame.setTabOrder(self.sliderSpectrogramMax, self.cbProtoView)
         SignalFrame.setTabOrder(self.cbProtoView, self.chkBoxShowProtocol)
         SignalFrame.setTabOrder(self.chkBoxShowProtocol, self.chkBoxSyncSelection)
-        SignalFrame.setTabOrder(self.chkBoxSyncSelection, self.sliderYScale)
-        SignalFrame.setTabOrder(self.sliderYScale, self.btnFilter)
-        SignalFrame.setTabOrder(self.btnFilter, self.spinBoxSelectionStart)
-        SignalFrame.setTabOrder(self.spinBoxSelectionStart, self.spinBoxSelectionEnd)
-        SignalFrame.setTabOrder(self.spinBoxSelectionEnd, self.spinBoxXZoom)
-        SignalFrame.setTabOrder(self.spinBoxXZoom, self.gvSpectrogram)
+        #SignalFrame.setTabOrder(self.chkBoxSyncSelection, self.sliderYScale)
+        #SignalFrame.setTabOrder(self.sliderYScale, self.btnFilter)
+        #SignalFrame.setTabOrder(self.btnFilter, self.spinBoxSelectionStart)
+        #SignalFrame.setTabOrder(self.spinBoxSelectionStart, self.spinBoxSelectionEnd)
+        #SignalFrame.setTabOrder(self.spinBoxSelectionEnd, self.spinBoxXZoom)
+        #SignalFrame.setTabOrder(self.spinBoxXZoom, self.gvSpectrogram)
 
     def retranslateUi(self, SignalFrame):
         _translate = QtCore.QCoreApplication.translate
@@ -869,7 +871,7 @@ class Ui_SignalFrame(object):
         oleh_frame.setLineWidth(4)
         oleh_layout.addWidget(dialog)
         if SignalFrame.signal_controller and SignalFrame.signal_controller.ptz_view.blue_print:
-            SignalFrame.signal_controller.ptz_blue_print.open_signal_replay_frame(oleh_frame, -1)
+            SignalFrame.signal_controller.ptz_view.blue_print.open_signal_replay_frame(oleh_frame, SignalFrame.ptz_index)
         else:
             self.horizontalLayout.addWidget(oleh_frame)
 

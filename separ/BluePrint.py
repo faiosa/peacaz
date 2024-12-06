@@ -19,6 +19,7 @@ class BluePrint:
         self.open_index = -1
 
         self.buttons = [None, None, None]
+        self.repl_frames = [None, None, None]
 
 
     def __set_left_frame(self):
@@ -143,4 +144,10 @@ class GridBluePrint(BluePrint):
 
     def open_signal_replay_frame(self, repl_frame, index):
         repl_frame.setMaximumWidth(500)
-        self.roller_layout.addWidget(repl_frame, 0, 2)
+        self.roller_layout.addWidget(repl_frame, index, 2)
+        self.repl_frames[index] = repl_frame
+
+    def del_signal_replay_frame(self, index):
+        self.roller_layout.removeWidget(self.repl_frames[index])
+        self.repl_frames[index].deleteLater()
+        self.repl_frames[index] = None

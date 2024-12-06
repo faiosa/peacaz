@@ -831,6 +831,7 @@ class SignalFrame(QFrame):
 
     def del_from_ptz(self):
         self.signal_controller.ptz_view.setup_open_button(self.ptz_index)
+        self.signal_controller.ptz_view.blue_print.del_signal_replay_frame(self.ptz_index)
 
     def __handle_graphic_view_zoomed(self, graphic_view):
         self.ui.lSamplesInView.setText(

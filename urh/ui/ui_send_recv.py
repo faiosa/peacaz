@@ -335,6 +335,9 @@ class Ui_SendRecvDialog(object):
         SendRecvDialog.setTabOrder(self.graphicsViewSend, self.graphicsViewReceive)
         SendRecvDialog.setTabOrder(self.graphicsViewReceive, self.btnAccept)
 
+        self.layoutWidget.setMinimumWidth(300)
+        #self.scrollAreaWidgetContents_2.setMinimumWidth(500)
+
     def retranslateUi(self, SendRecvDialog):
         _translate = QtCore.QCoreApplication.translate
         SendRecvDialog.setWindowTitle(_translate("SendRecvDialog", "Record Signal"))

@@ -55,7 +55,7 @@ class MainRollerView(QMainWindow):
             self.urh_controller = MainController(self)
             #self.urh_controller = MainController(None)
             #self.blue_print.set_urh(self.urh_controller)
-            self.setMenuBar(self.urh_controller.ui.menubar)
+            #self.setMenuBar(self.urh_controller.ui.menubar)
         self.open_index = -1
         for i in range(3):
             self.setup_open_button(i)
