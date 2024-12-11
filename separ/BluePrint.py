@@ -148,6 +148,7 @@ class GridBluePrint(BluePrint):
         self.repl_frames[index] = repl_frame
 
     def del_signal_replay_frame(self, index):
-        self.roller_layout.removeWidget(self.repl_frames[index])
-        self.repl_frames[index].deleteLater()
-        self.repl_frames[index] = None
+        if self.repl_frames[index]:
+            self.roller_layout.removeWidget(self.repl_frames[index])
+            self.repl_frames[index].deleteLater()
+            self.repl_frames[index] = None

@@ -18,13 +18,13 @@
                     "engine": "stepper",
                     "min_angle": 0.0,
                     "max_angle": 359.0,
-                    "current_angle": 60.94539590092286
+                    "current_angle": 49.763641690726175
                 }
             ]
         },
         "2": {
             "name": "Великий контролер",
-            "serial_port": "/dev/ttyUSB0",
+            "serial_port": "/dev/ttyUSB1",
             "switchboard_pins": "8,13,14",
             "switchboard_serial_port": "/dev/ttyACM0",
             "full_controller": true,
@@ -35,7 +35,7 @@
                     "engine": "line",
                     "min_angle": 0.0,
                     "max_angle": 359.999,
-                    "current_angle": 101.30993247402021
+                    "current_angle": 201.29735404903374
                 },
                 {
                     "rotation_speed": 2.77,
