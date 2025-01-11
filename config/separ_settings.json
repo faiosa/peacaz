@@ -6,19 +6,19 @@
     "controller_values": {
         "1": {
             "name": "Маленький контролер",
-            "serial_port": "/dev/ttyUSB0",
+            "serial_port": "/dev/ttyACM0",
             "switchboard_pins": "12, 23",
             "switchboard_serial_port": "/dev/switch1",
             "full_controller": false,
             "rollers": [
                 {
-                    "steps": 512,
+                    "steps": 400,
                     "step_delay": "8",
                     "type": "horizontal",
                     "engine": "stepper",
                     "min_angle": 0.0,
-                    "max_angle": 359.0,
-                    "current_angle": 49.763641690726175
+                    "max_angle": 359.9999,
+                    "current_angle": 0.5906572146464031
                 }
             ]
         },

@@ -73,7 +73,10 @@ class StepperRoller(BaseRoller):
             try:
                 self.arduino = serial.Serial(port=self.serial_port, baudrate=9600)
                 time.sleep(2)#Can't work immediately without a pause (
-                self.set_current_command(self.cur_step)
+                #self.set_current_command(self.cur_step)
+                self.cur_step = self.read_current_step()
+                self.trg_step = self.cur_step
+                self.current_angle = self.step_to_angle(self.cur_step)
                 return True
             except SerialException:
                 text = f"Не вдається підключитись до серійного порта контролера {self.serial_port}. Підключіть девайс або змініть адресу порта в налаштуваннях."
@@ -94,17 +97,21 @@ class StepperRoller(BaseRoller):
     def step_to_angle(self, step):
         return 360.0 * step / self.steps
 
+    def enter(self, s):
+        command = s + "\n"
+        return command.encode('utf-8')
+
     def send_move_command(self, trg_step):
-        self.arduino.write(f"p{trg_step}Q".encode())
+        self.arduino.write(self.enter(f"p{trg_step}"))
 
     def send_stop_command(self):
-        self.arduino.write("sQ".encode())
+        self.arduino.write(self.enter("s"))
 
     def set_current_command(self, cur_step):
-        self.arduino.write(f"c{cur_step}Q".encode())
+        self.arduino.write(self.enter(f"c{cur_step}"))
 
     def read_current_step(self):
-        self.arduino.write("gQ".encode())
+        self.arduino.write(self.enter("g"))
         while True:
             bytes = self.arduino.readline()
             if bytes:
