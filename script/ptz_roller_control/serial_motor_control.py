@@ -35,8 +35,8 @@ class StepperSerialControl:
           elif self.cur > self.trg:
               DIR_GPIO.write(False)
         elif s[0] == 's':
-            self.trg = self.cur
-            self.check_stop()
+          self.trg = self.cur
+          self.check_stop()
 
     def do_step(self):
         PUL_GPIO.write(True)
@@ -75,9 +75,18 @@ def write_data(num):
     f.write(str(num))
     f.close()
 
-control = None
+def wait_for_serial(wait_seconds, limit=999):
+    try:
+        return serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+    except (serial.SerialException, OSError) as se:
+        if limit == 0:
+            raise se
+        else:
+            time.sleep(wait_seconds)
+            return wait_for_serial(wait_seconds, limit - 1)
+
 try:
-    ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+    ser = wait_for_serial(1)
     EN_GPIO.write(False)
 
     delay = 32. / 400.
@@ -101,7 +110,7 @@ finally:
         DIR_GPIO.close()
     if 'EN_GPIO' in locals():
         EN_GPIO.close()
-    if control:
+    if 'control' in locals():
         write_data(control.cur)
 
 print("Program finished.")
