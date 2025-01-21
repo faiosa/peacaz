@@ -4,8 +4,8 @@
 {
     "distutils": {
         "depends": [],
-        "include_dirs": [
-            "/home/oleh/.local/lib/python3.8/site-packages/numpy/core/include"
+        "extra_compile_args": [
+            "-Wno-cpp"
         ],
         "language": "c++",
         "libraries": [
@@ -13,7 +13,7 @@
         ],
         "name": "urh.dev.native.lib.hackrf",
         "sources": [
-            "/home/oleh/PycharmProjects/urh/src/urh/dev/native/lib/hackrf.pyx"
+            "urh/dev/native/lib/hackrf.pyx"
         ]
     },
     "module_name": "urh.dev.native.lib.hackrf"
