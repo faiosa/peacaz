@@ -270,7 +270,7 @@ def get_device_extension(
     cur_dir = os.path.dirname(os.path.realpath(__file__))
     if USE_RELATIVE_PATHS:
         # We need relative paths on windows
-        cpp_file_path = "src/urh/dev/native/lib/{0}.pyx".format(dev_name)
+        cpp_file_path = "urh/dev/native/lib/{0}.pyx".format(dev_name)
     else:
         cpp_file_path = os.path.join(cur_dir, "lib", "{0}.pyx".format(dev_name))
 
