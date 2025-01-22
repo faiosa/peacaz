@@ -1,5 +1,6 @@
 from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
-import pyboard
+from utils import pyboard
+
 
 class Manager:
     def __init__(self, json_settings):

@@ -1,6 +1,6 @@
 from tkinter import Button, Frame
 from utils.settings import load_settings
-import pyboard
+from utils import pyboard
 
 
 class Switchboard(Frame):

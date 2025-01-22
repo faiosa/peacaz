@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "ptz-controller"
-version = "0.2.0"
+name = "peacaz"
+version = "1.2.0"
 description = ""
 authors = ["Vitalii <tomchyshakvitalik@gmail.com>"]
 readme = "README.md"

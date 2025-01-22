@@ -12,7 +12,7 @@ from tkinter import (
 )
 
 from config import ui
-import ptz_controller
+from utils import ptz_controller
 from config.ptz_controls_config import (
     MAX_ANGLE_SETTING,
     MAX_TILT_SETTING,

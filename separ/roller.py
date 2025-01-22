@@ -1,10 +1,8 @@
-import time
-
 from PyQt5.QtWidgets import QMessageBox
 from serial.serialutil import SerialException
 
 from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
-from ptz_controller import send_pelco_command
+from utils.ptz_controller import send_pelco_command
 import serial, time
 
 
