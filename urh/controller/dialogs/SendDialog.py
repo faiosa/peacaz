@@ -153,6 +153,7 @@ class SendDialog(SendRecvDialog):
 
     @pyqtSlot()
     def on_start_clicked(self):
+        print("ON start clicked event")
         super().on_start_clicked()
         if self.ui.progressBarSample.value() >= self.ui.progressBarSample.maximum() - 1:
             self.on_clear_clicked()
@@ -177,6 +178,7 @@ class SendDialog(SendRecvDialog):
 
     @pyqtSlot()
     def on_device_started(self):
+        print("ON device start")
         super().on_device_started()
         self.device_is_sending = True
         self.ui.btnStart.setEnabled(True)

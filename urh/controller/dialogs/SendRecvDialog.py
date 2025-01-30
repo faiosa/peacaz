@@ -187,6 +187,7 @@ class SendRecvDialog(QWidget):
 
     @pyqtSlot()
     def on_start_clicked(self):
+        print("ON start clicked super")
         self.emit_editing_finished_signals()
 
     @pyqtSlot()
