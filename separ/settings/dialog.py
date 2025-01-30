@@ -13,6 +13,7 @@ class TotalSettings(SettingsComposer):
     def __init__(self, parent_frame, main_view):
         super().__init__(parent_frame, main_view.settings)
         self.main_view = main_view
+        self.tweak = self.main_view.tweak
         self.global_labels = {
             "theme": "Тема інтерфейсу",
             "language": "Мова інтерфейсу",
@@ -94,9 +95,8 @@ class TotalSettings(SettingsComposer):
         else:
             self.save_settings()
             self.__update_current_angles()
-            with open(os.path.abspath(file_name), "w", encoding="utf-8") as file:
-                json.dump(self.settings, file, indent=4, ensure_ascii=False)
-            self.main_view.reload_settings(file_name)
+            self.tweak.write_settings(self.settings)
+            self.main_view.reload_settings()
             self.main_view.reload_print()
 
     def get_settings(self):

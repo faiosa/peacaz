@@ -1,0 +1,69 @@
+{
+    "global_settings": {
+        "theme": "Світла",
+        "language": "Українська"
+    },
+    "controller_values": {
+        "1": {
+            "name": "Маленький контролер",
+            "serial_port": "/dev/ttyACM0",
+            "switchboard_pins": "12, 23",
+            "switchboard_serial_port": "/dev/switch1",
+            "full_controller": false,
+            "rollers": [
+                {
+                    "steps": 400,
+                    "step_delay": "8",
+                    "type": "horizontal",
+                    "engine": "stepper",
+                    "min_angle": 0.0,
+                    "max_angle": 359.9999,
+                    "current_angle": 0.5906572146464031
+                }
+            ]
+        },
+        "2": {
+            "name": "Великий контролер",
+            "serial_port": "/dev/ttyUSB1",
+            "switchboard_pins": "8,13,14",
+            "switchboard_serial_port": "/dev/ttyACM0",
+            "full_controller": true,
+            "rollers": [
+                {
+                    "rotation_speed": 16.0,
+                    "type": "horizontal",
+                    "engine": "line",
+                    "min_angle": 0.0,
+                    "max_angle": 359.999,
+                    "current_angle": 201.29735404903374
+                },
+                {
+                    "rotation_speed": 2.77,
+                    "type": "vertical",
+                    "engine": "line",
+                    "min_angle": 0.0,
+                    "max_angle": 75.0,
+                    "current_angle": 12.34478978872299
+                }
+            ]
+        },
+        "3": {
+            "name": "Контролер 3",
+            "serial_port": "/dev/ttyUSB1",
+            "switchboard_pins": "23,45",
+            "switchboard_serial_port": "/wrong",
+            "full_controller": true,
+            "rollers": [
+                {
+                    "steps": 512,
+                    "step_delay": "8",
+                    "type": "horizontal",
+                    "engine": "stepper",
+                    "min_angle": 0.0,
+                    "max_angle": 359.9999,
+                    "current_angle": 0.0
+                }
+            ]
+        }
+    }
+}

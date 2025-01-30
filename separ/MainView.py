@@ -7,6 +7,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox, qApp, QAction, \
     QDialog, QLabel
 
+from config.tweak import Tweak
 from separ.BluePrint import BluePrint, GridBluePrint
 from separ.control import Manager
 from separ.settings.dialog import TotalSettings
@@ -30,7 +31,7 @@ class MainRollerView(QMainWindow):
     def __init__(self, *args):
         super().__init__(*args)
 
-
+        self.tweak = Tweak()
         window = QWidget(self)
         self.setCentralWidget(window)
 
@@ -46,7 +47,7 @@ class MainRollerView(QMainWindow):
         self.roller_manager = None
         self.roller_manager_view = None
 
-        self.reload_settings(SEPAR_SETTINGS_FILE)
+        self.reload_settings()
         for index in range(len(self.roller_manager.controllers)):
             self.blue_print.add_roller(self.roller_manager.controllers[index], index)
 
@@ -80,8 +81,8 @@ class MainRollerView(QMainWindow):
         self.urh_controller.on_open_file_action_triggered()
         self.open_index = -1
 
-    def reload_settings(self, file):
-        self.settings = load_settings_from_file(file)
+    def reload_settings(self):
+        self.settings = self.tweak.get_settings()
         self.roller_manager = Manager(self.settings)
 
     def reload_print(self):
