@@ -753,7 +753,9 @@ class Device(object):
                         self.__class__.__name__
                     )
                 )
-                self.transmit_process.terminate()
+                # OLEH: see Device.727
+                if not sys.platform == "win32":
+                    self.transmit_process.terminate()
                 self.transmit_process.join()
 
         self.is_transmitting = False
