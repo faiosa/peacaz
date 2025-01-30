@@ -14,6 +14,7 @@ from urh.dev.native.SendConfig import SendConfig
 from urh.signalprocessing.IQArray import IQArray
 from urh.util import util
 from urh.util.Logger import logger
+import sys
 
 # set shared library path when processes spawn so they can also find the .so's in bundled case
 util.set_shared_library_path()
@@ -722,9 +723,15 @@ class Device(object):
 
         logger.info("{0}: Starting TX Mode".format(self.__class__.__name__))
 
-        self.transmit_process = Process(
-            target=self.send_process_function, args=self.send_process_arguments
-        )
+        #OLEH: Process doesn't work with pyinstaller on windows 11, replaced it with Thread
+        if sys.platform == "win32":
+            self.transmit_process = threading.Thread(
+                target=self.send_process_function, args=self.send_process_arguments
+            )
+        else:
+            self.transmit_process = Process(
+                target=self.send_process_function, args=self.send_process_arguments
+            )
 
         self.transmit_process.daemon = True
         self._start_read_message_thread()
