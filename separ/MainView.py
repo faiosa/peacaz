@@ -57,6 +57,9 @@ class MainRollerView(QMainWindow):
             #self.urh_controller = MainController(None)
             #self.blue_print.set_urh(self.urh_controller)
             #self.setMenuBar(self.urh_controller.ui.menubar)
+        self.__setup_open_buttons()
+
+    def __setup_open_buttons(self):
         self.open_index = -1
         for i in range(3):
             self.setup_open_button(i)
@@ -86,7 +89,7 @@ class MainRollerView(QMainWindow):
         self.roller_manager = Manager(self.settings)
 
     def reload_print(self):
-        self.blue_print.reload_roller_slots()
+        self.blue_print.remove_roller_frames()
         for index in range(len(self.roller_manager.controllers)):
             self.blue_print.add_roller(self.roller_manager.controllers[index], index)
 

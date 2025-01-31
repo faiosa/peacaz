@@ -20,6 +20,7 @@ class BluePrint:
 
         self.buttons = [None, None, None]
         self.repl_frames = [None, None, None]
+        self.roller_frames = [None, None, None]
 
 
     def __set_left_frame(self):
@@ -38,15 +39,12 @@ class BluePrint:
     def set_urh(self, urh_controller):
         self.left_layout.addWidget(urh_controller)
 
-    def reload_roller_slots(self):
-        self.__unset_rollers_slots()
-        #self.__set_rollers_slots()
-
+    '''
     def __unset_rollers_slots(self):
         self.left_layout.removeWidget(self.rollers_frame)
         self.rollers_frame.deleteLater()
         self.rollers_frame = None
-
+    '''
     def __set_rollers_slots(self):
         self.rollers_frame = QWidget(self.left_column)
         #self.left_layout.addWidget(self.rollers_frame)
@@ -103,6 +101,7 @@ class GridBluePrint(BluePrint):
         super().__init__(window)
 
 
+
     def set_urh(self, urh_controller):
         pass
 
@@ -124,7 +123,7 @@ class GridBluePrint(BluePrint):
         controller_view = ControllerView(controller, frame)
 
         self.roller_layout.addWidget(frame, index, 0, alignment=QtCore.Qt.AlignLeft)
-
+        self.roller_frames[index] = frame
         return controller_view
 
     def add_open_signal_button(self, button, index):
@@ -152,3 +151,12 @@ class GridBluePrint(BluePrint):
             self.roller_layout.removeWidget(self.repl_frames[index])
             self.repl_frames[index].deleteLater()
             self.repl_frames[index] = None
+
+
+    def remove_roller_frames(self):
+        #self.__unset_rollers_slots()
+        for i in range(3):
+            if self.roller_frames[i]:
+                self.roller_layout.removeWidget(self.roller_frames[i])
+                self.roller_frames[i].deleteLater()
+                self.roller_frames[i] = None
