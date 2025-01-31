@@ -20,7 +20,7 @@ def __get_qt_settings():
         __qt_settings.fileName()
     except:
         __qt_settings = QSettings(
-            QSettings.IniFormat, QSettings.UserScope, "urh", "urh"
+            QSettings.IniFormat, QSettings.UserScope, "peacaz", "urh"
         )
 
     return __qt_settings
