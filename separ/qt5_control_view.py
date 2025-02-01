@@ -92,13 +92,6 @@ class SwitchBoardView:
         self.switchboard = switchboard
         self.frame = frame
 
-        self.active_palette = QPalette()
-        self.active_palette.setColor(QPalette.Active, QPalette.Button, QColor("#ADD8E6"))#QColor("#ADD8E6")
-        self.active_palette.setColor(QPalette.Inactive, QPalette.Button, QColor("#ADD8E6"))
-        self.inactive_palette = QPalette()
-        self.inactive_palette.setColor(QPalette.Active, QPalette.Button, QColor("#FFFFFF"))#QColor("#FFFFFF"))
-        self.inactive_palette.setColor(QPalette.Inactive, QPalette.Button, QColor("#FFFFFF"))  # QColor("#FFFFFF"))
-
         self.buttons = []
         switch_buttons_len = len(switchboard.pins) if self.switchboard.is_full_control else 4
         for ind in range(switch_buttons_len):
@@ -116,6 +109,6 @@ class SwitchBoardView:
     def update_button_visuals(self):
         for i, button in enumerate(self.buttons):
             if self.switchboard.states[i]:
-                button.setPalette(self.active_palette)  # Light blue for active buttons
+                button.setStyleSheet("background-color : #ADD8E6")  # Light blue for active buttons
             else:
-                button.setPalette(self.inactive_palette)  # White for inactive buttons
+                button.setStyleSheet("background-color : #DDDDDD")  # White for inactive buttons
