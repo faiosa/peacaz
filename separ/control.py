@@ -1,5 +1,7 @@
 from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
 from utils import pyboard
+import serial
+from utils.comutator import BYTE_SIZE, toByteArray
 
 
 class Manager:
@@ -66,27 +68,26 @@ class Controller:
 
 class SwitchBoard:
     def __init__(self, pins, switchboard_serial_port, is_full_control):
-        self.pins = pins
+        self.pins = [int(sp) for sp in pins]
         self.states = []
         self.switchboard_serial_port = switchboard_serial_port
         self.is_full_control = is_full_control
+        self.app_index = 42
+
+    def _compose_command(self, *args):
+        return toByteArray(self.app_index, len(args) * BYTE_SIZE, *args)
 
     def _connect_device(self):
         try:
-            return pyboard.Pyboard(self.switchboard_serial_port)
+            return serial.Serial(port=self.switchboard_serial_port, baudrate=115200)
         except Exception as e:
             print(f"Failed to connect to the device: {e}")
 
     def _exec_command(self, pyboard, command):
         try:
-            pyboard.enter_raw_repl()
-            pyboard.exec_(command)
-            output = pyboard.exec_(command).decode("utf-8")
-            pyboard.exit_raw_repl()
-            return output
+            pyboard.write(command)
         except Exception as e:
             print(f"Error executing command '{command}': {e}")
-            return None
 
 
 class FullControlSwitchBoard(SwitchBoard):
@@ -99,15 +100,9 @@ class FullControlSwitchBoard(SwitchBoard):
         self.__send_gpio_command(index, self.states[index])
 
     def __send_gpio_command(self, index, state):
-        pin = self.pins[index]
+        command = self._compose_command(self.pins[index], 1 if state else 0)
         pyb = self._connect_device()
-        command = [
-            "import machine",
-            f"pin = machine.Pin({pin}, machine.Pin.OUT); pin.{'high' if state else 'low'}()",
-        ]
-        for cmd in command:
-            result = self._exec_command(pyb, cmd)
-            print(f"Command result: {result}")
+        self._exec_command(pyb, command)
         if pyb:
             pyb.close()
 
@@ -123,31 +118,8 @@ class SimplySwitchBoard(SwitchBoard):
 
     def __send_pico_command(self, index):
         first_pin, second_pin = self.pins
-        commands = [
-            [
-                "import machine",
-                f"pin = machine.Pin({first_pin}, machine.Pin.OUT); pin.low()",
-                f"pin = machine.Pin({second_pin}, machine.Pin.OUT); pin.low()",
-            ],
-            [
-                "import machine",
-                f"pin = machine.Pin({first_pin}, machine.Pin.OUT); pin.high()",
-                f"pin = machine.Pin({second_pin}, machine.Pin.OUT); pin.low()",
-            ],
-            [
-                "import machine",
-                f"pin = machine.Pin({first_pin}, machine.Pin.OUT); pin.low()",
-                f"pin = machine.Pin({second_pin}, machine.Pin.OUT); pin.high()",
-            ],
-            [
-                "import machine",
-                f"pin = machine.Pin({first_pin}, machine.Pin.OUT); pin.high()",
-                f"pin = machine.Pin({second_pin}, machine.Pin.OUT); pin.high()",
-            ],
-        ]
+        command = self._compose_command(first_pin, index % 2, second_pin, index // 2)
         pyb = self._connect_device()
-        for cmd in commands[index]:
-            result = self._exec_command(pyb, cmd)
-            print(f"Command '{cmd}' output:", result)
+        self._exec_command(pyb, command)
         if pyb:
             pyb.close()
