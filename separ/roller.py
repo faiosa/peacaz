@@ -1,9 +1,11 @@
 from PyQt5.QtWidgets import QMessageBox
+from pearax.client import PearaxClient
+from pearax.core import Pearax
 from serial.serialutil import SerialException
 
 from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
 from utils.ptz_controller import send_pelco_command
-import serial, time
+import serial, time, threading
 
 
 class BaseRoller:
@@ -54,23 +56,33 @@ class BaseRoller:
         return self.is_moving_increase or self.is_moving_decrease
 
 
+def enter(s):
+    return s.encode('utf-8')
+
+
 class StepperRoller(BaseRoller):
     def __init__(self, steps, min_angle, max_angle, current_angle, serial_port, is_vertical):
         super().__init__(min_angle, max_angle, current_angle, serial_port, is_vertical)
         self.steps = steps
         self.cur_step = self.angle_to_step(self.current_angle)
         self.trg_step = self.cur_step
-        self.arduino = None
+        self.pearax = None
         self.ensure_arduino(False)
         #self.arduino = serial.Serial(port=self.serial_port, baudrate=9600)
 
     def ensure_arduino(self, show_message = True):
-        if self.arduino:
+        if self.pearax:
             return True
         else:
             try:
-                self.arduino = serial.Serial(port=self.serial_port, baudrate=9600)
+                arduino = serial.Serial(port=self.serial_port, baudrate=115200)
                 time.sleep(2)#Can't work immediately without a pause (
+                connector = Pearax(arduino, 3, [42])
+                thread = threading.Thread(target = connector.run, daemon=True, name="PearaxConnector")
+                thread.start()
+
+                self.pearax = PearaxClient(42, connector)
+
                 #self.set_current_command(self.cur_step)
                 self.cur_step = self.read_current_step()
                 self.trg_step = self.cur_step
@@ -95,26 +107,19 @@ class StepperRoller(BaseRoller):
     def step_to_angle(self, step):
         return 360.0 * step / self.steps
 
-    def enter(self, s):
-        command = s + "\n"
-        return command.encode('utf-8')
-
     def send_move_command(self, trg_step):
-        self.arduino.write(self.enter(f"p{trg_step}"))
+        self.pearax.write(enter(f"p{trg_step}"))
 
     def send_stop_command(self):
-        self.arduino.write(self.enter("s"))
+        self.pearax.write(enter("s"))
 
     def set_current_command(self, cur_step):
-        self.arduino.write(self.enter(f"c{cur_step}"))
+        self.pearax.write(enter(f"c{cur_step}"))
 
     def read_current_step(self):
-        self.arduino.write(self.enter("g"))
-        while True:
-            bytes = self.arduino.readline()
-            if bytes:
-                return int(bytes)
-
+        self.pearax.write(enter("g"))
+        bytes = self.pearax.block_read()
+        return int.from_bytes(bytes, byteorder='big')
 
     def start_increase_angle(self, dst_angle):
         if self.ensure_arduino() and not (self.is_moving_increase or self.is_moving_decrease):

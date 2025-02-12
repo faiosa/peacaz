@@ -2,7 +2,7 @@ import copy
 import os
 
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtCore import pyqtSlot, QDir, Qt
+from PyQt5.QtCore import pyqtSlot, QDir, Qt, QStandardPaths
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox, qApp, QAction, \
     QDialog, QLabel
@@ -23,6 +23,7 @@ from urh.util import FileOperator
 from urh.util.Errors import Errors
 from urh.util.ProjectManager import ProjectManager
 from utils.settings import load_settings_from_file, SEPAR_SETTINGS_FILE
+from pearax.func import log_conf
 
 #class PTZRolerView(QMainWindow):
 
@@ -47,6 +48,9 @@ class MainRollerView(QMainWindow):
         self.roller_manager = None
         self.roller_manager_view = None
 
+        log_dir = os.path.join(os.path.dirname(str(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))), "peacaz", "logs", "")
+        os.makedirs(os.path.dirname(log_dir), exist_ok=True)
+        log_conf["log_dir"] = log_dir
         self.reload_settings()
         for index in range(len(self.roller_manager.controllers)):
             self.blue_print.add_roller(self.roller_manager.controllers[index], index)
