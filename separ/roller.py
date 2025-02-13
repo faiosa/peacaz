@@ -75,11 +75,15 @@ class StepperRoller(BaseRoller):
             return True
         else:
             try:
-                arduino = serial.Serial(port=self.serial_port, baudrate=115200)
-                time.sleep(2)#Can't work immediately without a pause (
-                connector = Pearax(arduino, 3, [42])
+                def serial_connect():
+                    arduino = serial.Serial(port=self.serial_port, baudrate=115200)
+                    #time.sleep(2)  # Can't work immediately without a pause (
+                    return arduino
+                connector = Pearax(serial_connect, 3, [42])
                 thread = threading.Thread(target = connector.run, daemon=True, name="PearaxConnector")
                 thread.start()
+
+
 
                 self.pearax = PearaxClient(42, connector)
 
