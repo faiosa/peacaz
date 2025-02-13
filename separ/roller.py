@@ -118,8 +118,8 @@ class StepperRoller(BaseRoller):
 
     def read_current_step(self):
         self.pearax.write(enter("g"))
-        bytes = self.pearax.block_read()
-        return int.from_bytes(bytes, byteorder='big')
+        bits = self.pearax.block_read()
+        return int(bits.decode("utf-8").strip())
 
     def start_increase_angle(self, dst_angle):
         if self.ensure_arduino() and not (self.is_moving_increase or self.is_moving_decrease):
