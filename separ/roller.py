@@ -61,49 +61,40 @@ def enter(s):
 
 
 class StepperRoller(BaseRoller):
-    def __init__(self, steps, min_angle, max_angle, current_angle, serial_port, is_vertical):
-        super().__init__(min_angle, max_angle, current_angle, serial_port, is_vertical)
+    def __init__(self, radxa: Pearax, steps, min_angle, max_angle, current_angle, is_vertical):
+        super().__init__(min_angle, max_angle, current_angle, None, is_vertical)
+        assert radxa is not None
         self.steps = steps
         self.cur_step = self.angle_to_step(self.current_angle)
         self.trg_step = self.cur_step
-        self.pearax = None
+        self.serial_client = PearaxClient(42, radxa)
         self.ensure_arduino(False)
         #self.arduino = serial.Serial(port=self.serial_port, baudrate=9600)
 
-    def ensure_arduino(self, show_message = True):
-        if self.pearax:
-            return True
-        else:
-            try:
-                def serial_connect():
-                    arduino = serial.Serial(port=self.serial_port, baudrate=115200)
-                    #time.sleep(2)  # Can't work immediately without a pause (
-                    return arduino
-                connector = Pearax(serial_connect, 3, [42])
-                thread = threading.Thread(target = connector.run, daemon=True, name="PearaxConnector")
-                thread.start()
-
-
-
-                self.pearax = PearaxClient(42, connector)
-
-                #self.set_current_command(self.cur_step)
-                self.cur_step = self.read_current_step()
+    def ensure_arduino(self, show_message = False, retry=5):
+        resp = False
+        if self.serial_client.pearax.is_serial_alive():
+            cs = self.read_current_step()
+            if not cs is None:
+                self.cur_step = cs
                 self.trg_step = self.cur_step
                 self.current_angle = self.step_to_angle(self.cur_step)
-                return True
-            except SerialException:
-                text = f"Не вдається підключитись до серійного порта контролера {self.serial_port}. Підключіть девайс або змініть адресу порта в налаштуваннях."
-                if show_message:
-                    msg = QMessageBox()
-                    msg.setIcon(QMessageBox.Critical)
-                    msg.setText("Не підключено серійний порт контролера")
-                    msg.setInformativeText(text)
-                    msg.setWindowTitle("Помилка конфігурації")
-                    msg.exec_()
-                else:
-                    print(text)
-                return False
+                resp = True
+        if not resp:
+            if retry > 0:
+                time.sleep(0.01)
+                return self.ensure_arduino(show_message, retry - 1)
+            text = f"Не вдається підключитись до серійного порта контролера {self.serial_port}. Підключіть девайс або змініть адресу порта в налаштуваннях."
+            if show_message:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Critical)
+                msg.setText("Не підключено серійний порт контролера")
+                msg.setInformativeText(text)
+                msg.setWindowTitle("Помилка конфігурації")
+                msg.exec_()
+            else:
+                print(text)
+        return resp
 
     def angle_to_step(self, angle):
         return int(angle * self.steps / 360)
@@ -112,17 +103,17 @@ class StepperRoller(BaseRoller):
         return 360.0 * step / self.steps
 
     def send_move_command(self, trg_step):
-        self.pearax.write(enter(f"p{trg_step}"))
+        self.serial_client.write(enter(f"p{trg_step}"))
 
     def send_stop_command(self):
-        self.pearax.write(enter("s"))
+        self.serial_client.write(enter("s"))
 
     def set_current_command(self, cur_step):
-        self.pearax.write(enter(f"c{cur_step}"))
+        self.serial_client.write(enter(f"c{cur_step}"))
 
     def read_current_step(self):
-        self.pearax.write(enter("g"))
-        bits = self.pearax.block_read()
+        self.serial_client.write(enter("g"))
+        bits = self.serial_client.block_read()
         return int(bits.decode("utf-8").strip())
 
     def start_increase_angle(self, dst_angle):

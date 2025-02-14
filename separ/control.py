@@ -1,7 +1,8 @@
 from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
-from utils import pyboard
-import serial
 from utils.comutator import BYTE_SIZE, toByteArray
+from pearax.func import serial_connect
+from pearax.core import Pearax
+import threading
 
 
 class Manager:
@@ -22,6 +23,12 @@ class Controller:
     def __init__(self, json_settings):
         self.name = json_settings.get("name")
         self.settings = json_settings
+        self.radxa = None
+        if self.settings.get("use_radxa"):
+            radxa_serial_port = self.settings.get("radxa_serial_port")
+            self.radxa = Pearax(lambda: serial_connect(radxa_serial_port, 115200), 3, [42])
+            rthread = threading.Thread(target=self.radxa.run, daemon=True, name="PearaxConnector")
+            rthread.start()
         self.rollers = [ self.create_roller(json, json_settings.get("serial_port")) for json in json_settings.get("rollers") ]
         switchboard_pins = [
             pin.strip()
@@ -36,11 +43,11 @@ class Controller:
         is_vertical = json.get("type") == "vertical"
         if json.get("engine") == "stepper":
             return StepperRoller(
+                self.radxa,
                 steps=json.get("steps"),
                 min_angle=json.get("min_angle"),
                 max_angle=json.get("max_angle"),
                 current_angle=json.get("current_angle"),
-                serial_port=serial_port,
                 is_vertical = is_vertical
             )
         elif is_vertical:

@@ -68,7 +68,7 @@ class BaseRollerView:
         self.update_roller_view()
         if self.roller.is_moving_increase:
             QTimer.singleShot(
-                100,
+                20,
                 lambda: self.check_ptz_increase(target_angle)
             )
         else:
@@ -85,7 +85,7 @@ class BaseRollerView:
         self.update_roller_view()
         if self.roller.is_moving_decrease:
             QTimer.singleShot(
-                100,
+                20,
                 lambda: self.check_ptz_decrease(target_angle)
             )
         else:
