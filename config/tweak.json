@@ -9,9 +9,9 @@
             "use_radxa": true,
             "radxa_serial_port": "/dev/ttyACM0",
             "switchboard": {
-                "pins": "12, 23",
-                "serial_port": "NOT_EXISTING_PORT",
-                "full_control": false
+                "pins": "71, 72, 75",
+                "serial_port": "radxa",
+                "full_control": true
             },
             "rollers": [
                 {

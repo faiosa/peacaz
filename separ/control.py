@@ -1,6 +1,6 @@
+from pearax.client import PearaxClient
 from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
-from utils.comutator import BYTE_SIZE, toByteArray
-from pearax.func import serial_connect
+from pearax import func
 from pearax.core import Pearax
 import threading
 
@@ -26,18 +26,20 @@ class Controller:
         self.radxa = None
         if self.settings.get("use_radxa"):
             radxa_serial_port = self.settings.get("radxa_serial_port")
-            self.radxa = Pearax(lambda: serial_connect(radxa_serial_port, 115200), 3, [42])
+            self.radxa = Pearax(lambda: func.serial_connect(radxa_serial_port, 115200), 3, [42, 16])
             rthread = threading.Thread(target=self.radxa.run, daemon=True, name="PearaxConnector")
             rthread.start()
         self.rollers = [ self.create_roller(json, json_settings.get("serial_port")) for json in json_settings.get("rollers") ]
+
+        switchboard_settings = self.settings.get("switchboard")
+        switchboard_serial_port = switchboard_settings.get("serial_port")
         switchboard_pins = [
             pin.strip()
-            for pin in self.settings.get("switchboard_pins", "28, 29").split(
+            for pin in switchboard_settings.get("pins", "28, 29").split(
                 ","
             )
         ]
-        switchboard_serial_port = self.settings.get("switchboard_serial_port")
-        self.switchboard = FullControlSwitchBoard(switchboard_pins, switchboard_serial_port) if self.settings.get("full_controller") else SimplySwitchBoard(switchboard_pins, switchboard_serial_port)
+        self.switchboard = FullControlSwitchBoard(self.radxa, switchboard_serial_port, switchboard_pins) if switchboard_settings.get("full_control") else SimplySwitchBoard(self.radxa, switchboard_serial_port, switchboard_pins)
 
     def create_roller(self, json, serial_port):
         is_vertical = json.get("type") == "vertical"
@@ -73,33 +75,39 @@ class Controller:
                 return True
         return False
 
+BYTE_SIZE = 3
+BYTE_ORDER = 'big'
+
 class SwitchBoard:
-    def __init__(self, pins, switchboard_serial_port, is_full_control):
+    def __init__(self, pearax: Pearax, switchboard_serial_port: str, pins, is_full_control):
         self.pins = [int(sp) for sp in pins]
         self.states = []
-        self.switchboard_serial_port = switchboard_serial_port
+        self.app_index = 16
+        if switchboard_serial_port == "radxa":
+            if pearax is None:
+                func_logger.fatal("Controller missing pearax fro swithcboard configured with 'radxa'")
+        else:
+            pearax = Pearax(lambda: self.__connect_device(switchboard_serial_port), 3, [self.app_index])
+            rthread = threading.Thread(target=pearax.run, daemon=True, name="PearaxConnector")
+            rthread.start()
+        self.serial_client = PearaxClient(self.app_index, pearax)
         self.is_full_control = is_full_control
-        self.app_index = 42
+        self.ints_to_bytes = func.ints_to_bytes_lambda(BYTE_SIZE, BYTE_ORDER)
+
 
     def _compose_command(self, *args):
-        return toByteArray(self.app_index, len(args) * BYTE_SIZE, *args)
+        return self.ints_to_bytes(*args)
 
-    def _connect_device(self):
-        try:
-            return serial.Serial(port=self.switchboard_serial_port, baudrate=115200)
-        except Exception as e:
-            print(f"Failed to connect to the device: {e}")
+    def __connect_device(self, serial_port):
+        return func.serial_connect(serial_port, 115200)
 
-    def _exec_command(self, pyboard, command):
-        try:
-            pyboard.write(command)
-        except Exception as e:
-            print(f"Error executing command '{command}': {e}")
+    def _exec_command(self, command):
+        self.serial_client.write(command)
 
 
 class FullControlSwitchBoard(SwitchBoard):
-    def __init__(self, pins, switchboard_serial_port):
-        super().__init__(pins, switchboard_serial_port, True)
+    def __init__(self, pearax, switchboard_serial_port, pins):
+        super().__init__(pearax, switchboard_serial_port, pins,True)
         self.states = [False] * len(pins)
 
     def send_command(self, index):
@@ -108,14 +116,11 @@ class FullControlSwitchBoard(SwitchBoard):
 
     def __send_gpio_command(self, index, state):
         command = self._compose_command(self.pins[index], 1 if state else 0)
-        pyb = self._connect_device()
-        self._exec_command(pyb, command)
-        if pyb:
-            pyb.close()
+        self._exec_command(command)
 
 class SimplySwitchBoard(SwitchBoard):
-    def __init__(self, pins, switchboard_serial_port):
-        super().__init__(pins, switchboard_serial_port, False)
+    def __init__(self, pearax, switchboard_serial_port, pins):
+        super().__init__(pearax, switchboard_serial_port, pins,False)
         self.states = [False] * 4
 
     def send_command(self, index):
@@ -126,7 +131,4 @@ class SimplySwitchBoard(SwitchBoard):
     def __send_pico_command(self, index):
         first_pin, second_pin = self.pins
         command = self._compose_command(first_pin, index % 2, second_pin, index // 2)
-        pyb = self._connect_device()
-        self._exec_command(pyb, command)
-        if pyb:
-            pyb.close()
+        self._exec_command(command)
