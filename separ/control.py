@@ -19,11 +19,15 @@ class Manager:
                 return True
         return False
 
+    def close(self):
+        for controller in self.controllers:
+            controller.close()
+
 class Controller:
     def __init__(self, json_settings):
         self.name = json_settings.get("name")
         self.settings = json_settings
-        self.radxa = None
+        self.radxa: ManagePeer = None
         if self.settings.get("use_radxa"):
             radxa_serial_port = self.settings.get("radxa_serial_port")
             self.radxa = ManagePeer(lambda: func.serial_connect(radxa_serial_port, 115200), 3, [42, 16])
@@ -73,6 +77,13 @@ class Controller:
             if roller.is_moving():
                 return True
         return False
+
+    def close(self):
+        if self.radxa:
+            self.radxa.stop()
+        if self.switchboard:
+            if self.switchboard.switchboard_pearax:
+                self.switchboard.switchboard_pearax.stop()
 
 BYTE_SIZE = 3
 BYTE_ORDER = 'big'

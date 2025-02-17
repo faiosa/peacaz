@@ -90,6 +90,7 @@ class MainRollerView(QMainWindow):
 
     def reload_settings(self):
         self.settings = self.tweak.get_settings()
+        self.roller_manager.stop()
         self.roller_manager = Manager(self.settings)
 
     def reload_print(self):
