@@ -32,7 +32,7 @@ class Controller:
             radxa_serial_port = self.settings.get("radxa_serial_port")
             self.radxa = ManagePeer(lambda: func.serial_connect(radxa_serial_port, 115200), 3, [42, 16])
             self.radxa.start()
-        self.rollers = [ self.create_roller(json, json_settings.get("serial_port")) for json in json_settings.get("rollers") ]
+        self.rollers = [ self.create_roller(json) for json in json_settings.get("rollers") ]
 
         switchboard_settings = self.settings.get("switchboard")
         switchboard_serial_port = switchboard_settings.get("serial_port")
@@ -44,7 +44,7 @@ class Controller:
         ]
         self.switchboard = FullControlSwitchBoard(self.radxa, switchboard_serial_port, switchboard_pins) if switchboard_settings.get("full_control") else SimplySwitchBoard(self.radxa, switchboard_serial_port, switchboard_pins)
 
-    def create_roller(self, json, serial_port):
+    def create_roller(self, json):
         is_vertical = json.get("type") == "vertical"
         if json.get("engine") == "stepper":
             return StepperRoller(
@@ -61,7 +61,7 @@ class Controller:
                 min_angle=json.get("min_angle"),
                 max_angle=json.get("max_angle"),
                 current_angle=json.get("current_angle"),
-                serial_port=serial_port
+                serial_port=json.get("serial_port")
             )
         else:
             return HorizontalRoller(
@@ -69,7 +69,7 @@ class Controller:
                 min_angle=json.get("min_angle"),
                 max_angle=json.get("max_angle"),
                 current_angle=json.get("current_angle"),
-                serial_port=serial_port
+                serial_port=json.get("serial_port")
             )
 
     def is_moving(self):

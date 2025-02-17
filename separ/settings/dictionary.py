@@ -174,7 +174,7 @@ class ControllerSettings(SettingsComposer):
         self.controller_labels = {
             "name": "Назва контроллера",
             "use_radxa": "Використовує спільний порт (radxa)",
-            "radxa_serial_port": "Спільний серійний порт"
+            "radxa_serial_port": "Спільний серійний порт (radxa)"
         }
         self.controller_policies = {
             "name": "str",
