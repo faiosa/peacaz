@@ -1,7 +1,7 @@
 from pearax.client import PearaxClient
 from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
 from pearax import func
-from pearax.core import Pearax
+from pearax.core import ManagePeer
 import threading
 
 
@@ -26,9 +26,8 @@ class Controller:
         self.radxa = None
         if self.settings.get("use_radxa"):
             radxa_serial_port = self.settings.get("radxa_serial_port")
-            self.radxa = Pearax(lambda: func.serial_connect(radxa_serial_port, 115200), 3, [42, 16])
-            rthread = threading.Thread(target=self.radxa.run, daemon=True, name="PearaxConnector")
-            rthread.start()
+            self.radxa = ManagePeer(lambda: func.serial_connect(radxa_serial_port, 115200), 3, [42, 16])
+            self.radxa.start()
         self.rollers = [ self.create_roller(json, json_settings.get("serial_port")) for json in json_settings.get("rollers") ]
 
         switchboard_settings = self.settings.get("switchboard")
@@ -83,13 +82,13 @@ class SwitchBoard:
         self.pins = [int(sp) for sp in pins]
         self.states = []
         self.app_index = 16
+        self.switchboard_pearax = None
         if switchboard_serial_port == "radxa":
             if pearax is None:
                 func_logger.fatal("Controller missing pearax fro swithcboard configured with 'radxa'")
         else:
-            pearax = Pearax(lambda: self.__connect_device(switchboard_serial_port), 3, [self.app_index])
-            rthread = threading.Thread(target=pearax.run, daemon=True, name="PearaxConnector")
-            rthread.start()
+            self.switchboard_pearax = ManagePeer(lambda: self.__connect_device(switchboard_serial_port), 3, [self.app_index])
+            self.switchboard_pearax.start()
         self.serial_client = PearaxClient(self.app_index, pearax)
         self.is_full_control = is_full_control
         self.ints_to_bytes = func.ints_to_bytes_lambda(BYTE_SIZE, BYTE_ORDER)
