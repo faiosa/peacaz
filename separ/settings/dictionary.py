@@ -149,46 +149,53 @@ class SettingsComposer(QFrame):
         self.layout = QVBoxLayout(self)
         self.setLayout(self.layout)
 
-    def get_dictionary_settings(self, frame, labels, policies):
+    def get_dictionary_settings(self, frame, labels, policies, src=None):
+        if src is None:
+            src = self.settings
         settings = {}
         for key, label in labels.items():
-            if key in self.settings:
-                settings[key] = self.settings[key]
+            if key in src:
+                settings[key] = src[key]
         return DictionarySettings(frame, labels, settings, policies)
 
 class ControllerSettings(SettingsComposer):
     def __init__(self, parent_frame, json_settings):
         super().__init__(parent_frame, json_settings)
         self.switchboard_labels = {
-            "switchboard_pins": "Піни комутатора:",
-            "switchboard_serial_port": "Серійний порт комутатора:",
-            "full_controller": "Повний контроль"
+            "pins": "Піни комутатора:",
+            "serial_port": "Серійний порт комутатора:",
+            "full_control": "Повний контроль"
         }
         self.switchboard_policies = {
-            "full_controller": "bool",
-            "switchboard_pins": "pins"
+            "full_control": "bool",
+            "pins": "pins",
+            "serial_port": "str"
         }
         self.controller_labels = {
             "name": "Назва контроллера",
-            "serial_port": "Серійний порт"
+            "use_radxa": "Використовує спільний порт (radxa)",
+            "radxa_serial_port": "Спільний серійний порт"
         }
         self.controller_policies = {
             "name": "str",
-            "serial_port": "str"
+            "use_radxa": "bool",
+            "radxa_serial_port": "str"
         }
         roller_labels = {
             "type": "тип ролера",
             "engine": "тип двигуна",
             "min_angle": "Мін кут",
             "max_angle": "Макс кут",
-            "current_angle": "Поточний кут"
+            "current_angle": "Поточний кут",
+            "serial_port": "Серійний порт"
         }
         roller_policies = {
             "type": "immutable",
-            "engine": "immutable",
+            "engine": ["stepper", "line"],
             "min_angle": "double",
             "max_angle": "double",
-            "current_angle": "double"
+            "current_angle": "double",
+            "serial_port": "str"
         }
         self.line_roller_labels = {
             "rotation_speed": "Швидкість повертання (градус/с)"
@@ -210,7 +217,7 @@ class ControllerSettings(SettingsComposer):
         self.stepper_roller_policies.update(roller_policies)
 
         self.controller_settings_view = self.get_dictionary_settings(QGroupBox("general"), self.controller_labels, self.controller_policies)
-        self.switchboard_settings_view = self.get_dictionary_settings(QGroupBox("switchboard"), self.switchboard_labels, self.switchboard_policies)
+        self.switchboard_settings_view = self.get_dictionary_settings(QGroupBox("switchboard"), self.switchboard_labels, self.switchboard_policies, src=self.settings["switchboard"])
 
         self.vroller_settings_view = None
         self.hroller_settings_view = None
@@ -306,7 +313,8 @@ class ControllerSettings(SettingsComposer):
     def get_settings(self):
         settings = {}
         settings.update(self.controller_settings_view.get_settings())
-        settings.update(self.switchboard_settings_view.get_settings())
+        settings["switchboard"] = {}
+        settings["switchboard"].update(self.switchboard_settings_view.get_settings())
         if self.hroller_settings_view or self.vroller_settings_view:
             settings["rollers"] = list()
             if self.hroller_settings_view:

@@ -89,7 +89,7 @@ BYTE_SIZE = 3
 BYTE_ORDER = 'big'
 
 class SwitchBoard:
-    def __init__(self, pearax: Pearax, switchboard_serial_port: str, pins, is_full_control):
+    def __init__(self, pearax: ManagePeer, switchboard_serial_port: str, pins, is_full_control):
         self.pins = [int(sp) for sp in pins]
         self.states = []
         self.app_index = 16
@@ -97,10 +97,12 @@ class SwitchBoard:
         if switchboard_serial_port == "radxa":
             if pearax is None:
                 func_logger.fatal("Controller missing pearax fro swithcboard configured with 'radxa'")
+            else:
+                self.serial_client = PearaxClient(self.app_index, pearax)
         else:
             self.switchboard_pearax = ManagePeer(lambda: self.__connect_device(switchboard_serial_port), 3, [self.app_index])
             self.switchboard_pearax.start()
-        self.serial_client = PearaxClient(self.app_index, pearax)
+            self.serial_client = PearaxClient(self.app_index, self.switchboard_pearax)
         self.is_full_control = is_full_control
         self.ints_to_bytes = func.ints_to_bytes_lambda(BYTE_SIZE, BYTE_ORDER)
 
