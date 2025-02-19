@@ -5,10 +5,10 @@ from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QFrame, Q
     QGroupBox
 
 
+
 class DictionarySettings:
-    def __init__(self, frame, labels, json_settings, policies):
+    def __init__(self, frame, json_settings, policies):
         self.frame = frame
-        self.labels = labels
         self.frame.setStyleSheet('''
             QGroupBox {
                 background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
@@ -30,34 +30,25 @@ class DictionarySettings:
         self.input_fields = {}
         self.settings = json_settings
         self.layout = QGridLayout(frame)
-        row = 0
+        self.policies = policies
 
-        for key in labels:
-            label = QLabel(frame)
-            label.setText(labels.get(key) if key in labels else key)
-            self.layout.addWidget(label, row, 0)
-            value = self.settings[key] if key in self.settings else None
-
-            policy = policies[key] if key in policies else "str"
-            if policy == "immutable":
-                self.input_fields[key] = StrItem(frame, value, False)
-            elif policy == "int":
-                self.input_fields[key] = IntItem(frame, value)
-            elif policy == "double":
-                self.input_fields[key] = DoubleItem(frame, value)
-            elif policy == "bool":
-                self.input_fields[key] = BoolItem(frame, value)
-            elif policy == "pins":
-                self.input_fields[key] = PinListItem(frame, value)
-            elif type(policy) is list:
-                self.input_fields[key] = ComboItem(frame, policy, value)
-            else:
-                self.input_fields[key] = StrItem(frame, value)
-
-            self.layout.addWidget(self.input_fields[key].widget, row, 1)
-            row += 1
+        for policy in policies:
+            policy.apply(self)
+            self.showPolicy(policy)
 
         self.frame.setLayout(self.layout)
+
+    def showPolicy(self, policy):
+        self.layout.addWidget(policy.getQLabel(), policy.index, 0)
+        self.layout.addWidget(policy.getQWidget(), policy.index, 1)
+        self.policies[policy.index] = policy
+
+    def hidePolicy(self, policy):
+        assert self.policies[policy.index] == policy
+        self.layout.removeWidget(policy.getQLabel())
+        self.layout.removeWidget(policy.getQWidget())
+        self.policies[policy.index] = None
+
 
     def add_bottom_widget(self, widget):
         self.layout.addWidget(widget, len(self.labels), 0, 1, 2)
@@ -72,73 +63,7 @@ class DictionarySettings:
     def save_settings(self):
         self.settings = self.get_settings()
 
-class InputItem:
-    def __init__(self, widget):
-        self.widget = widget
 
-    def input_field(self):
-        return self.widget
-
-class IntItem(InputItem):
-    def __init__(self, parent_frame, value):
-        super().__init__(QLineEdit(parent_frame))
-        self.widget.setValidator(QIntValidator())
-        self.widget.setText(str(0 if value is None else value))
-
-    def value(self):
-        return int(self.widget.text())
-
-
-class DoubleItem(InputItem):
-    def __init__(self, parent_frame, value):
-        super().__init__(QLineEdit(parent_frame))
-        validator = QDoubleValidator()
-        locale = QtCore.QLocale(QLocale.English, QLocale.UnitedStates)
-        validator.setLocale(locale)
-        self.widget.setValidator(validator)
-        self.widget.setText(str(0.0 if value is None else value))
-
-    def value(self):
-        return float(self.widget.text())
-
-class StrItem(InputItem):
-    def __init__(self, parent_frame, value, enabled = True):
-        super().__init__(QLineEdit(parent_frame))
-
-        #regex = QRegExp("[0-9]+.?[0-9]{,2}")
-        #validator = QRegExpValidator(regex, self.widget)
-        #self.widget.setValidator(validator)
-        self.widget.setText(str(value))
-        self.widget.setEnabled(enabled)
-
-    def value(self):
-        return str(self.widget.text())
-
-class PinListItem(StrItem):
-    def __init__(self, parent_frame, value):
-        super().__init__(parent_frame, value)
-        regex = QRegExp("[0-9]{1,3}([ ]*,[ ]*[0-9]{1,3})*")
-        validator = QRegExpValidator(regex, self.widget)
-        self.widget.setValidator(validator)
-
-
-class BoolItem(InputItem):
-    def __init__(self, parent_frame, value):
-        super().__init__(QCheckBox(parent_frame))
-        self.widget.setChecked(bool(value))
-
-    def value(self):
-        return self.widget.isChecked()
-
-class ComboItem(InputItem):
-    def __init__(self, parent_frame, values, value):
-        combo = QComboBox(parent_frame)
-        combo.addItems(values)
-        combo.setCurrentText(value)
-        super().__init__(combo)
-
-    def value(self):
-        return self.widget.currentText()
 
 
 class SettingsComposer(QFrame):
@@ -148,7 +73,7 @@ class SettingsComposer(QFrame):
 
         self.layout = QVBoxLayout(self)
         self.setLayout(self.layout)
-
+    '''
     def get_dictionary_settings(self, frame, labels, policies, src=None):
         if src is None:
             src = self.settings
@@ -157,174 +82,124 @@ class SettingsComposer(QFrame):
             if key in src:
                 settings[key] = src[key]
         return DictionarySettings(frame, labels, settings, policies)
-
-class ControllerSettings(SettingsComposer):
-    def __init__(self, parent_frame, json_settings):
-        super().__init__(parent_frame, json_settings)
-        self.switchboard_labels = {
-            "pins": "Піни комутатора:",
-            "serial_port": "Серійний порт комутатора:",
-            "full_control": "Повний контроль"
-        }
-        self.switchboard_policies = {
-            "full_control": "bool",
-            "pins": "pins",
-            "serial_port": "str"
-        }
-        self.controller_labels = {
-            "name": "Назва контроллера",
-            "use_radxa": "Використовує спільний порт (radxa)",
-            "radxa_serial_port": "Спільний серійний порт (radxa)"
-        }
-        self.controller_policies = {
-            "name": "str",
-            "use_radxa": "bool",
-            "radxa_serial_port": "str"
-        }
-        roller_labels = {
-            "type": "тип ролера",
-            "engine": "тип двигуна",
-            "min_angle": "Мін кут",
-            "max_angle": "Макс кут",
-            "current_angle": "Поточний кут",
-            "serial_port": "Серійний порт"
-        }
-        roller_policies = {
-            "type": "immutable",
-            "engine": ["stepper", "line"],
-            "min_angle": "double",
-            "max_angle": "double",
-            "current_angle": "double",
-            "serial_port": "str"
-        }
-        self.line_roller_labels = {
-            "rotation_speed": "Швидкість повертання (градус/с)"
-        }
-        self.line_roller_labels.update(roller_labels)
-        self.line_roller_policies = {
-            "rotation_speed": "double",
-        }
-        self.line_roller_policies.update(roller_policies)
-        self.stepper_roller_labels = {
-            "steps": "кроків в повному оберті",
-            "step_delay": "затримка кроку (мілісекунди)"
-        }
-        self.stepper_roller_labels.update(roller_labels)
-        self.stepper_roller_policies = {
-            "steps": "int",
-            "step_delay": "immutable"
-        }
-        self.stepper_roller_policies.update(roller_policies)
-
-        self.controller_settings_view = self.get_dictionary_settings(QGroupBox("general"), self.controller_labels, self.controller_policies)
-        self.switchboard_settings_view = self.get_dictionary_settings(QGroupBox("switchboard"), self.switchboard_labels, self.switchboard_policies, src=self.settings["switchboard"])
-
-        self.vroller_settings_view = None
-        self.hroller_settings_view = None
-
-        self.vroller_add_button = None
-        self.hroller_add_button = None
-
-        if "rollers" in self.settings:
-            for roller in self.settings["rollers"]:
-                if roller["type"] == "vertical":
-                    self.vroller_settings_view = self.__create_roller(roller)
-                elif roller["type"] == "horizontal":
-                    self.hroller_settings_view = self.__create_roller(roller)
-
-        self.layout.addWidget(self.controller_settings_view.frame)
-        self.layout.addWidget(self.switchboard_settings_view.frame)
-
-        if self.vroller_settings_view:
-            vertical_roller_frame = QFrame(self)
-            self.vertical_roller_layout = QVBoxLayout(vertical_roller_frame)
-            vertical_roller_frame.setLayout(self.vertical_roller_layout)
-            self.layout.addWidget(vertical_roller_frame)
-            self.vertical_roller_layout.addWidget(self.vroller_settings_view.frame)
-        '''
-        else:
-            self.vroller_add_button = QPushButton()
-            self.vroller_add_button.setText("Додати вертикальний ролер")
-            self.vroller_add_button.clicked.connect(lambda: self._new_roller("vertical"))
-            self.vertical_roller_layout.addWidget(self.vroller_add_button)
-        '''
-        if self.hroller_settings_view:
-            horizontal_roller_frame = QFrame(self)
-            self.horizontal_roller_layout = QVBoxLayout(horizontal_roller_frame)
-            horizontal_roller_frame.setLayout(self.horizontal_roller_layout)
-            self.layout.addWidget(horizontal_roller_frame)
-            self.horizontal_roller_layout.addWidget(self.hroller_settings_view.frame)
-        '''
-        else:
-            self.hroller_add_button = QPushButton()
-            self.hroller_add_button.setText("Додати горизонтальний ролер")
-            self.hroller_add_button.clicked.connect(lambda: self._new_roller("horizontal"))
-            self.horizontal_roller_layout.addWidget(self.hroller_add_button)
-        '''
     '''
-    def _new_roller(self, roller_type):
-        roller_settings = {
-            "type": roller_type,
-            "rotation_speed": 0.0,
-            "min_angle": 0.0,
-            "max_angle": 0.0,
-            "current_angle": 0.0
-        }
-        if roller_type == "vertical":
-            self.vroller_settings_view = self.__create_roller(roller_settings)
-            self.vertical_roller_layout.removeWidget(self.vroller_add_button)
-            self.vroller_add_button.deleteLater()
-            self.vertical_roller_layout.addWidget(self.vroller_settings_view.frame)
-            self.vroller_add_button = None
-        else:
-            self.hroller_settings_view = self.__create_roller(roller_settings)
-            self.horizontal_roller_layout.removeWidget(self.hroller_add_button)
-            self.hroller_add_button.deleteLater()
-            self.horizontal_roller_layout.addWidget(self.hroller_settings_view.frame)
-            self.hroller_add_button = None
-    '''
-    def __create_roller(self, roller_settings):
-        labels = self.stepper_roller_labels if roller_settings["engine"] == "stepper" else self.line_roller_labels
-        policies = self.stepper_roller_policies if roller_settings["engine"] == "stepper" else self.line_roller_policies
-        settings_view = DictionarySettings(QGroupBox(f"{roller_settings['type']} roller"), labels, roller_settings, policies)
-        #del_button = QPushButton("Видалити", self)
-        #del_button.clicked.connect(lambda: self.__remove_roller(settings_view))
-        #settings_view.add_bottom_widget(del_button)
-        return settings_view
 
-    '''
-    def __remove_roller(self, roller_view):
-        target_layout = self.vertical_roller_layout if roller_view.settings['type'] == "vertical" else self.horizontal_roller_layout
-        target_layout.removeWidget(roller_view.frame)
-        roller_view.frame.deleteLater()
-        if roller_view.settings['type'] == "vertical":
-            self.vroller_add_button = QPushButton()
-            self.vroller_add_button.setText("Додати вертикальний ролер")
-            self.vroller_add_button.clicked.connect(lambda: self._new_roller("vertical"))
-            target_layout.addWidget(self.vroller_add_button)
-            self.vroller_settings_view = None
-        else:
-            self.hroller_add_button = QPushButton()
-            self.hroller_add_button.setText("Додати горизонтальний ролер")
-            self.hroller_add_button.clicked.connect(lambda: self._new_roller("horizontal"))
-            target_layout.addWidget(self.hroller_add_button)
-            self.hroller_settings_view = None
-    '''
-    def get_settings(self):
-        settings = {}
-        settings.update(self.controller_settings_view.get_settings())
-        settings["switchboard"] = {}
-        settings["switchboard"].update(self.switchboard_settings_view.get_settings())
-        if self.hroller_settings_view or self.vroller_settings_view:
-            settings["rollers"] = list()
-            if self.hroller_settings_view:
-                settings["rollers"].append(self.hroller_settings_view.get_settings())
-            if self.vroller_settings_view:
-                settings["rollers"].append(self.vroller_settings_view.get_settings())
-        return settings
+class Policy:
+    def __init__(self, key: str, index: int, label: str):
+        self.key = key
+        self.index = index
+        self.label = label
+        self.ds = None
+        self.qWidget = None
+        self.qLabel = None
 
-    def save_settings(self):
-        self.settings = self.get_settings()
+    def create_widget(self):
+        pass
+
+    def apply(self, ds: DictionarySettings):
+        self.ds = ds
+        self.qWidget = self.create_widget()
+        self.qLabel = QLabel(self.ds.frame)
+        self.qLabel.setText(self.label)
+
+    def getQLabel(self):
+        return self.qLabel
+
+    def getQWidget(self):
+        return self.qWidget
+
+    def value(self):
+        pass
+
+
+class IntPolicy(Policy):
+    def __init__(self, key: str, index: int, label: str):
+        super().__init__(key, index, label)
+
+    def create_widget(self):
+        widget = QLineEdit(self.ds.frame)
+        widget.setValidator(QIntValidator())
+        value = str(self.ds.settings[self.key] if self.key in self.ds.settings else 0)
+        widget.setText(value)
+        return widget
+
+    def value(self):
+        return int(self.qWidget.text())
+
+class DoublePolicy(Policy):
+    def __init__(self, key: str, index: int, label: str):
+        super().__init__(key, index, label)
+
+    def create_widget(self):
+        widget = QLineEdit(self.ds.frame)
+        validator = QDoubleValidator()
+        locale = QtCore.QLocale(QLocale.English, QLocale.UnitedStates)
+        validator.setLocale(locale)
+        widget.setValidator(validator)
+        value = str(self.ds.settings[self.key] if self.key in self.ds.settings else 0.0)
+        widget.setText(value)
+        return widget
+
+    def value(self):
+        return float(self.qWidget.text())
+
+class StrPolicy(Policy):
+    def __init__(self, key: str, index: int, label: str, enabled = True):
+        super().__init__(key, index, label)
+        self.enabled = enabled
+
+    def create_widget(self):
+        widget = QLineEdit(self.ds.frame)
+        widget.setValidator(QIntValidator())
+        value = str(self.ds.settings[self.key] if self.key in self.ds.settings else "")
+        widget.setText(value)
+        widget.setEnabled(self.enabled)
+        return widget
+
+    def value(self):
+        return str(self.qWidget.text())
+
+class PinsPolicy(StrPolicy):
+    def __init__(self, key: str, index: int, label: str):
+        super().__init__(key, index, label)
+
+    def create_widget(self):
+        widget = QLineEdit(self.ds.frame)
+        regex = QRegExp("[0-9]{1,3}([ ]*,[ ]*[0-9]{1,3})*")
+        validator = QRegExpValidator(regex, self.qWidget)
+        value = str(self.ds.settings[self.key] if  self.key in self.ds.settings else "")
+        widget.setText(value)
+        return widget
+
+class BoolPolicy(Policy):
+    def __init__(self, key: str, index: int, label: str):
+        super().__init__(key, index, label)
+
+    def create_widget(self):
+        widget = QCheckBox(self.ds.frame)
+        widget.setChecked(self.ds.settings[self.key] if self.key in self.ds.settings else False)
+        return widget
+
+    def value(self):
+        return self.widget.isChecked()
+
+class ComboPolicy(Policy):
+    def __init__(self, key: str, index: int, label: str, items, enabled = True):
+        super().__init__(key, index, label)
+        self.items = items
+        self.enabled = enabled
+
+    def create_widget(self):
+        combo = QComboBox(self.ds.frame)
+        combo.addItems(self.items)
+        if self.key in self.ds.settings:
+            combo.setCurrentText(self.ds.settings[self.key])
+        combo.setEnabled(self.enabled)
+        return combo
+
+    def value(self):
+        return self.widget.currentText()
+
 
 
 
