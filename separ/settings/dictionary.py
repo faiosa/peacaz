@@ -27,7 +27,6 @@ class DictionarySettings:
                 color: black;
             }
         ''')
-        self.input_fields = {}
         self.settings = json_settings
         self.layout = QGridLayout(frame)
         self.policies = policies
@@ -56,8 +55,9 @@ class DictionarySettings:
 
     def get_settings(self):
         settings = {}
-        for key, ifield in self.input_fields.items():
-            settings[key] = ifield.value()
+        for policy in self.policies:
+            if not policy is None:
+                settings[policy.key] = policy.value()
         return settings
 
     def save_settings(self):
@@ -92,6 +92,17 @@ class Policy:
         self.ds = None
         self.qWidget = None
         self.qLabel = None
+        self.subp = []
+
+    def addSubPolicy(self, policy, val):
+        self.subp.append((policy, val))
+
+    def normalizeSubPolicies(self):
+        for policy, val in self.subp:
+            if self.value() == val:
+                policy.ds.showPolicy(policy)
+            else:
+                policy.ds.hidePolicy(policy)
 
     def create_widget(self):
         pass
@@ -181,7 +192,7 @@ class BoolPolicy(Policy):
         return widget
 
     def value(self):
-        return self.widget.isChecked()
+        return self.getQWidget().isChecked()
 
 class ComboPolicy(Policy):
     def __init__(self, key: str, index: int, label: str, items, enabled = True):
@@ -198,7 +209,7 @@ class ComboPolicy(Policy):
         return combo
 
     def value(self):
-        return self.widget.currentText()
+        return self.getQWidget().currentText()
 
 
 

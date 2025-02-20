@@ -48,9 +48,9 @@ class TotalSettings(SettingsComposer):
     def __add_settings_controller(self, settings):
         index = len(self.controllers_settings)
         controller = ControllerSettings(self, settings)
-        if not 'name' in controller.settings:
-            controller.settings['name'] = f"Контролер {index + 1}"
-            controller.controller_settings_view.input_fields["name"].widget.setText(controller.settings['name'])
+        #if not 'name' in controller.settings:
+        #    controller.settings['name'] = f"Контролер {index + 1}"
+        #    controller.controller_settings_view.input_fields["name"].widget.setText(controller.settings['name'])
         self.controllers_settings.append(controller)
         self.controller_tabs.addTab(controller, controller.settings["name"])
         #del_button = QPushButton()
@@ -123,16 +123,6 @@ class ControllerSettings(SettingsComposer):
             BoolPolicy("use_radxa", 1, "Використовує спільний порт (radxa)"),
             StrPolicy("radxa_serial_port", 2, "Спільний серійний порт (radxa)")
         ]
-        self.roller_policies = [
-            ComboPolicy("type", 0, "тип ролера", ["vertical", "horizontal"], False),
-            ComboPolicy("engine", 1, "тип двигуна", ["stepper", "line"]),
-            DoublePolicy("min_angle", 2, "Мін кут"),
-            DoublePolicy("max_angle", 3, "Макс кут"),
-            DoublePolicy("current_angle", 4, "Поточний кут"),
-            StrPolicy("serial_port", 5, "Серійний порт"),
-            DoublePolicy("rotation_speed", 6, "Швидкість повертання (градус/с)"),
-            IntPolicy("steps", 7, "кроків в повному оберті")
-        ]
 
         self.controller_settings_view = DictionarySettings(QGroupBox("general"), self.settings, self.controller_policies)
         self.switchboard_settings_view = DictionarySettings(QGroupBox("switchboard"), self.settings["switchboard"], self.switchboard_policies)
@@ -201,13 +191,25 @@ class ControllerSettings(SettingsComposer):
             self.horizontal_roller_layout.addWidget(self.hroller_settings_view.frame)
             self.hroller_add_button = None
     '''
+
     def __create_roller(self, roller_settings):
         '''
         labels = self.stepper_roller_labels if roller_settings["engine"] == "stepper" else self.line_roller_labels
         policies = self.stepper_roller_policies if roller_settings["engine"] == "stepper" else self.line_roller_policies
         settings_view = DictionarySettings(QGroupBox(f"{roller_settings['type']} roller"), labels, roller_settings, policies)
         '''
-        settings_view = DictionarySettings(QGroupBox(f"{roller_settings['type']} roller"), roller_settings, self.roller_policies)
+        roller_policies = [
+            ComboPolicy("type", 0, "тип ролера", ["vertical", "horizontal"], False),
+            ComboPolicy("engine", 1, "тип двигуна", ["stepper", "line"]),
+            DoublePolicy("min_angle", 2, "Мін кут"),
+            DoublePolicy("max_angle", 3, "Макс кут"),
+            DoublePolicy("current_angle", 4, "Поточний кут"),
+            StrPolicy("serial_port", 5, "Серійний порт"),
+            DoublePolicy("rotation_speed", 6, "Швидкість повертання (градус/с)"),
+            IntPolicy("steps", 7, "кроків в повному оберті")
+        ]
+
+        settings_view = DictionarySettings(QGroupBox(f"{roller_settings['type']} roller"), roller_settings, roller_policies)
         #del_button = QPushButton("Видалити", self)
         #del_button.clicked.connect(lambda: self.__remove_roller(settings_view))
         #settings_view.add_bottom_widget(del_button)
