@@ -7,46 +7,79 @@ from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QFrame, Q
 
 
 class DictionarySettings:
-    def __init__(self, frame, json_settings, policies):
-        self.frame = frame
-        self.frame.setStyleSheet('''
-            QGroupBox {
-                background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                                  stop: 0 #E0E0E0, stop: 1 #FFFFFF);
-                border: 2px solid #999999;
-                border-radius: 5px;
-                margin-top: 1ex;  /*leave space at the top for the title */
-                font-size: 13px;
-                color: black;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                subcontrol-position: top left;    /* position at the top center */
-                padding: 0 3px;
-                font-size: 13px;
-                color: black;
-            }
-        ''')
+    def __init__(self, title, parent_layout, json_settings, policies):
+        self.title = title
+        self.parent_layout = parent_layout
+
         self.settings = json_settings
-        self.layout = QGridLayout(frame)
         self.policies = policies
 
-        for policy in policies:
-            policy.apply(self)
-            self.showPolicy(policy)
+        for policy in self.policies:
+            policy.ds = self
 
-        self.frame.setLayout(self.layout)
+        self.view = None
+        self.previous_view = None
+        self.need_refresh = False
 
-    def showPolicy(self, policy):
-        self.layout.addWidget(policy.getQLabel(), policy.index, 0)
-        self.layout.addWidget(policy.getQWidget(), policy.index, 1)
+        '''
+        self.view
+        self.cnt = 1
+        self.refreshView()
+        '''
+    def showView(self):
+        self.view = SettingsView(self.title)
+        for policy in self.policies:
+            if not policy is None:
+                self.view.addPolicyWidget(policy)
+        self.parent_layout.addWidget(self.view.frame)
+    '''
+    def destroyView(self):
+        self.view.frame.setFixedWidth(0)
+        self.view.frame.setFixedHeight(0)
+        self.parent_layout.removeWidget(self.view.frame)
+        self.view.frame.deleteLater()
+        self.view.frame = None
+        self.view = None
+    '''
+
+    def refreshView(self):
+        if self.need_refresh:
+            self.settings = self.get_settings()
+            new_view = SettingsView(self.title)
+            for policy in self.policies:
+                if not policy is None:
+                    new_view.addPolicyWidget(policy)
+            self.parent_layout.replaceWidget(self.view.frame, new_view.frame)
+
+            if not self.previous_view is None:
+                self.previous_view.frame.deleteLater()
+                self.previous_view.frame = None
+            self.previous_view = self.view
+
+            #self.view.frame.deleteLater()
+            self.previous_view.frame.setFixedWidth(0)
+            self.previous_view.frame.setFixedHeight(0)
+            #self.view.frame = None
+            #self.previous_view = self.view
+            self.view = new_view
+            self.need_refresh = False
+
+    def normalizeSubPolicies(self):
+        for index in range(len(self.policies)):
+            if not self.policies[index] is None:
+                self.policies[index].normalizeSubPolicies()
+
+    def enablePolicy(self, policy):
+        #assert self.policies[policy.index] is None
+        #print(f"enable policy index={policy.index}, label={policy.label}")
         self.policies[policy.index] = policy
+        self.need_refresh = True
 
-    def hidePolicy(self, policy):
+    def disablePolicy(self, policy):
+        #print(f"disable policy index={policy.index}, label={policy.label}")
         assert self.policies[policy.index] == policy
-        self.layout.removeWidget(policy.getQLabel())
-        self.layout.removeWidget(policy.getQWidget())
         self.policies[policy.index] = None
+        self.need_refresh = True
 
 
     def add_bottom_widget(self, widget):
@@ -63,7 +96,179 @@ class DictionarySettings:
     def save_settings(self):
         self.settings = self.get_settings()
 
+class SettingsView:
+    def __init__(self, title):
+        self.frame = QGroupBox(title)
+        self.frame.setStyleSheet('''
+            QGroupBox {
+                background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                    stop: 0 #E0E0E0, stop: 1 #FFFFFF);
+                border: 2px solid #999999;
+                border-radius: 5px;
+                margin-top: 1ex;  /*leave space at the top for the title */
+                font-size: 13px;
+                color: black;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top left;    /* position at the top center */
+                padding: 0 3px;
+                font-size: 13px;
+                color: black;
+            }
+        ''')
+        self.layout = QGridLayout(self.frame)
+        self.frame.setLayout(self.layout)
+        self.widgets = {}
 
+    def addPolicyWidget(self, policy):
+        qWidget = policy.create_widget(self.frame)
+        qLabel = QLabel(self.frame)
+        qLabel.setText(policy.label)
+        self.widgets[policy.index] = qWidget
+        self.layout.addWidget(qLabel, policy.index, 0)
+        self.layout.addWidget(qWidget, policy.index, 1)
+
+
+class Policy:
+    def __init__(self, key: str, index: int, label: str):
+        self.key = key
+        self.index = index
+        self.label = label
+        self.ds = None
+        self.subp = []
+
+    def addSubPolicy(self, policy, val):
+        self.subp.append((policy, val))
+
+    def normalizeSubPolicies(self):
+        refresh_ds = []
+        for policy, val in self.subp:
+            if self.value() == val:
+                policy.ds.enablePolicy(policy)
+            else:
+                policy.ds.disablePolicy(policy)
+            if not policy.ds in refresh_ds:
+                refresh_ds.append(policy.ds)
+        for ds in refresh_ds:
+            ds.refreshView()
+
+    def create_widget(self, frame):
+        pass
+
+    def __find_my_widget(self):
+        if self.index in self.ds.view.widgets:
+            return self.ds.view.widgets[self.index]
+        elif self.index in self.ds.previous_view.widgets:
+            return self.ds.previous_view.widgets[self.index]
+        else:
+            return None
+
+    def _vidget_value(self, widget):
+        pass
+
+    def value(self):
+        widget = self.__find_my_widget()
+        if widget is None:
+            return None
+        else:
+            return self._vidget_value(widget)
+
+
+class IntPolicy(Policy):
+    def __init__(self, key: str, index: int, label: str):
+        super().__init__(key, index, label)
+
+    def create_widget(self, frame):
+        widget = QLineEdit(frame)
+        widget.setValidator(QIntValidator())
+        value = str(self.ds.settings[self.key] if self.key in self.ds.settings else 0)
+        widget.setText(value)
+        return widget
+
+    def _vidget_value(self, widget):
+        return int(widget.text())
+
+class DoublePolicy(Policy):
+    def __init__(self, key: str, index: int, label: str):
+        super().__init__(key, index, label)
+
+    def create_widget(self, frame):
+        widget = QLineEdit(frame)
+        validator = QDoubleValidator()
+        locale = QtCore.QLocale(QLocale.English, QLocale.UnitedStates)
+        validator.setLocale(locale)
+        widget.setValidator(validator)
+        value = str(self.ds.settings[self.key] if self.key in self.ds.settings else 0.0)
+        widget.setText(value)
+        return widget
+
+    def _vidget_value(self, widget):
+        return float(widget.text())
+
+class StrPolicy(Policy):
+    def __init__(self, key: str, index: int, label: str, enabled = True):
+        super().__init__(key, index, label)
+        self.enabled = enabled
+
+    def create_widget(self, frame):
+        widget = QLineEdit(frame)
+        widget.setFixedWidth(300)
+        widget.setFixedHeight(20)
+        widget.setValidator(QIntValidator())
+        value = str(self.ds.settings[self.key] if self.key in self.ds.settings else "")
+        widget.setText(value)
+        widget.setEnabled(self.enabled)
+        return widget
+
+    def _vidget_value(self, widget):
+        return str(widget.text())
+
+class PinsPolicy(StrPolicy):
+    def __init__(self, key: str, index: int, label: str):
+        super().__init__(key, index, label)
+
+    def create_widget(self, frame):
+        widget = QLineEdit(self.ds.view.frame)
+        regex = QRegExp("[0-9]{1,3}([ ]*,[ ]*[0-9]{1,3})*")
+        validator = QRegExpValidator(regex, widget)
+        widget.setValidator(validator)
+        value = str(self.ds.settings[self.key] if  self.key in self.ds.settings else "")
+        widget.setText(value)
+        return widget
+
+class BoolPolicy(Policy):
+    def __init__(self, key: str, index: int, label: str):
+        super().__init__(key, index, label)
+
+    def create_widget(self, frame):
+        widget = QCheckBox(self.ds.view.frame)
+        widget.setChecked(self.ds.settings[self.key] if self.key in self.ds.settings else False)
+        widget.stateChanged.connect(lambda idx: self.normalizeSubPolicies())
+        #widget.stateChanged.connect(lambda idx: print(f"Changed to {idx}"))
+        return widget
+
+    def _vidget_value(self, widget):
+        #print(f"checked value is {widget.isChecked()}")
+        return widget.isChecked()
+
+class ComboPolicy(Policy):
+    def __init__(self, key: str, index: int, label: str, items, enabled = True):
+        super().__init__(key, index, label)
+        self.items = items
+        self.enabled = enabled
+
+    def create_widget(self, frame):
+        combo = QComboBox(frame)
+        combo.addItems(self.items)
+        if self.key in self.ds.settings:
+            combo.setCurrentText(self.ds.settings[self.key])
+        combo.setEnabled(self.enabled)
+        combo.currentIndexChanged.connect(lambda idx: self.normalizeSubPolicies())
+        return combo
+
+    def _vidget_value(self, widget):
+        return widget.currentText()
 
 
 class SettingsComposer(QFrame):
@@ -83,134 +288,6 @@ class SettingsComposer(QFrame):
                 settings[key] = src[key]
         return DictionarySettings(frame, labels, settings, policies)
     '''
-
-class Policy:
-    def __init__(self, key: str, index: int, label: str):
-        self.key = key
-        self.index = index
-        self.label = label
-        self.ds = None
-        self.qWidget = None
-        self.qLabel = None
-        self.subp = []
-
-    def addSubPolicy(self, policy, val):
-        self.subp.append((policy, val))
-
-    def normalizeSubPolicies(self):
-        for policy, val in self.subp:
-            if self.value() == val:
-                policy.ds.showPolicy(policy)
-            else:
-                policy.ds.hidePolicy(policy)
-
-    def create_widget(self):
-        pass
-
-    def apply(self, ds: DictionarySettings):
-        self.ds = ds
-        self.qWidget = self.create_widget()
-        self.qLabel = QLabel(self.ds.frame)
-        self.qLabel.setText(self.label)
-
-    def getQLabel(self):
-        return self.qLabel
-
-    def getQWidget(self):
-        return self.qWidget
-
-    def value(self):
-        pass
-
-
-class IntPolicy(Policy):
-    def __init__(self, key: str, index: int, label: str):
-        super().__init__(key, index, label)
-
-    def create_widget(self):
-        widget = QLineEdit(self.ds.frame)
-        widget.setValidator(QIntValidator())
-        value = str(self.ds.settings[self.key] if self.key in self.ds.settings else 0)
-        widget.setText(value)
-        return widget
-
-    def value(self):
-        return int(self.qWidget.text())
-
-class DoublePolicy(Policy):
-    def __init__(self, key: str, index: int, label: str):
-        super().__init__(key, index, label)
-
-    def create_widget(self):
-        widget = QLineEdit(self.ds.frame)
-        validator = QDoubleValidator()
-        locale = QtCore.QLocale(QLocale.English, QLocale.UnitedStates)
-        validator.setLocale(locale)
-        widget.setValidator(validator)
-        value = str(self.ds.settings[self.key] if self.key in self.ds.settings else 0.0)
-        widget.setText(value)
-        return widget
-
-    def value(self):
-        return float(self.qWidget.text())
-
-class StrPolicy(Policy):
-    def __init__(self, key: str, index: int, label: str, enabled = True):
-        super().__init__(key, index, label)
-        self.enabled = enabled
-
-    def create_widget(self):
-        widget = QLineEdit(self.ds.frame)
-        widget.setValidator(QIntValidator())
-        value = str(self.ds.settings[self.key] if self.key in self.ds.settings else "")
-        widget.setText(value)
-        widget.setEnabled(self.enabled)
-        return widget
-
-    def value(self):
-        return str(self.qWidget.text())
-
-class PinsPolicy(StrPolicy):
-    def __init__(self, key: str, index: int, label: str):
-        super().__init__(key, index, label)
-
-    def create_widget(self):
-        widget = QLineEdit(self.ds.frame)
-        regex = QRegExp("[0-9]{1,3}([ ]*,[ ]*[0-9]{1,3})*")
-        validator = QRegExpValidator(regex, self.qWidget)
-        value = str(self.ds.settings[self.key] if  self.key in self.ds.settings else "")
-        widget.setText(value)
-        return widget
-
-class BoolPolicy(Policy):
-    def __init__(self, key: str, index: int, label: str):
-        super().__init__(key, index, label)
-
-    def create_widget(self):
-        widget = QCheckBox(self.ds.frame)
-        widget.setChecked(self.ds.settings[self.key] if self.key in self.ds.settings else False)
-        return widget
-
-    def value(self):
-        return self.getQWidget().isChecked()
-
-class ComboPolicy(Policy):
-    def __init__(self, key: str, index: int, label: str, items, enabled = True):
-        super().__init__(key, index, label)
-        self.items = items
-        self.enabled = enabled
-
-    def create_widget(self):
-        combo = QComboBox(self.ds.frame)
-        combo.addItems(self.items)
-        if self.key in self.ds.settings:
-            combo.setCurrentText(self.ds.settings[self.key])
-        combo.setEnabled(self.enabled)
-        return combo
-
-    def value(self):
-        return self.getQWidget().currentText()
-
 
 
 
