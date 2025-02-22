@@ -52,7 +52,6 @@ class Controller:
                 steps=json.get("steps"),
                 min_angle=json.get("min_angle"),
                 max_angle=json.get("max_angle"),
-                current_angle=json.get("current_angle"),
                 is_vertical = is_vertical
             )
         elif is_vertical:

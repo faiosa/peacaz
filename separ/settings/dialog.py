@@ -118,16 +118,22 @@ class TotalSettings(SettingsComposer):
 class ControllerSettings(SettingsComposer):
     def __init__(self, parent_frame, json_settings):
         super().__init__(parent_frame, json_settings)
+
+        switchboard_use_radxa_policy = BoolPolicy("use_radxa", 2, "Використовує спільний порт (radxa)")
+        switchboard_serial_port = StrPolicy("serial_port", 3, "Серійний порт комутатора:")
         self.switchboard_policies = [
             PinsPolicy("pins", 0, "Піни комутатора:"),
-            StrPolicy("serial_port", 1, "Серійний порт комутатора:"),
-            BoolPolicy("full_control", 2, "Повний контроль")
+            BoolPolicy("full_control", 1, "Повний контроль"),
+            switchboard_use_radxa_policy,
+            switchboard_serial_port
         ]
+        switchboard_use_radxa_policy.addSubPolicy(switchboard_serial_port, [False, "__disabled__"])
 
         use_radxa_policy = BoolPolicy("use_radxa", 1, "Використовує спільний порт (radxa)")
         radxa_port_policy = StrPolicy("radxa_serial_port", 2, "Спільний серійний порт (radxa)")
 
-        use_radxa_policy.addSubPolicy(radxa_port_policy, True)
+        use_radxa_policy.addSubPolicy(radxa_port_policy, [True])
+        use_radxa_policy.addSubPolicy(switchboard_use_radxa_policy, [True])
         self.controller_policies = [
             StrPolicy("name", 0, "Назва контроллера"),
             use_radxa_policy,
@@ -152,14 +158,14 @@ class ControllerSettings(SettingsComposer):
                     self.vertical_roller_layout = QVBoxLayout(vertical_roller_frame)
                     vertical_roller_frame.setLayout(self.vertical_roller_layout)
                     self.layout.addWidget(vertical_roller_frame)
-                    self.vroller_settings_view = self.__create_roller(roller, self.vertical_roller_layout)
+                    self.vroller_settings_view = self.__create_roller(roller, self.vertical_roller_layout, use_radxa_policy)
                     self.vroller_settings_view.showView()
                 elif roller["type"] == "horizontal":
                     horizontal_roller_frame = QFrame(self)
                     self.horizontal_roller_layout = QVBoxLayout(horizontal_roller_frame)
                     horizontal_roller_frame.setLayout(self.horizontal_roller_layout)
                     self.layout.addWidget(horizontal_roller_frame)
-                    self.hroller_settings_view = self.__create_roller(roller, self.horizontal_roller_layout)
+                    self.hroller_settings_view = self.__create_roller(roller, self.horizontal_roller_layout, use_radxa_policy)
                     self.hroller_settings_view.showView()
 
         '''
@@ -210,21 +216,33 @@ class ControllerSettings(SettingsComposer):
             self.hroller_add_button = None
     '''
 
-    def __create_roller(self, roller_settings, roller_layout):
+    def __create_roller(self, roller_settings, roller_layout, is_radxa_policy):
         '''
         labels = self.stepper_roller_labels if roller_settings["engine"] == "stepper" else self.line_roller_labels
         policies = self.stepper_roller_policies if roller_settings["engine"] == "stepper" else self.line_roller_policies
         settings_view = DictionarySettings(QGroupBox(f"{roller_settings['type']} roller"), labels, roller_settings, policies)
         '''
+
+        no_radxa_engine_policy = ComboPolicy("engine", 1, "тип двигуна", ["line"], False)
+        is_radxa_policy.addSubPolicy(no_radxa_engine_policy, [False, "__disabled__"])
+        is_radxa_engine_policy = ComboPolicy("engine", 2, "тип двигуна", ["stepper", "line"])
+        is_radxa_policy.addSubPolicy(is_radxa_engine_policy, [True])
+        current_angle_policy = DoublePolicy("current_angle", 5, "Поточний кут")
+        is_radxa_engine_policy.addSubPolicy(current_angle_policy, ["line", "__disabled__"])
+        serial_port_policy = StrPolicy("serial_port", 6, "Серійний порт")
+        is_radxa_engine_policy.addSubPolicy(serial_port_policy, ["line", "__disabled__"])
+        num_steps_policy = IntPolicy("steps", 8, "кроків в повному оберті")
+        is_radxa_engine_policy.addSubPolicy(num_steps_policy, ["stepper"])
         roller_policies = [
             ComboPolicy("type", 0, "тип ролера", ["vertical", "horizontal"], False),
-            ComboPolicy("engine", 1, "тип двигуна", ["stepper", "line"]),
-            DoublePolicy("min_angle", 2, "Мін кут"),
-            DoublePolicy("max_angle", 3, "Макс кут"),
-            DoublePolicy("current_angle", 4, "Поточний кут"),
-            StrPolicy("serial_port", 5, "Серійний порт"),
-            DoublePolicy("rotation_speed", 6, "Швидкість повертання (градус/с)"),
-            IntPolicy("steps", 7, "кроків в повному оберті")
+            no_radxa_engine_policy,
+            is_radxa_engine_policy,
+            DoublePolicy("min_angle", 3, "Мін кут"),
+            DoublePolicy("max_angle", 4, "Макс кут"),
+            current_angle_policy,
+            serial_port_policy,
+            DoublePolicy("rotation_speed", 7, "Швидкість повертання (градус/с)"),
+            num_steps_policy
         ]
 
         settings_view = DictionarySettings(f"{roller_settings['type']} roller", roller_layout, roller_settings, roller_policies)

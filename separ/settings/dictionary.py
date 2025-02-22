@@ -18,7 +18,6 @@ class DictionarySettings:
             policy.ds = self
 
         self.view = None
-        self.previous_view = None
         self.need_refresh = False
 
         '''
@@ -51,16 +50,11 @@ class DictionarySettings:
                     new_view.addPolicyWidget(policy)
             self.parent_layout.replaceWidget(self.view.frame, new_view.frame)
 
-            if not self.previous_view is None:
-                self.previous_view.frame.deleteLater()
-                self.previous_view.frame = None
-            self.previous_view = self.view
+            self.view.frame.deleteLater()
+            self.view.frame.setFixedWidth(0)
+            self.view.frame.setFixedHeight(0)
+            self.view.frame = None
 
-            #self.view.frame.deleteLater()
-            self.previous_view.frame.setFixedWidth(0)
-            self.previous_view.frame.setFixedHeight(0)
-            #self.view.frame = None
-            #self.previous_view = self.view
             self.view = new_view
             self.need_refresh = False
 
@@ -77,9 +71,10 @@ class DictionarySettings:
 
     def disablePolicy(self, policy):
         #print(f"disable policy index={policy.index}, label={policy.label}")
-        assert self.policies[policy.index] == policy
-        self.policies[policy.index] = None
-        self.need_refresh = True
+        if self.policies[policy.index] == policy:
+            policy.disabled_value = policy.value()
+            self.policies[policy.index] = None
+            self.need_refresh = True
 
 
     def add_bottom_widget(self, widget):
@@ -137,21 +132,23 @@ class Policy:
         self.label = label
         self.ds = None
         self.subp = []
+        self.disabled_value = None
 
-    def addSubPolicy(self, policy, val):
-        self.subp.append((policy, val))
+    def addSubPolicy(self, policy, enable_val_list):
+        self.subp.append((policy, enable_val_list))
 
-    def normalizeSubPolicies(self):
-        refresh_ds = []
-        for policy, val in self.subp:
-            if self.value() == val:
+    def normalizeSubPolicies(self, refresh_ds=[], do_refresh=True):
+        for policy, enable_val_list in self.subp:
+            if self.status() in enable_val_list:
                 policy.ds.enablePolicy(policy)
             else:
                 policy.ds.disablePolicy(policy)
             if not policy.ds in refresh_ds:
                 refresh_ds.append(policy.ds)
-        for ds in refresh_ds:
-            ds.refreshView()
+            policy.normalizeSubPolicies(refresh_ds, do_refresh=False)
+        if do_refresh:
+            for ds in refresh_ds:
+                ds.refreshView()
 
     def create_widget(self, frame):
         pass
@@ -159,18 +156,22 @@ class Policy:
     def __find_my_widget(self):
         if self.index in self.ds.view.widgets:
             return self.ds.view.widgets[self.index]
-        elif self.index in self.ds.previous_view.widgets:
-            return self.ds.previous_view.widgets[self.index]
         else:
             return None
 
     def _vidget_value(self, widget):
         pass
 
+    def status(self):
+        if self in self.ds.policies:
+            return self.value()
+        else:
+            return "__disabled__"
+
     def value(self):
         widget = self.__find_my_widget()
         if widget is None:
-            return None
+            return self.disabled_value
         else:
             return self._vidget_value(widget)
 
@@ -261,9 +262,10 @@ class ComboPolicy(Policy):
     def create_widget(self, frame):
         combo = QComboBox(frame)
         combo.addItems(self.items)
-        if self.key in self.ds.settings:
-            combo.setCurrentText(self.ds.settings[self.key])
         combo.setEnabled(self.enabled)
+        if self.key in self.ds.settings:
+            if self.ds.settings[self.key] in self.items:
+                combo.setCurrentText(self.ds.settings[self.key])
         combo.currentIndexChanged.connect(lambda idx: self.normalizeSubPolicies())
         return combo
 

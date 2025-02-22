@@ -61,8 +61,8 @@ def enter(s):
 
 
 class StepperRoller(BaseRoller):
-    def __init__(self, radxa: Pearax, steps, min_angle, max_angle, current_angle, is_vertical):
-        super().__init__(min_angle, max_angle, current_angle, None, is_vertical)
+    def __init__(self, radxa: Pearax, steps, min_angle, max_angle, is_vertical):
+        super().__init__(min_angle, max_angle, 0., None, is_vertical)
         assert radxa is not None
         self.steps = steps
         self.cur_step = self.angle_to_step(self.current_angle)
