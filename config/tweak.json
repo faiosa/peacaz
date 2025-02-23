@@ -9,20 +9,18 @@
             "use_radxa": true,
             "radxa_serial_port": "/dev/ttyACM0",
             "switchboard": {
-                "pins": "71, 72, 75",
-                "serial_port": "radxa",
-                "full_control": true
+                "pins": "71,72,75",
+                "use_radxa": true,
+                "full_control": false
             },
             "rollers": [
                 {
-                    "steps": 400,
-                    "step_delay": "8",
                     "type": "horizontal",
                     "engine": "stepper",
-                    "serial_port": "radxa",
                     "min_angle": 0.0,
                     "max_angle": 359.9999,
-                    "current_angle": 0.5906572146464031
+                    "rotation_speed": 60.0,
+                    "steps": 400
                 }
             ]
         },
@@ -31,27 +29,27 @@
             "use_radxa": false,
             "switchboard": {
                 "pins": "8,13,14",
-                "serial_port": "NOT_EXISTING_PORT",
-                "full_control": true
+                "full_control": true,
+                "serial_port": "NOT_EXISTING_PORT"
             },
             "rollers": [
                 {
-                    "rotation_speed": 16.0,
-                    "type": "horizontal",
-                    "engine": "line",
-                    "serial_port": "NOT_EXISTING_PORT",
-                    "min_angle": 0.0,
-                    "max_angle": 359.999,
-                    "current_angle": 201.29735404903374
-                },
-                {
-                    "rotation_speed": 2.77,
                     "type": "vertical",
                     "engine": "line",
-                    "serial_port": "NOT_EXISTING_PORT",
                     "min_angle": 0.0,
                     "max_angle": 75.0,
-                    "current_angle": 12.34478978872299
+                    "current_angle": 12.34478978872299,
+                    "serial_port": "NOT_EXISTING_PORT",
+                    "rotation_speed": 2.77
+                },
+                {
+                    "type": "horizontal",
+                    "engine": "line",
+                    "min_angle": 0.0,
+                    "max_angle": 359.999,
+                    "current_angle": 0.0,
+                    "serial_port": "NOT_EXISTING_PORT",
+                    "rotation_speed": 16.0
                 }
             ]
         },
@@ -60,18 +58,18 @@
             "use_radxa": false,
             "switchboard": {
                 "pins": "23,45",
-                "serial_port": "NOT_EXISTING_PORT",
-                "full_control": false
+                "full_control": false,
+                "serial_port": "NOT_EXISTING_PORT"
             },
             "rollers": [
                 {
-                    "rotation_speed": 16.0,
                     "type": "horizontal",
                     "engine": "line",
-                    "serial_port": "NOT_EXISTING_PORT",
                     "min_angle": 0.0,
                     "max_angle": 359.999,
-                    "current_angle": 201.29735404903374
+                    "current_angle": 0.0,
+                    "serial_port": "NOT_EXISTING_PORT",
+                    "rotation_speed": 16.0
                 }
             ]
         }

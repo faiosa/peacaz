@@ -19,7 +19,6 @@ class TotalSettings(SettingsComposer):
             ComboPolicy("language", 1, "Мова інтерфейсу", ["Українська", "English"])
         ]
 
-
         top_frame = QFrame(self)
         top_layout = QGridLayout(top_frame)
         top_frame.setLayout(top_layout)
@@ -31,10 +30,9 @@ class TotalSettings(SettingsComposer):
         top_layout.addWidget(gs_frame, 0, 0, 5, 1)
         self.global_settings_view = DictionarySettings("global settings", gs_layout, self.settings["global_settings"], self.global_policies)
         self.global_settings_view.showView()
-        #top_layout.addWidget(self.global_settings_view.outFrame, 0, 0, 5, 1)
 
         save_button = QPushButton("Зберегти зміни", self)
-        save_button.clicked.connect(lambda: self.__write_settings_to_file(SEPAR_SETTINGS_FILE))
+        save_button.clicked.connect(lambda: self.__write_settings_to_file())
         top_layout.addWidget(save_button, 1, 2)
 
         #add_controller_button = QPushButton("Додати контролер", self)
@@ -53,9 +51,6 @@ class TotalSettings(SettingsComposer):
     def __add_settings_controller(self, settings):
         index = len(self.controllers_settings)
         controller = ControllerSettings(self, settings)
-        #if not 'name' in controller.settings:
-        #    controller.settings['name'] = f"Контролер {index + 1}"
-        #    controller.controller_settings_view.input_fields["name"].widget.setText(controller.settings['name'])
         self.controllers_settings.append(controller)
         self.controller_tabs.addTab(controller, controller.settings["name"])
         #del_button = QPushButton()
@@ -70,20 +65,9 @@ class TotalSettings(SettingsComposer):
                 self.controller_tabs.removeTab(index)
                 return
     '''
-    def __update_current_angles(self):
-        for controller in self.main_view.roller_manager.controllers:
-            for c_key, controller_settings in self.settings["controller_values"].items():
-                if controller.name == controller_settings["name"]:
-                    for roller in controller.rollers:
-                        for r_index, roller_settings in enumerate(controller_settings["rollers"]):
-                            if roller_settings["type"] == "vertical" and roller.is_vertical:
-                                self.settings["controller_values"][c_key]["rollers"][r_index]["current_angle"] = roller.current_angle
-                            elif roller_settings["type"] == "horizontal" and not roller.is_vertical:
-                                self.settings["controller_values"][c_key]["rollers"][r_index]["current_angle"] = roller.current_angle
 
 
-
-    def __write_settings_to_file(self, file_name):
+    def __write_settings_to_file(self):
         if self.main_view.roller_manager.is_moving():
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Critical)
@@ -93,7 +77,6 @@ class TotalSettings(SettingsComposer):
             msg.exec_()
         else:
             self.save_settings()
-            self.__update_current_angles()
             self.tweak.write_settings(self.settings)
             self.main_view.reload_settings()
             self.main_view.reload_print()

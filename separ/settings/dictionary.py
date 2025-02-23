@@ -20,26 +20,12 @@ class DictionarySettings:
         self.view = None
         self.need_refresh = False
 
-        '''
-        self.view
-        self.cnt = 1
-        self.refreshView()
-        '''
     def showView(self):
         self.view = SettingsView(self.title)
         for policy in self.policies:
             if not policy is None:
                 self.view.addPolicyWidget(policy)
         self.parent_layout.addWidget(self.view.frame)
-    '''
-    def destroyView(self):
-        self.view.frame.setFixedWidth(0)
-        self.view.frame.setFixedHeight(0)
-        self.parent_layout.removeWidget(self.view.frame)
-        self.view.frame.deleteLater()
-        self.view.frame = None
-        self.view = None
-    '''
 
     def refreshView(self):
         if self.need_refresh:
@@ -64,13 +50,11 @@ class DictionarySettings:
                 self.policies[index].normalizeSubPolicies()
 
     def enablePolicy(self, policy):
-        #assert self.policies[policy.index] is None
-        #print(f"enable policy index={policy.index}, label={policy.label}")
-        self.policies[policy.index] = policy
-        self.need_refresh = True
+        if self.policies[policy.index] is None:
+            self.policies[policy.index] = policy
+            self.need_refresh = True
 
     def disablePolicy(self, policy):
-        #print(f"disable policy index={policy.index}, label={policy.label}")
         if self.policies[policy.index] == policy:
             policy.disabled_value = policy.value()
             self.policies[policy.index] = None
@@ -214,9 +198,6 @@ class StrPolicy(Policy):
 
     def create_widget(self, frame):
         widget = QLineEdit(frame)
-        widget.setFixedWidth(300)
-        widget.setFixedHeight(20)
-        widget.setValidator(QIntValidator())
         value = str(self.ds.settings[self.key] if self.key in self.ds.settings else "")
         widget.setText(value)
         widget.setEnabled(self.enabled)
@@ -246,11 +227,9 @@ class BoolPolicy(Policy):
         widget = QCheckBox(self.ds.view.frame)
         widget.setChecked(self.ds.settings[self.key] if self.key in self.ds.settings else False)
         widget.stateChanged.connect(lambda idx: self.normalizeSubPolicies())
-        #widget.stateChanged.connect(lambda idx: print(f"Changed to {idx}"))
         return widget
 
     def _vidget_value(self, widget):
-        #print(f"checked value is {widget.isChecked()}")
         return widget.isChecked()
 
 class ComboPolicy(Policy):
