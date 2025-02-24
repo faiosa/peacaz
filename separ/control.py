@@ -31,11 +31,16 @@ class Controller:
         if self.settings.get("use_radxa"):
             radxa_serial_port = self.settings.get("radxa_serial_port")
             self.radxa = ManagePeer(lambda: func.serial_connect(radxa_serial_port, 115200), 3, [42, 16])
-            self.radxa.start()
+            self.radxa.start(f"Controller_{self.name}_radxa")
         self.rollers = [ self.create_roller(json) for json in json_settings.get("rollers") ]
 
         switchboard_settings = self.settings.get("switchboard")
         switchboard_serial_port = switchboard_settings.get("serial_port")
+
+        if switchboard_serial_port is None:
+            assert self.radxa is not None
+            assert switchboard_settings.get("use_radxa") is True
+
         switchboard_pins = [
             pin.strip()
             for pin in switchboard_settings.get("pins", "28, 29").split(
@@ -49,6 +54,7 @@ class Controller:
         if json.get("engine") == "stepper":
             return StepperRoller(
                 self.radxa,
+                rotation_speed=json.get("rotation_speed"),
                 steps=json.get("steps"),
                 min_angle=json.get("min_angle"),
                 max_angle=json.get("max_angle"),
@@ -93,14 +99,15 @@ class SwitchBoard:
         self.states = []
         self.app_index = 16
         self.switchboard_pearax = None
-        if switchboard_serial_port == "radxa":
+
+        if switchboard_serial_port is None:
             if pearax is None:
-                func_logger.fatal("Controller missing pearax fro swithcboard configured with 'radxa'")
+                func_logger.fatal("Controller missing pearax for swithcboard configured with 'radxa'")
             else:
                 self.serial_client = PearaxClient(self.app_index, pearax)
         else:
             self.switchboard_pearax = ManagePeer(lambda: self.__connect_device(switchboard_serial_port), 3, [self.app_index])
-            self.switchboard_pearax.start()
+            self.switchboard_pearax.start("SwitchBoardPearax")
             self.serial_client = PearaxClient(self.app_index, self.switchboard_pearax)
         self.is_full_control = is_full_control
         self.ints_to_bytes = func.ints_to_bytes_lambda(BYTE_SIZE, BYTE_ORDER)

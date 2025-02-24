@@ -61,9 +61,10 @@ def enter(s):
 
 
 class StepperRoller(BaseRoller):
-    def __init__(self, radxa: Pearax, steps, min_angle, max_angle, is_vertical):
+    def __init__(self, radxa: Pearax, rotation_speed, steps, min_angle, max_angle, is_vertical):
         super().__init__(min_angle, max_angle, 0., None, is_vertical)
         assert radxa is not None
+        self.rotation_speed = rotation_speed
         self.steps = steps
         self.cur_step = self.angle_to_step(self.current_angle)
         self.trg_step = self.cur_step
@@ -79,6 +80,7 @@ class StepperRoller(BaseRoller):
                 self.cur_step = cs
                 self.trg_step = self.cur_step
                 self.current_angle = self.step_to_angle(self.cur_step)
+                self.send_rotation_speed()
                 resp = True
         if not resp:
             if retry > 0:
@@ -95,6 +97,11 @@ class StepperRoller(BaseRoller):
             else:
                 print(text)
         return resp
+
+    def send_rotation_speed(self):
+        motor_delay =  360.0 / (float(self.steps) * self.rotation_speed)
+        self.serial_client.write(enter(f"v{motor_delay}"))
+
 
     def angle_to_step(self, angle):
         return int(angle * self.steps / 360)
