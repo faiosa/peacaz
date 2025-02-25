@@ -1,8 +1,7 @@
 from pearax.client import PearaxClient
 from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
-from pearax import func
+from pearax import func, STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX, PEARAX_BAUD_RATE, PINNER_INT_BYTE_SIZE, PINNER_INT_BYTE_ORDER
 from pearax.core import ManagePeer
-import threading
 
 
 class Manager:
@@ -30,7 +29,7 @@ class Controller:
         self.radxa: ManagePeer = None
         if self.settings.get("use_radxa"):
             radxa_serial_port = self.settings.get("radxa_serial_port")
-            self.radxa = ManagePeer(lambda: func.serial_connect(radxa_serial_port, 115200), 3, [42, 16])
+            self.radxa = ManagePeer(lambda: func.serial_connect(radxa_serial_port, PEARAX_BAUD_RATE), [STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX])
             self.radxa.start(f"Controller_{self.name}_radxa")
         self.rollers = [ self.create_roller(json) for json in json_settings.get("rollers") ]
 
@@ -90,9 +89,6 @@ class Controller:
             if self.switchboard.switchboard_pearax:
                 self.switchboard.switchboard_pearax.stop()
 
-BYTE_SIZE = 3
-BYTE_ORDER = 'big'
-
 class SwitchBoard:
     def __init__(self, pearax: ManagePeer, switchboard_serial_port: str, pins, is_full_control):
         self.pins = [int(sp) for sp in pins]
@@ -102,15 +98,15 @@ class SwitchBoard:
 
         if switchboard_serial_port is None:
             if pearax is None:
-                func_logger.fatal("Controller missing pearax for swithcboard configured with 'radxa'")
+                func.func_logger.fatal("Controller missing pearax for swithcboard configured with 'radxa'")
             else:
                 self.serial_client = PearaxClient(self.app_index, pearax)
         else:
-            self.switchboard_pearax = ManagePeer(lambda: self.__connect_device(switchboard_serial_port), 3, [self.app_index])
+            self.switchboard_pearax = ManagePeer(lambda: func.serial_connect(switchboard_serial_port, PEARAX_BAUD_RATE), [self.app_index])
             self.switchboard_pearax.start("SwitchBoardPearax")
             self.serial_client = PearaxClient(self.app_index, self.switchboard_pearax)
         self.is_full_control = is_full_control
-        self.ints_to_bytes = func.ints_to_bytes_lambda(BYTE_SIZE, BYTE_ORDER)
+        self.ints_to_bytes = func.ints_to_bytes_lambda(PINNER_INT_BYTE_SIZE, PINNER_INT_BYTE_ORDER)
 
 
     def _compose_command(self, *args):

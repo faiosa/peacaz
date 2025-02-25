@@ -1,11 +1,9 @@
 from PyQt5.QtWidgets import QMessageBox
 from pearax.client import PearaxClient
 from pearax.core import Pearax
-from serial.serialutil import SerialException
-
 from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
 from utils.ptz_controller import send_pelco_command
-import serial, time, threading
+import time
 
 
 class BaseRoller:
