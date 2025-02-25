@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "peacaz"
-version = "1.2.0"
+version = "0.2"
 description = ""
-authors = ["Vitalii <tomchyshakvitalik@gmail.com>"]
+authors = ["Oleh Myhal <odmyhal@gmail.com>","Vitalii <tomchyshakvitalik@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
