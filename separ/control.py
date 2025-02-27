@@ -107,16 +107,20 @@ class SwitchBoard:
             self.serial_client = PearaxClient(self.app_index, self.switchboard_pearax)
         self.is_full_control = is_full_control
         self.ints_to_bytes = func.ints_to_bytes_lambda(PINNER_INT_BYTE_SIZE, PINNER_INT_BYTE_ORDER)
+        self._initial_command()
 
 
     def _compose_command(self, *args):
         return self.ints_to_bytes(*args)
 
-    def __connect_device(self, serial_port):
-        return func.serial_connect(serial_port, 115200)
-
     def _exec_command(self, command):
         self.serial_client.write(command)
+
+    def _initial_command(self):
+        args = [0] * len(self.pins) * 2
+        args[0::2] = self.pins
+        command = self._compose_command(*args)
+        self._exec_command(command)
 
 
 class FullControlSwitchBoard(SwitchBoard):
