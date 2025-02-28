@@ -110,10 +110,13 @@ class StepperRoller(BaseRoller):
         return 360.0 * step / self.steps
 
     def send_move_command(self, trg_step):
-        j_move_task = [
-            {"class": "StepperParametersTask", "target_step": trg_step},
-            {"class": "MoveToTargetStep", "target_step": trg_step}
-        ]
+        j_move_task = {
+            "rfos": False,
+            "tasks": [
+                {"class": "StepperParametersTask", "target_step": trg_step},
+                {"class": "MoveToTargetStep", "target_step": trg_step}
+            ]
+        }
         self.serial_client.write(enter(json.dumps(j_move_task)))
 
     def send_stop_command(self):
