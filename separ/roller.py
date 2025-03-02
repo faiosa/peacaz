@@ -3,6 +3,7 @@ import json
 from PyQt5.QtWidgets import QMessageBox
 from pearax.client import PearaxClient
 from pearax.core import Pearax
+from pearax import STEPPER_MOTOR_INDEX
 from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
 from utils.ptz_controller import send_pelco_command
 import time
@@ -16,44 +17,25 @@ class BaseRoller:
         self.serial_port = serial_port
         self.is_vertical = is_vertical
 
-        self.is_moving_increase = False
-        self.is_moving_decrease = False
 
-    def start_increase_angle(self, dst_angle):
-        pass
-            
-    def __update_increase_angle(self):
+    def start_move_angle(self, dst_angle):
         pass
 
-    def check_increase_angle(self, dest_angle):
+    def __update_move_angle(self):
         pass
 
-    def __stop_increase_angle(self, update = True):
+    def check_move_angle(self, dest_angle):
         pass
 
-    def start_decrease_angle(self, dst_angle):
-        pass
-
-    def __update_decrease_angle(self):
-        pass
-
-    def check_decrease_angle(self, dest_angle):
-        pass
-
-    def __stop_decrease_angle(self, update=True):
+    def __stop_move_angle(self, update=True):
         pass
 
     def ptz_turn_stop(self):
         pass
 
-    def increase_angle_command(self):
-        pass
-
-    def decrease_angle_command(self):
-        pass
 
     def is_moving(self):
-        return self.is_moving_increase or self.is_moving_decrease
+        pass
 
 
 def enter(s):
@@ -67,18 +49,20 @@ class StepperRoller(BaseRoller):
         self.rotation_speed = rotation_speed
         self.steps = steps
         self.cur_step = self.angle_to_step(self.current_angle)
-        self.trg_step = self.cur_step
-        self.serial_client = PearaxClient(42, radxa)
+        #self.trg_step = self.cur_step
+        self.serial_client = PearaxClient(STEPPER_MOTOR_INDEX, radxa)
+        self.moving = False
         self.ensure_arduino(False)
-        #self.arduino = serial.Serial(port=self.serial_port, baudrate=9600)
+
+    def is_moving(self):
+        return self.moving
 
     def ensure_arduino(self, show_message = False, retry=5):
         resp = False
         if self.serial_client.pearax.is_serial_alive():
-            cs = self.read_current_step()
+            _, cs = self.read_current_step()
             if not cs is None:
                 self.cur_step = cs
-                self.trg_step = self.cur_step
                 self.current_angle = self.step_to_angle(self.cur_step)
                 self.send_rotation_speed()
                 resp = True
@@ -128,74 +112,52 @@ class StepperRoller(BaseRoller):
     def read_current_step(self):
         self.serial_client.write(enter("g"))
         bits = self.serial_client.block_read()
-        return int(bits.decode("utf-8").strip())
+        s = bits.decode("utf-8").strip()
+        return s[:1], int(s[1:])
 
-    def start_increase_angle(self, dst_angle):
-        if self.ensure_arduino() and not (self.is_moving_increase or self.is_moving_decrease):
-            self.is_moving_increase = True
-            self.trg_step = self.angle_to_step(dst_angle)
-            self.send_move_command(self.trg_step)
+    def start_move_angle(self, dst_angle):
+        if self.ensure_arduino() and not self.is_moving():
+            self.moving = True
+            trg_step = self.angle_to_step(dst_angle)
+            self.send_move_command(trg_step)
 
-    def __update_increase_angle(self):
-        if self.is_moving_increase:
-            self.cur_step = self.read_current_step()
+    def __update_move_angle(self):
+        if self.is_moving():
+            status, self.cur_step = self.read_current_step()
+            self.moving = True if status == 'r' else False
             self.current_angle = self.step_to_angle(self.cur_step)
 
-    def check_increase_angle(self, dest_angle):
-        if self.is_moving_increase:
-            self.__update_increase_angle()
-            target_angle = max(dest_angle, self.min_angle)
-            if self.cur_step == self.trg_step:
-                self.current_angle = target_angle
-                self.__stop_increase_angle(False)
-
-    def __stop_increase_angle(self, update=True):
-        if self.is_moving_increase:
-            if update:
-                self.__update_increase_angle()
-            self.send_stop_command()
-            self.is_moving_increase = False
-
-    def start_decrease_angle(self, trg_angle):
-        if self.ensure_arduino() and not (self.is_moving_increase or self.is_moving_decrease):
-            self.is_moving_decrease = True
-            self.trg_step = self.angle_to_step(trg_angle)
-            self.send_move_command(self.trg_step)
-
-    def __update_decrease_angle(self):
-        if self.is_moving_decrease:
-            cur_time = time.time()
-            self.cur_step = self.read_current_step()
-            self.current_angle = self.step_to_angle(self.cur_step)
-
-    def check_decrease_angle(self, dest_angle):
-        if self.is_moving_decrease:
-            self.__update_decrease_angle()
-            target_angle = max(dest_angle, self.min_angle)
-            if self.cur_step == self.trg_step:
-                self.current_angle = target_angle
-                self.__stop_decrease_angle(False)
-
-    def __stop_decrease_angle(self, update=True):
-        if self.is_moving_decrease:
-            if update:
-                self.__update_decrease_angle()
-            self.send_stop_command()
-            self.is_moving_decrease = False
+    def check_move_angle(self, dest_angle):
+        if self.is_moving():
+            self.__update_move_angle()
 
     def ptz_turn_stop(self):
-        if self.is_moving_increase:
-            self.__stop_increase_angle()
-        if self.is_moving_decrease:
-            self.__stop_decrease_angle()
+        if self.is_moving():
+            self.send_stop_command()
 
 class TimeRoller(BaseRoller):
     def __init__(self, rotation_speed, min_angle, max_angle, current_angle, serial_port, is_vertical):
         super().__init__(min_angle, max_angle, current_angle, serial_port, is_vertical)
         self.rotation_speed = rotation_speed
         self.start_move_time = 0
+        self.is_moving_increase = False
+        self.is_moving_decrease = False
 
-    def start_increase_angle(self, dst_angle):
+
+    def start_move_angle(self, dst_angle):
+        if self.current_angle > dst_angle:
+            self.__start_decrease_angle(dst_angle)
+        elif self.current_angle < dst_angle:
+            self.__start_increase_angle(dst_angle)
+
+    def check_move_angle(self, dest_angle=360.0):
+        if self.is_moving_increase:
+            assert not self.is_moving_decrease
+            self.__check_increase_angle(dest_angle)
+        elif self.is_moving_decrease:
+            self.__check_decrease_angle()
+
+    def __start_increase_angle(self, dst_angle):
         if not (self.is_moving_increase or self.is_moving_decrease):
             self.is_moving_increase = True
             self.start_move_time = time.time()
@@ -207,7 +169,7 @@ class TimeRoller(BaseRoller):
             self.current_angle = self.current_angle + self.rotation_speed * (cur_time - self.start_move_time)
             self.start_move_time = cur_time
 
-    def check_increase_angle(self, dest_angle=360.0):
+    def __check_increase_angle(self, dest_angle=360.0):
         if self.is_moving_increase:
             self.__update_increase_angle()
             target_angle = min(dest_angle, self.max_angle)
@@ -222,7 +184,7 @@ class TimeRoller(BaseRoller):
             send_pelco_command(STOP, self.serial_port)
             self.is_moving_increase = False
 
-    def start_decrease_angle(self, dst_angle):
+    def __start_decrease_angle(self, dst_angle):
         if not (self.is_moving_increase or self.is_moving_decrease):
             self.is_moving_decrease = True
             self.start_move_time = time.time()
@@ -234,7 +196,7 @@ class TimeRoller(BaseRoller):
             self.current_angle = self.current_angle - self.rotation_speed * (cur_time - self.start_move_time)
             self.start_move_time = cur_time
 
-    def check_decrease_angle(self, dest_angle=-360.0):
+    def __check_decrease_angle(self, dest_angle=-360.0):
         if self.is_moving_decrease:
             self.__update_decrease_angle()
             target_angle = max(dest_angle, self.min_angle)
@@ -255,11 +217,14 @@ class TimeRoller(BaseRoller):
         if self.is_moving_decrease:
             self.__stop_decrease_angle()
 
+    def is_moving(self):
+        return self.is_moving_increase or self.is_moving_decrease
+
     def increase_angle_command(self):
-        return STOP
+        return bytearray(0)
 
     def decrease_angle_command(self):
-        return STOP
+        return bytearray(0)
             
 
 class VerticalRoller(TimeRoller):

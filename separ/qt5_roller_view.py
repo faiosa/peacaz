@@ -65,47 +65,27 @@ class BaseRollerView:
             #messagebox.showwarning("Warning", "Введіть коректне число")
 
     def roll_desired_angle(self, desired_angle):
-        if self.roller.current_angle < desired_angle:
-            self.turn_ptz_increase(desired_angle)
-        else:
-            self.turn_ptz_decrease(desired_angle)
+        self.turn_ptz_move(desired_angle)
 
-    def check_ptz_increase(self, target_angle):
-        self.roller.check_increase_angle(target_angle)
+    def check_ptz_move(self, target_angle):
+        self.roller.check_move_angle(target_angle)
         self.update_roller_view()
-        if self.roller.is_moving_increase:
+        if self.roller.is_moving():
             QTimer.singleShot(
                 20,
-                lambda: self.check_ptz_increase(target_angle)
+                lambda: self.check_ptz_move(target_angle)
             )
         else:
             self.__on_finish_move()
 
-    def turn_ptz_increase(self, target_angle):
-        self.roller.start_increase_angle(target_angle)
-        if self.roller.is_moving_increase:
+    def turn_ptz_move(self, target_angle):
+        self.roller.start_move_angle(target_angle)
+        if self.roller.is_moving():
             self.__on_start_move()
-            self.check_ptz_increase(target_angle)
-
-    def check_ptz_decrease(self, target_angle):
-        self.roller.check_decrease_angle(target_angle)
-        self.update_roller_view()
-        if self.roller.is_moving_decrease:
-            QTimer.singleShot(
-                20,
-                lambda: self.check_ptz_decrease(target_angle)
-            )
-        else:
-            self.__on_finish_move()
-
-    def turn_ptz_decrease(self, target_angle):
-        self.roller.start_decrease_angle(target_angle)
-        if self.roller.is_moving_decrease:
-            self.__on_start_move()
-            self.check_ptz_decrease(target_angle)
+            self.check_ptz_move(target_angle)
 
     def is_roller_moving(self):
-        return self.roller.is_moving_increase or self.roller.is_moving_decrease
+        return self.roller.is_moving()
 
 
     def stop_ptz(self):

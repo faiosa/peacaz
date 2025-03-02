@@ -51,7 +51,7 @@ class ControllerView:
     def stop_ptz(self):
         for indx in range(0, len(self.controller.rollers)):
             roller = self.controller.rollers[indx]
-            if roller.is_moving_increase or roller.is_moving_decrease:
+            if roller.is_moving():
                 self.roller_views[indx].stop_ptz()
 
     def roller_start(self, roller_index):
