@@ -111,7 +111,7 @@ class StepperRoller(BaseRoller):
 
     def send_move_command(self, trg_step):
         j_move_task = {
-            "rfos": False,
+            "run_final_on_stop": False,
             "tasks": [
                 {"class": "StepperParametersTask", "target_step": trg_step},
                 {"class": "MoveToTargetStep", "target_step": trg_step}

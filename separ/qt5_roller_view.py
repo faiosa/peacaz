@@ -5,6 +5,9 @@ from PyQt5.QtGui import QDoubleValidator, QFont, QPainter, QPen, QBrush, QStatic
 from PyQt5.QtWidgets import QLabel, QLineEdit, QFrame, QWidget, QPushButton
 import math
 
+from separ.roller import StepperRoller
+
+
 class BaseRollerView:
     def __init__(self, roller, frame, grid, controller_view, index):
         self.roller = roller
@@ -46,6 +49,10 @@ class BaseRollerView:
         self.input_field.setFixedWidth(50)
         grid.addWidget(self.input_field, start_row_index + 2, 1)
 
+        if isinstance(self.roller, StepperRoller):
+            self.patrol_button = QPushButton(self.frame)
+            self.patrol_button.setText("patrol")
+            grid.addWidget(self.patrol_button, 8, 3)
 
 
     def set_desired_angle(self, event=None):
