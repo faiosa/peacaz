@@ -76,10 +76,13 @@ class ControllerView:
 
     def __tune_angles(self):
         angles = [json.get("current_angle") for json in self.controller.settings.get("rollers")]
-        for i in range(0, min(len(self.roller_views), len(angles))):
+        for i in range(0, len(angles)):
+            if angles[i] is None:#Stepper motor has no current_angle attribute
+                continue
             if self.roller_views[i].is_roller_moving():
                 self.roller_views[i].stop_ptz()
-            my_lambda = lambda: self.roller_views[len(self.roller_views) - len(angles)].roll_desired_angle(angles.pop(0))
+            my_lambda = (lambda index, angle: lambda: self.roller_views[index].roll_desired_angle(angle))(i, angles[i])
+            #my_lambda = lambda: self.roller_views[len(self.roller_views) - len(angles)].roll_desired_angle(angles.pop(0))
             self.lambda_queue.append(my_lambda)
         self.__check_lambdas()
 
