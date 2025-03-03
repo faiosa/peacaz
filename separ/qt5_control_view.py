@@ -25,6 +25,14 @@ class ControllerView:
         controller_label.setFont(header_font)
         rollers_layout.addWidget(controller_label, 0, 0, 1, 2)
 
+
+        self.restore_button = QPushButton(self.frame)
+        self.restore_button.setIcon(self.restore_button.style().standardIcon(getattr(QStyle, "SP_BrowserReload")))
+        #self.restore_button.setText("Відновити початкові значення")
+        self.restore_button.clicked.connect(self.__tune_angles)
+        #rollers_layout.addWidget(self.restore_button, 8, 4, 1, 4)
+        rollers_layout.addWidget(self.restore_button, 8, 5)
+
         for indx in range(0, len(self.controller.rollers)):
             roller = self.controller.rollers[indx]
             roller_view = RollerViewVertical(roller, frame, rollers_layout, self, indx) if roller.is_vertical else RollerViewHorizontal(roller, frame, rollers_layout, self, indx)
@@ -35,12 +43,6 @@ class ControllerView:
         self.stop_button.clicked.connect(lambda: self.stop_ptz())
         rollers_layout.addWidget(self.stop_button, 8, 4)
 
-        self.restore_button = QPushButton(self.frame)
-        self.restore_button.setIcon(self.restore_button.style().standardIcon(getattr(QStyle, "SP_BrowserReload")))
-        #self.restore_button.setText("Відновити початкові значення")
-        self.restore_button.clicked.connect(self.__tune_angles)
-        #rollers_layout.addWidget(self.restore_button, 8, 4, 1, 4)
-        rollers_layout.addWidget(self.restore_button, 8, 5)
 
         switchboard_frame = QFrame(self.frame)
         switchboard_layout = QHBoxLayout()

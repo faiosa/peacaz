@@ -18,7 +18,6 @@ class PatrolDialog(QDialog):
         self.setLayout(self.layout)
         self.roller_view = roller_view
 
-        self.roller = roller_view.roller
         settings = self.__patrol_settings()
         policies = _patrol_policies()
         self.dictionary = DictionarySettings("Параметри патрулювання", self.layout, settings, policies)
@@ -31,15 +30,14 @@ class PatrolDialog(QDialog):
 
     def __patrol_settings(self):
         return {
-            "min_angle": self.roller.min_angle,
-            "max_angle": self.roller.max_angle,
-            "rotation_speed": self.roller.rotation_speed
+            "min_angle": self.roller_view.roller.min_angle,
+            "max_angle": self.roller_view .roller.max_angle,
+            "rotation_speed": self.roller_view.roller.rotation_speed
         }
 
     def __do_patrol(self):
         patrol_settings = self.dictionary.get_settings()
-        self.roller.do_patrol(patrol_settings['min_angle'], patrol_settings['max_angle'], patrol_settings['rotation_speed'])
-        self.roller_view.check_ptz_move(patrol_settings['min_angle'])
+        self.roller_view.turn_ptz_patrol(patrol_settings)
         self.close()
 
     def __buttons_frame(self):

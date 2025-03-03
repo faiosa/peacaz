@@ -4,6 +4,7 @@ from PyQt5.QtGui import QDoubleValidator, QFont, QPainter, QPen, QBrush, QStatic
 
 from PyQt5.QtWidgets import QLabel, QLineEdit, QFrame, QWidget, QPushButton
 import math
+from pearax.func import func_logger
 
 from separ.patrol_dialog import PatrolDialog
 from separ.roller import StepperRoller
@@ -55,6 +56,8 @@ class BaseRollerView:
             self.patrol_button.setText("patrol")
             self.patrol_button.clicked.connect(self.show_patrol_dialog)
             grid.addWidget(self.patrol_button, 8, 3)
+        else:
+            self.patrol_button = None
 
     def show_patrol_dialog(self):
         dlg = PatrolDialog(self)
@@ -84,8 +87,20 @@ class BaseRollerView:
         else:
             self.__on_finish_move()
 
+    #Works for stepper only
+    def turn_ptz_patrol(self, patrol_params):
+        if isinstance(self.roller, StepperRoller):
+            if not self.roller.is_moving():
+                self.roller.do_patrol(patrol_params['min_angle'], patrol_params['max_angle'], patrol_params['rotation_speed'])
+                self.check_move_started(patrol_params['min_angle'])
+        else:
+            func_logger.fatal("Patrol works with stepper roller only")
+
     def turn_ptz_move(self, target_angle):
         self.roller.start_move_angle(target_angle)
+        self.check_move_started(target_angle)
+
+    def check_move_started(self, target_angle):
         if self.roller.is_moving():
             self.__on_start_move()
             self.check_ptz_move(target_angle)
@@ -113,9 +128,13 @@ class BaseRollerView:
 
     def disable_buttons(self):
         self.input_field.setEnabled(False)
+        if not self.patrol_button is None:
+            self.patrol_button.setEnabled(False)
 
     def enable_buttons(self):
         self.input_field.setEnabled(True)
+        if not self.patrol_button is None:
+            self.patrol_button.setEnabled(True)
 
 class RollerViewVertical(BaseRollerView):
     def __init__(self, roller, frame, grid, controller_view, index):
@@ -140,6 +159,7 @@ class RollerViewVertical(BaseRollerView):
         self.turn_down_button.clicked.connect(lambda: self.turn_ptz_decrease(self.roller.min_angle))
         grid.addWidget(self.turn_down_button, 5, 6)
         '''
+        self.check_move_started(None)
 
     def update_roller_view(self):
         super().update_roller_view()
@@ -227,6 +247,8 @@ class RollerViewHorizontal(BaseRollerView):
         self.turn_right_button.clicked.connect(lambda: self.turn_ptz_increase(self.roller.max_angle))
         grid.addWidget(self.turn_right_button, 4, 7)
         '''
+        self.check_move_started(None)
+
     def update_roller_view(self):
         super().update_roller_view()
         self.canvas_frame.update()

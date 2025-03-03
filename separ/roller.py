@@ -60,12 +60,16 @@ class StepperRoller(BaseRoller):
     def ensure_arduino(self, show_message = False, retry=5):
         resp = False
         if self.serial_client.pearax.is_serial_alive():
-            _, cs = self.read_current_step()
+            status, cs = self.read_current_step()
             if not cs is None:
                 self.cur_step = cs
                 self.current_angle = self.step_to_angle(self.cur_step)
-                self.send_rotation_speed()
+                if status == 'r':
+                    self.moving = True
+                else:
+                    self.send_rotation_speed()
                 resp = True
+
         if not resp:
             if retry > 0:
                 time.sleep(0.01)
