@@ -5,6 +5,7 @@ from PyQt5.QtGui import QDoubleValidator, QFont, QPainter, QPen, QBrush, QStatic
 from PyQt5.QtWidgets import QLabel, QLineEdit, QFrame, QWidget, QPushButton
 import math
 
+from separ.patrol_dialog import PatrolDialog
 from separ.roller import StepperRoller
 
 
@@ -52,7 +53,12 @@ class BaseRollerView:
         if isinstance(self.roller, StepperRoller):
             self.patrol_button = QPushButton(self.frame)
             self.patrol_button.setText("patrol")
+            self.patrol_button.clicked.connect(self.show_patrol_dialog)
             grid.addWidget(self.patrol_button, 8, 3)
+
+    def show_patrol_dialog(self):
+        dlg = PatrolDialog(self)
+        dlg.exec_()
 
 
     def set_desired_angle(self, event=None):

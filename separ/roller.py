@@ -135,6 +135,27 @@ class StepperRoller(BaseRoller):
         if self.is_moving():
             self.send_stop_command()
 
+    def do_patrol(self, min_angle: float, max_angle: float, rotation_speed: float):
+        if self.ensure_arduino() and not self.is_moving():
+            self.moving = True
+            trg_step_1 = self.angle_to_step(min_angle)
+            trg_step_2 = self.angle_to_step(max_angle)
+            velocity_delay = 360.0 / (float(self.steps) * rotation_speed)
+            j_patrol_task = {
+                "run_final_on_stop": True,
+                "tasks": [
+                    {"class": "RememberOldVelocity"},
+                    {"class": "StepperParametersTask", "velocity_delay": velocity_delay},
+                    {"class": "StepperParametersTask", "target_step": trg_step_1},
+                    {"class": "MoveToTargetStep", "target_step": trg_step_1},
+                    {"class": "StepperParametersTask", "target_step": trg_step_2},
+                    {"class": "MoveToTargetStep", "target_step": trg_step_2},
+                    {"class": "GoToTask", "goto_index": 2},
+                    {"class": "RecallOldVelocity"}
+                ]
+            }
+            self.serial_client.write(enter(json.dumps(j_patrol_task)))
+
 class TimeRoller(BaseRoller):
     def __init__(self, rotation_speed, min_angle, max_angle, current_angle, serial_port, is_vertical):
         super().__init__(min_angle, max_angle, current_angle, serial_port, is_vertical)
