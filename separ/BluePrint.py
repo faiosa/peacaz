@@ -116,14 +116,11 @@ class GridBluePrint(BluePrint):
     def add_roller(self, controller, index):
         if (not hasattr(self, "rollers_frame")) or self.rollers_frame == None:
             self.__set_rollers_slots()
-        frame = QFrame(self.rollers_frame)
-        frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
-        frame.setLineWidth(4)
-        frame.setMaximumWidth(480)
-        controller_view = ControllerView(controller, frame)
+        controller.show(self.rollers_frame)
+        controller_view = controller.view
 
-        self.roller_layout.addWidget(frame, index, 0, alignment=QtCore.Qt.AlignLeft)
-        self.roller_frames[index] = frame
+        self.roller_layout.addWidget(controller_view.frame, index, 0, alignment=QtCore.Qt.AlignLeft)
+        self.roller_frames[index] = controller_view.frame
         return controller_view
 
     def add_open_signal_button(self, button, index):

@@ -42,11 +42,10 @@ class MainRollerView(QMainWindow):
         settings_button.setIcon(QIcon("assets/settings.png"))
         settings_button.clicked.connect(lambda: self.open_settings_window())
         settings_button.setFixedWidth(25)
-        #main_layout.addWidget(settings_button, stretch=0, alignment=QtCore.Qt.AlignTop)
         self.blue_print.add_settings_button(settings_button)
 
         self.roller_manager = None
-        self.roller_manager_view = None
+        #self.roller_manager_view = None
 
         log_dir = os.path.join(os.path.dirname(str(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))), "peacaz", "logs", "")
         os.makedirs(os.path.dirname(log_dir), exist_ok=True)

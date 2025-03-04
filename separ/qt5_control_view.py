@@ -11,13 +11,17 @@ from separ.qt5_roller_view import RollerViewVertical, RollerViewHorizontal
 
 
 class ControllerView:
-    def __init__(self, controller, frame):
+    def __init__(self, controller, parent_frame):
+        self.frame = QFrame(parent_frame)
+        self.frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+        self.frame.setLineWidth(4)
+        self.frame.setMaximumWidth(480)
+
         self.controller = controller
-        self.frame = frame
         self.roller_views = []
         self.lambda_queue = []
         rollers_layout = QGridLayout()
-        frame.setLayout(rollers_layout)
+        self.frame.setLayout(rollers_layout)
         controller_label = QLabel(self.frame)
         controller_label.setText(self.controller.name)
         header_font = QFont("Arial",14)
@@ -35,7 +39,7 @@ class ControllerView:
 
         for indx in range(0, len(self.controller.rollers)):
             roller = self.controller.rollers[indx]
-            roller_view = RollerViewVertical(roller, frame, rollers_layout, self, indx) if roller.is_vertical else RollerViewHorizontal(roller, frame, rollers_layout, self, indx)
+            roller_view = RollerViewVertical(roller, self.frame, rollers_layout, self, indx) if roller.is_vertical else RollerViewHorizontal(roller, self.frame, rollers_layout, self, indx)
             self.roller_views.append(roller_view)
 
         self.stop_button = QPushButton(self.frame)
@@ -82,7 +86,6 @@ class ControllerView:
             if self.roller_views[i].is_roller_moving():
                 self.roller_views[i].stop_ptz()
             my_lambda = (lambda index, angle: lambda: self.roller_views[index].roll_desired_angle(angle))(i, angles[i])
-            #my_lambda = lambda: self.roller_views[len(self.roller_views) - len(angles)].roll_desired_angle(angles.pop(0))
             self.lambda_queue.append(my_lambda)
         self.__check_lambdas()
 

@@ -5,6 +5,7 @@ from pearax.client import PearaxClient
 from pearax.core import Pearax
 from pearax import STEPPER_MOTOR_INDEX
 from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
+#from separ.qt5_roller_view import RollerViewVertical
 from utils.ptz_controller import send_pelco_command
 import time
 
@@ -16,7 +17,7 @@ class BaseRoller:
         self.current_angle = current_angle
         self.serial_port = serial_port
         self.is_vertical = is_vertical
-
+        self.view = None
 
     def start_move_angle(self, dst_angle):
         pass
@@ -36,7 +37,11 @@ class BaseRoller:
 
     def is_moving(self):
         pass
-
+    '''
+    def show(self, parent_frame, indx):
+        if self.is_vertical:
+            self.view = RollerViewVertical(self, self.frame, rollers_layout, self, indx)
+    '''
 
 def enter(s):
     return s.encode('utf-8')

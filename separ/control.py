@@ -1,4 +1,6 @@
 from pearax.client import PearaxClient
+
+from separ.qt5_control_view import ControllerView
 from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
 from pearax import func, STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX, PEARAX_BAUD_RATE, PINNER_INT_BYTE_SIZE, PINNER_INT_BYTE_ORDER
 from pearax.core import ManagePeer
@@ -25,6 +27,7 @@ class Manager:
 class Controller:
     def __init__(self, json_settings):
         self.name = json_settings.get("name")
+        self.view = None
         self.settings = json_settings
         self.radxa: ManagePeer = None
         if self.settings.get("use_radxa"):
@@ -47,6 +50,12 @@ class Controller:
             )
         ]
         self.switchboard = FullControlSwitchBoard(self.radxa, switchboard_serial_port, switchboard_pins) if switchboard_settings.get("full_control") else SimplySwitchBoard(self.radxa, switchboard_serial_port, switchboard_pins)
+
+    def show(self, parent_frame):
+        if self.view is None:
+            self.view = ControllerView(self, parent_frame)
+        else:
+            raise Exception("Controller show should appear only once")
 
     def create_roller(self, json):
         is_vertical = json.get("type") == "vertical"
