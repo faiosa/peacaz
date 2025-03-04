@@ -13,11 +13,8 @@ class BaseRollerView:
     def __init__(self, roller, frame, support_patrol = False):
         self.roller = roller
         self.frame = frame
-        #self.controller_view = controller_view
-        #self.index = index
         self.canvas_height = 232
         self.support_patrol = support_patrol
-        #self.canvas_height = 200
 
         grid = frame.layout()
 
@@ -77,39 +74,14 @@ class BaseRollerView:
 
     def roll_desired_angle(self, desired_angle):
         self.roller.turn_ptz_move(desired_angle)
-    '''
-    def check_ptz_move(self, target_angle):
-        self.roller.check_move_angle(target_angle)
-        self.update_roller_view()
-        if self.roller.is_moving():
-            QTimer.singleShot(
-                20,
-                lambda: self.check_ptz_move(target_angle)
-            )
-        else:
-            self.__on_finish_move()
-    '''
+
     #Works for stepper only
     def turn_ptz_patrol(self, patrol_params):
         if self.support_patrol:
             if not self.roller.is_moving():
                 self.roller.do_patrol(patrol_params['min_angle'], patrol_params['max_angle'], patrol_params['rotation_speed'])
-                #self.check_move_started(patrol_params['min_angle'])
         else:
             func_logger.fatal("Patrol works with stepper roller only")
-    '''
-    def turn_ptz_move(self, target_angle):
-        self.roller.start_move_angle(target_angle)
-        self.check_move_started(target_angle)
-    
-    def check_move_started(self, target_angle):
-        if self.roller.is_moving():
-            self.__on_start_move()
-            self.check_ptz_move(target_angle)
-    
-    def is_roller_moving(self):
-        return self.roller.is_moving()
-    '''
 
     def stop_ptz(self):
         self.roller.stop_ptz()
@@ -140,34 +112,11 @@ class RollerViewVertical(BaseRollerView):
 
         grid = frame.layout()
         grid.addWidget(self.slider_frame, 0, 2, 8, 1)
-        '''
-        self.turn_up_button = QPushButton(self.frame)
-        self.turn_up_button.setIcon(QIcon("assets/turn_up.png"))
-        self.turn_up_button.clicked.connect(lambda: self.turn_ptz_increase(self.roller.max_angle))
-        grid.addWidget(self.turn_up_button, 3, 6)
-
-        self.turn_down_button = QPushButton(self.frame)
-        self.turn_down_button.setIcon(QIcon("assets/turn_down.png"))
-        self.turn_down_button.clicked.connect(lambda: self.turn_ptz_decrease(self.roller.min_angle))
-        grid.addWidget(self.turn_down_button, 5, 6)
-        '''
-        #self.roller.check_move_started(None)
 
     def update_roller_view(self):
         super().update_roller_view()
         self.slider_frame.update()
 
-    '''
-    def disable_buttons(self):
-        super().disable_buttons()
-        self.turn_up_button.setEnabled(False)
-        self.turn_down_button.setEnabled(False)
-
-    def enable_buttons(self):
-        super().enable_buttons()
-        self.turn_up_button.setEnabled(True)
-        self.turn_down_button.setEnabled(True)
-    '''
 class SliderCanvas(QFrame):
     def __init__(self, widget, roller_view):
         super().__init__(widget)
@@ -229,34 +178,11 @@ class RollerViewHorizontal(BaseRollerView):
         start_canvas_col = 1 + len(self.roller.controller.rollers)
         grid = frame.layout()
         grid.addWidget(self.canvas_frame, 0, start_canvas_col, 8, 3)
-        '''
-        self.turn_left_button = QPushButton(self.frame)
-        self.turn_left_button.setIcon(QIcon("assets/turn_left.png"))
-        self.turn_left_button.clicked.connect(lambda: self.turn_ptz_decrease(self.roller.min_angle))
-        grid.addWidget(self.turn_left_button, 4, 5)
-
-        self.turn_right_button = QPushButton(self.frame)
-        self.turn_right_button.setIcon(QIcon("assets/turn_right.png"))
-        self.turn_right_button.clicked.connect(lambda: self.turn_ptz_increase(self.roller.max_angle))
-        grid.addWidget(self.turn_right_button, 4, 7)
-        '''
-        #self.roller.check_move_started(None)
 
     def update_roller_view(self):
         super().update_roller_view()
         self.canvas_frame.update()
 
-    '''
-    def disable_buttons(self):
-        super().disable_buttons()
-        self.turn_right_button.setEnabled(False)
-        self.turn_left_button.setEnabled(False)
-
-    def enable_buttons(self):
-        super().enable_buttons()
-        self.turn_right_button.setEnabled(True)
-        self.turn_left_button.setEnabled(True)
-    '''
 class ArrowCanvas(QFrame):
     def __init__(self, widget, roller_view):
         super().__init__(widget)

@@ -3,7 +3,6 @@ import json
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QMessageBox
 from pearax.client import PearaxClient
-from pearax.core import Pearax
 from pearax import STEPPER_MOTOR_INDEX
 from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
 from separ.qt5_roller_view import RollerViewVertical, RollerViewHorizontal
@@ -45,7 +44,7 @@ class BaseRoller:
 
     def stop_ptz(self):
         if self.is_moving():
-            self._ptz_turn_stop()
+            self._stop_move_angle()
             self.view.update_roller_view()
             self.view.enable_buttons()
             self.controller.roller_finish(self)
@@ -53,16 +52,10 @@ class BaseRoller:
     def _start_move_angle(self, dst_angle):
         pass
 
-    def _update_move_angle(self):
-        pass
-
     def _check_move_angle(self, dest_angle):
         pass
 
-    def _stop_move_angle(self, update=True):
-        pass
-
-    def _ptz_turn_stop(self):
+    def _stop_move_angle(self):
         pass
 
     def on_view_ready(self):
@@ -89,7 +82,6 @@ class StepperRoller(BaseRoller):
         self.rotation_speed = rotation_speed
         self.steps = steps
         self.cur_step = self.angle_to_step(self.current_angle)
-        #self.trg_step = self.cur_step
         self.serial_client = PearaxClient(STEPPER_MOTOR_INDEX, self.controller.radxa)
         self.moving = False
 
@@ -101,17 +93,16 @@ class StepperRoller(BaseRoller):
         self.check_move_started(None)
 
     def ensure_arduino(self, show_message = False, retry=5):
-        print("STEPPER ensure arduino")
         resp = False
         if self.serial_client.pearax.is_serial_alive():
             status, cs = self.read_current_step()
-            print(f"STEPPER data status={status}, cs={cs}")
             if not cs is None:
                 self.cur_step = cs
                 self.current_angle = self.step_to_angle(self.cur_step)
                 if status == 'r':
                     self.moving = True
-                    self.check_move_started(None)
+                    self.moving = True
+                    self.moving = True
                 else:
                     self.send_rotation_speed()
                 resp = True
@@ -171,7 +162,7 @@ class StepperRoller(BaseRoller):
             trg_step = self.angle_to_step(dst_angle)
             self.send_move_command(trg_step)
 
-    def _update_move_angle(self):
+    def __update_move_angle(self):
         if self.is_moving():
             status, self.cur_step = self.read_current_step()
             self.moving = True if status == 'r' else False
@@ -179,9 +170,9 @@ class StepperRoller(BaseRoller):
 
     def _check_move_angle(self, dest_angle):
         if self.is_moving():
-            self._update_move_angle()
+            self.__update_move_angle()
 
-    def _ptz_turn_stop(self):
+    def _stop_move_angle(self):
         if self.is_moving():
             self.send_stop_command()
 
@@ -290,7 +281,7 @@ class TimeRoller(BaseRoller):
             send_pelco_command(STOP, self.serial_port)
             self.is_moving_decrease = False
 
-    def _ptz_turn_stop(self):
+    def _stop_move_angle(self):
         if self.is_moving_increase:
             self.__stop_increase_angle()
         if self.is_moving_decrease:
