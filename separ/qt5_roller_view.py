@@ -7,17 +7,19 @@ import math
 from pearax.func import func_logger
 
 from separ.patrol_dialog import PatrolDialog
-from separ.roller import StepperRoller
 
 
 class BaseRollerView:
-    def __init__(self, roller, frame, grid, controller_view, index):
+    def __init__(self, roller, frame, support_patrol = False):
         self.roller = roller
         self.frame = frame
-        self.controller_view = controller_view
-        self.index = index
+        #self.controller_view = controller_view
+        #self.index = index
         self.canvas_height = 232
+        self.support_patrol = support_patrol
         #self.canvas_height = 200
+
+        grid = frame.layout()
 
         self.roller_font = QFont("AnonymousPro Regular", 9)
 
@@ -51,7 +53,7 @@ class BaseRollerView:
         self.input_field.setFixedWidth(50)
         grid.addWidget(self.input_field, start_row_index + 2, 1)
 
-        if isinstance(self.roller, StepperRoller):
+        if self.support_patrol:
             self.patrol_button = QPushButton(self.frame)
             self.patrol_button.setText("patrol")
             self.patrol_button.clicked.connect(self.show_patrol_dialog)
@@ -74,8 +76,8 @@ class BaseRollerView:
             #messagebox.showwarning("Warning", "Введіть коректне число")
 
     def roll_desired_angle(self, desired_angle):
-        self.turn_ptz_move(desired_angle)
-
+        self.roller.turn_ptz_move(desired_angle)
+    '''
     def check_ptz_move(self, target_angle):
         self.roller.check_move_angle(target_angle)
         self.update_roller_view()
@@ -86,42 +88,31 @@ class BaseRollerView:
             )
         else:
             self.__on_finish_move()
-
+    '''
     #Works for stepper only
     def turn_ptz_patrol(self, patrol_params):
-        if isinstance(self.roller, StepperRoller):
+        if self.support_patrol:
             if not self.roller.is_moving():
                 self.roller.do_patrol(patrol_params['min_angle'], patrol_params['max_angle'], patrol_params['rotation_speed'])
-                self.check_move_started(patrol_params['min_angle'])
+                #self.check_move_started(patrol_params['min_angle'])
         else:
             func_logger.fatal("Patrol works with stepper roller only")
-
+    '''
     def turn_ptz_move(self, target_angle):
         self.roller.start_move_angle(target_angle)
         self.check_move_started(target_angle)
-
+    
     def check_move_started(self, target_angle):
         if self.roller.is_moving():
             self.__on_start_move()
             self.check_ptz_move(target_angle)
-
+    
     def is_roller_moving(self):
         return self.roller.is_moving()
-
+    '''
 
     def stop_ptz(self):
-        if self.is_roller_moving():
-            self.roller.ptz_turn_stop()
-            self.update_roller_view()
-            self.__on_finish_move()
-
-    def __on_start_move(self):
-        self.controller_view.roller_start(self.index)
-        self.disable_buttons()
-
-    def __on_finish_move(self):
-        self.enable_buttons()
-        self.controller_view.roller_finish(self.index)
+        self.roller.stop_ptz()
 
     def update_roller_view(self):
         self.current_angle_label.setText(f"{self.roller.current_angle:.1f}")
@@ -137,8 +128,8 @@ class BaseRollerView:
             self.patrol_button.setEnabled(True)
 
 class RollerViewVertical(BaseRollerView):
-    def __init__(self, roller, frame, grid, controller_view, index):
-        super().__init__(roller, frame, grid, controller_view, index)
+    def __init__(self, roller, frame, support_patrol = False):
+        super().__init__(roller, frame, support_patrol)
 
         self.slider_height = self.canvas_height
         self.slider_width = 60
@@ -147,6 +138,7 @@ class RollerViewVertical(BaseRollerView):
         self.slider_frame.setFixedWidth(self.slider_width)
         self.slider_frame.setFixedHeight(self.slider_height)
 
+        grid = frame.layout()
         grid.addWidget(self.slider_frame, 0, 2, 8, 1)
         '''
         self.turn_up_button = QPushButton(self.frame)
@@ -159,7 +151,7 @@ class RollerViewVertical(BaseRollerView):
         self.turn_down_button.clicked.connect(lambda: self.turn_ptz_decrease(self.roller.min_angle))
         grid.addWidget(self.turn_down_button, 5, 6)
         '''
-        self.check_move_started(None)
+        #self.roller.check_move_started(None)
 
     def update_roller_view(self):
         super().update_roller_view()
@@ -209,7 +201,7 @@ class SliderCanvas(QFrame):
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
-        if self.roller_view.controller_view.is_moving():
+        if self.roller_view.roller.controller.is_moving():
             return
         height = self.size().height()
         dy = height / 2 - event.y()
@@ -221,11 +213,11 @@ class SliderCanvas(QFrame):
             dangle = self.roller_view.roller.min_angle
 
         self.roller_view.input_field.setText(f"{dangle:.1f}")
-        self.roller_view.roll_desired_angle(dangle)
+        self.roller_view.roller.turn_ptz_move(dangle)
 
 class RollerViewHorizontal(BaseRollerView):
-    def __init__(self, roller, frame, grid, controller_view, index):
-        super().__init__(roller, frame, grid, controller_view, index)
+    def __init__(self, roller, frame, support_patrol = False):
+        super().__init__(roller, frame, support_patrol)
 
         self.slider_height = self.canvas_height
         self.slider_width = self.canvas_height + 30
@@ -234,7 +226,8 @@ class RollerViewHorizontal(BaseRollerView):
         self.canvas_frame.setFixedWidth(self.slider_width)
         self.canvas_frame.setFixedHeight(self.slider_height)
 
-        start_canvas_col = 1 + len(self.controller_view.controller.rollers)
+        start_canvas_col = 1 + len(self.roller.controller.rollers)
+        grid = frame.layout()
         grid.addWidget(self.canvas_frame, 0, start_canvas_col, 8, 3)
         '''
         self.turn_left_button = QPushButton(self.frame)
@@ -247,7 +240,7 @@ class RollerViewHorizontal(BaseRollerView):
         self.turn_right_button.clicked.connect(lambda: self.turn_ptz_increase(self.roller.max_angle))
         grid.addWidget(self.turn_right_button, 4, 7)
         '''
-        self.check_move_started(None)
+        #self.roller.check_move_started(None)
 
     def update_roller_view(self):
         super().update_roller_view()
@@ -271,7 +264,7 @@ class ArrowCanvas(QFrame):
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
-        if self.roller_view.controller_view.is_moving():
+        if self.roller_view.roller.controller.is_moving():
             return
         size = self.size()
         dx = event.x() - size.width() / 2
@@ -292,7 +285,7 @@ class ArrowCanvas(QFrame):
 
         tangle = trad * 180 / math.pi
         self.roller_view.input_field.setText(f"{tangle:.1f}")
-        self.roller_view.roll_desired_angle(tangle)
+        self.roller_view.roller.turn_ptz_move(tangle)
 
 
     def paintEvent(self, event):

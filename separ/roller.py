@@ -1,76 +1,117 @@
 import json
 
+from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QMessageBox
 from pearax.client import PearaxClient
 from pearax.core import Pearax
 from pearax import STEPPER_MOTOR_INDEX
 from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
-#from separ.qt5_roller_view import RollerViewVertical
+from separ.qt5_roller_view import RollerViewVertical, RollerViewHorizontal
 from utils.ptz_controller import send_pelco_command
 import time
 
 
 class BaseRoller:
-    def __init__(self, min_angle, max_angle, current_angle, serial_port, is_vertical):
+    def __init__(self, controller, min_angle, max_angle, current_angle, serial_port, is_vertical):
         self.min_angle = min_angle
         self.max_angle = max_angle
         self.current_angle = current_angle
         self.serial_port = serial_port
         self.is_vertical = is_vertical
+        self.controller = controller
         self.view = None
 
-    def start_move_angle(self, dst_angle):
+    def check_move_started(self, target_angle):
+        if self.is_moving():
+            self.view.disable_buttons()
+            self.controller.roller_start(self)
+            self.check_ptz_move(target_angle)
+
+    def turn_ptz_move(self, target_angle):
+        self._start_move_angle(target_angle)
+        self.check_move_started(target_angle)
+
+    def check_ptz_move(self, target_angle):
+        self._check_move_angle(target_angle)
+        self.view.update_roller_view()
+        if self.is_moving():
+            QTimer.singleShot(
+                20,
+                lambda: self.check_ptz_move(target_angle)
+            )
+        else:
+            self.view.enable_buttons()
+            self.controller.roller_finish(self)
+
+    def stop_ptz(self):
+        if self.is_moving():
+            self._ptz_turn_stop()
+            self.view.update_roller_view()
+            self.view.enable_buttons()
+            self.controller.roller_finish(self)
+
+    def _start_move_angle(self, dst_angle):
         pass
 
-    def __update_move_angle(self):
+    def _update_move_angle(self):
         pass
 
-    def check_move_angle(self, dest_angle):
+    def _check_move_angle(self, dest_angle):
         pass
 
-    def __stop_move_angle(self, update=True):
+    def _stop_move_angle(self, update=True):
         pass
 
-    def ptz_turn_stop(self):
+    def _ptz_turn_stop(self):
         pass
 
+    def on_view_ready(self):
+        pass
 
     def is_moving(self):
         pass
-    '''
-    def show(self, parent_frame, indx):
+
+    def show(self, parent_frame):
         if self.is_vertical:
-            self.view = RollerViewVertical(self, self.frame, rollers_layout, self, indx)
-    '''
+            self.view = RollerViewVertical(self, parent_frame)
+        else:
+            self.view = RollerViewHorizontal(self, parent_frame)
+
 
 def enter(s):
     return s.encode('utf-8')
 
 
 class StepperRoller(BaseRoller):
-    def __init__(self, radxa: Pearax, rotation_speed, steps, min_angle, max_angle, is_vertical):
-        super().__init__(min_angle, max_angle, 0., None, is_vertical)
-        assert radxa is not None
+    def __init__(self, controller, rotation_speed, steps, min_angle, max_angle, is_vertical):
+        super().__init__(controller, min_angle, max_angle, 0., None, is_vertical)
+        assert self.controller.radxa is not None
         self.rotation_speed = rotation_speed
         self.steps = steps
         self.cur_step = self.angle_to_step(self.current_angle)
         #self.trg_step = self.cur_step
-        self.serial_client = PearaxClient(STEPPER_MOTOR_INDEX, radxa)
+        self.serial_client = PearaxClient(STEPPER_MOTOR_INDEX, self.controller.radxa)
         self.moving = False
-        self.ensure_arduino(False)
 
     def is_moving(self):
         return self.moving
 
+    def on_view_ready(self):
+        self.ensure_arduino(False)
+        self.check_move_started(None)
+
     def ensure_arduino(self, show_message = False, retry=5):
+        print("STEPPER ensure arduino")
         resp = False
         if self.serial_client.pearax.is_serial_alive():
             status, cs = self.read_current_step()
+            print(f"STEPPER data status={status}, cs={cs}")
             if not cs is None:
                 self.cur_step = cs
                 self.current_angle = self.step_to_angle(self.cur_step)
                 if status == 'r':
                     self.moving = True
+                    self.check_move_started(None)
                 else:
                     self.send_rotation_speed()
                 resp = True
@@ -124,23 +165,23 @@ class StepperRoller(BaseRoller):
         s = bits.decode("utf-8").strip()
         return s[:1], int(s[1:])
 
-    def start_move_angle(self, dst_angle):
+    def _start_move_angle(self, dst_angle):
         if self.ensure_arduino() and not self.is_moving():
             self.moving = True
             trg_step = self.angle_to_step(dst_angle)
             self.send_move_command(trg_step)
 
-    def __update_move_angle(self):
+    def _update_move_angle(self):
         if self.is_moving():
             status, self.cur_step = self.read_current_step()
             self.moving = True if status == 'r' else False
             self.current_angle = self.step_to_angle(self.cur_step)
 
-    def check_move_angle(self, dest_angle):
+    def _check_move_angle(self, dest_angle):
         if self.is_moving():
-            self.__update_move_angle()
+            self._update_move_angle()
 
-    def ptz_turn_stop(self):
+    def _ptz_turn_stop(self):
         if self.is_moving():
             self.send_stop_command()
 
@@ -164,23 +205,31 @@ class StepperRoller(BaseRoller):
                 ]
             }
             self.serial_client.write(enter(json.dumps(j_patrol_task)))
+            self.check_move_started(min_angle)
+
+    def show(self, parent_frame):
+        if self.is_vertical:
+            self.view = RollerViewVertical(self, parent_frame, True)
+        else:
+            self.view = RollerViewHorizontal(self, parent_frame, True)
+
 
 class TimeRoller(BaseRoller):
-    def __init__(self, rotation_speed, min_angle, max_angle, current_angle, serial_port, is_vertical):
-        super().__init__(min_angle, max_angle, current_angle, serial_port, is_vertical)
+    def __init__(self, controller, rotation_speed, min_angle, max_angle, current_angle, serial_port, is_vertical):
+        super().__init__(controller, min_angle, max_angle, current_angle, serial_port, is_vertical)
         self.rotation_speed = rotation_speed
         self.start_move_time = 0
         self.is_moving_increase = False
         self.is_moving_decrease = False
 
 
-    def start_move_angle(self, dst_angle):
+    def _start_move_angle(self, dst_angle):
         if self.current_angle > dst_angle:
             self.__start_decrease_angle(dst_angle)
         elif self.current_angle < dst_angle:
             self.__start_increase_angle(dst_angle)
 
-    def check_move_angle(self, dest_angle=360.0):
+    def _check_move_angle(self, dest_angle=360.0):
         if self.is_moving_increase:
             assert not self.is_moving_decrease
             self.__check_increase_angle(dest_angle)
@@ -241,7 +290,7 @@ class TimeRoller(BaseRoller):
             send_pelco_command(STOP, self.serial_port)
             self.is_moving_decrease = False
 
-    def ptz_turn_stop(self):
+    def _ptz_turn_stop(self):
         if self.is_moving_increase:
             self.__stop_increase_angle()
         if self.is_moving_decrease:
@@ -258,8 +307,8 @@ class TimeRoller(BaseRoller):
             
 
 class VerticalRoller(TimeRoller):
-    def __init__(self, rotation_speed, min_angle, max_angle, current_angle, serial_port):
-        super().__init__(rotation_speed, min_angle, max_angle, current_angle, serial_port, True)
+    def __init__(self, controller, rotation_speed, min_angle, max_angle, current_angle, serial_port):
+        super().__init__(controller, rotation_speed, min_angle, max_angle, current_angle, serial_port, True)
 
     def increase_angle_command(self):
         return UP
@@ -269,8 +318,8 @@ class VerticalRoller(TimeRoller):
 
 
 class HorizontalRoller(TimeRoller):
-    def __init__(self, rotation_speed, min_angle, max_angle, current_angle, serial_port):
-        super().__init__(rotation_speed, min_angle, max_angle, current_angle, serial_port, False)
+    def __init__(self, controller, rotation_speed, min_angle, max_angle, current_angle, serial_port):
+        super().__init__(controller, rotation_speed, min_angle, max_angle, current_angle, serial_port, False)
 
     def increase_angle_command(self):
         return RIGHT

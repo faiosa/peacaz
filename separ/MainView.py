@@ -52,7 +52,9 @@ class MainRollerView(QMainWindow):
         log_conf["log_dir"] = log_dir
         self.reload_settings()
         for index in range(len(self.roller_manager.controllers)):
-            self.blue_print.add_roller(self.roller_manager.controllers[index], index)
+            controller = self.roller_manager.controllers[index]
+            self.blue_print.add_roller(controller, index)
+            controller.on_view_ready()
 
         self.urh_controller = None
         if True:#self.settings["global_settings"]["urh"]:

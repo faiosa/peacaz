@@ -18,8 +18,8 @@ class ControllerView:
         self.frame.setMaximumWidth(480)
 
         self.controller = controller
-        self.roller_views = []
-        self.lambda_queue = []
+        #self.roller_views = []
+        #self.lambda_queue = []
         rollers_layout = QGridLayout()
         self.frame.setLayout(rollers_layout)
         controller_label = QLabel(self.frame)
@@ -33,14 +33,15 @@ class ControllerView:
         self.restore_button = QPushButton(self.frame)
         self.restore_button.setIcon(self.restore_button.style().standardIcon(getattr(QStyle, "SP_BrowserReload")))
         #self.restore_button.setText("Відновити початкові значення")
-        self.restore_button.clicked.connect(self.__tune_angles)
+        self.restore_button.clicked.connect(self.controller.tune_angles)
         #rollers_layout.addWidget(self.restore_button, 8, 4, 1, 4)
         rollers_layout.addWidget(self.restore_button, 8, 5)
 
         for indx in range(0, len(self.controller.rollers)):
             roller = self.controller.rollers[indx]
-            roller_view = RollerViewVertical(roller, self.frame, rollers_layout, self, indx) if roller.is_vertical else RollerViewHorizontal(roller, self.frame, rollers_layout, self, indx)
-            self.roller_views.append(roller_view)
+            roller.show(self.frame)
+            #roller_view = RollerViewVertical(roller, self.frame, rollers_layout, self, indx) if roller.is_vertical else RollerViewHorizontal(roller, self.frame, rollers_layout, self, indx)
+            #self.roller_views.append(roller_view)
 
         self.stop_button = QPushButton(self.frame)
         self.stop_button.setIcon(QIcon("assets/stop.png"))
@@ -55,11 +56,8 @@ class ControllerView:
         rollers_layout.addWidget(switchboard_frame, 8, 0, 1, 3)
 
     def stop_ptz(self):
-        for indx in range(0, len(self.controller.rollers)):
-            roller = self.controller.rollers[indx]
-            if roller.is_moving():
-                self.roller_views[indx].stop_ptz()
-
+        self.controller.stop_ptz()
+    '''
     def roller_start(self, roller_index):
         self.restore_button.setEnabled(False)
         for i in range(0, len(self.roller_views)):
@@ -72,29 +70,16 @@ class ControllerView:
                 self.roller_views[i].enable_buttons()
         self.restore_button.setEnabled(True)
         self.__check_lambdas()
+    '''
 
-    def __check_lambdas(self):
-        if len(self.lambda_queue) > 0:
-            my_lambda = self.lambda_queue.pop(0)
-            my_lambda()
 
-    def __tune_angles(self):
-        angles = [json.get("current_angle") for json in self.controller.settings.get("rollers")]
-        for i in range(0, len(angles)):
-            if angles[i] is None:#Stepper motor has no current_angle attribute
-                continue
-            if self.roller_views[i].is_roller_moving():
-                self.roller_views[i].stop_ptz()
-            my_lambda = (lambda index, angle: lambda: self.roller_views[index].roll_desired_angle(angle))(i, angles[i])
-            self.lambda_queue.append(my_lambda)
-        self.__check_lambdas()
-
+    '''
     def is_moving(self):
         for rw in self.roller_views:
             if rw.is_roller_moving():
                 return True
         return False
-
+    '''
 class SwitchBoardView:
     def __init__(self, switchboard, frame, layout):
         self.switchboard = switchboard

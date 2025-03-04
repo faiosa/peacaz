@@ -28,6 +28,7 @@ class Controller:
     def __init__(self, json_settings):
         self.name = json_settings.get("name")
         self.view = None
+        self.lambda_queue = []
         self.settings = json_settings
         self.radxa: ManagePeer = None
         if self.settings.get("use_radxa"):
@@ -51,6 +52,10 @@ class Controller:
         ]
         self.switchboard = FullControlSwitchBoard(self.radxa, switchboard_serial_port, switchboard_pins) if switchboard_settings.get("full_control") else SimplySwitchBoard(self.radxa, switchboard_serial_port, switchboard_pins)
 
+    def on_view_ready(self):
+        for roller in self.rollers:
+            roller.on_view_ready()
+
     def show(self, parent_frame):
         if self.view is None:
             self.view = ControllerView(self, parent_frame)
@@ -61,7 +66,7 @@ class Controller:
         is_vertical = json.get("type") == "vertical"
         if json.get("engine") == "stepper":
             return StepperRoller(
-                self.radxa,
+                self,
                 rotation_speed=json.get("rotation_speed"),
                 steps=json.get("steps"),
                 min_angle=json.get("min_angle"),
@@ -70,6 +75,7 @@ class Controller:
             )
         elif is_vertical:
             return VerticalRoller(
+                self,
                 rotation_speed=json.get("rotation_speed"),
                 min_angle=json.get("min_angle"),
                 max_angle=json.get("max_angle"),
@@ -78,6 +84,7 @@ class Controller:
             )
         else:
             return HorizontalRoller(
+                self,
                 rotation_speed=json.get("rotation_speed"),
                 min_angle=json.get("min_angle"),
                 max_angle=json.get("max_angle"),
@@ -90,6 +97,40 @@ class Controller:
             if roller.is_moving():
                 return True
         return False
+
+    def roller_start(self, roller):
+        self.view.restore_button.setEnabled(False)
+        for rl in self.rollers:
+            if not rl == roller:
+                rl.view.disable_buttons()
+
+    def roller_finish(self, roller):
+        for rl in self.rollers:
+            if not rl == roller:
+                rl.view.enable_buttons()
+        self.view.restore_button.setEnabled(True)
+        self.__check_lambdas()
+
+    def stop_ptz(self):
+        for roller in self.rollers:
+            if roller.is_moving():
+                roller.stop_ptz()
+
+    def __check_lambdas(self):
+        if len(self.lambda_queue) > 0:
+            my_lambda = self.lambda_queue.pop(0)
+            my_lambda()
+
+    def tune_angles(self):
+        angles = [json.get("current_angle") for json in self.settings.get("rollers")]
+        for i in range(0, len(angles)):
+            if angles[i] is None:#Stepper motor has no current_angle attribute
+                continue
+            if self.rollers[i].is_moving():
+                self.rollers[i].stop_ptz()
+            my_lambda = (lambda index, angle: lambda: self.rollers[index].turn_ptz_move(angle))(i, angles[i])
+            self.lambda_queue.append(my_lambda)
+        self.__check_lambdas()
 
     def close(self):
         if self.radxa:
