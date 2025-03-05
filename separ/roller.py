@@ -101,8 +101,6 @@ class StepperRoller(BaseRoller):
                 self.current_angle = self.step_to_angle(self.cur_step)
                 if status == 'r':
                     self.moving = True
-                    self.moving = True
-                    self.moving = True
                 else:
                     self.send_rotation_speed()
                 resp = True
