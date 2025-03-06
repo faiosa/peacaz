@@ -1,5 +1,6 @@
 from pearax.client import PearaxClient
 
+from separ.pearax_util import SerialMonitor
 from separ.qt5_control_view import ControllerView
 from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
 from pearax import func, STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX, PEARAX_BAUD_RATE, PINNER_INT_BYTE_SIZE, PINNER_INT_BYTE_ORDER
@@ -31,10 +32,12 @@ class Controller:
         self.lambda_queue = []
         self.settings = json_settings
         self.radxa: ManagePeer = None
+        self.serial_monitor = None
         if self.settings.get("use_radxa"):
             radxa_serial_port = self.settings.get("radxa_serial_port")
             self.radxa = ManagePeer(lambda: func.serial_connect(radxa_serial_port, PEARAX_BAUD_RATE), [STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX])
             self.radxa.start(f"Controller_{self.name}_radxa")
+            self.serial_monitor = SerialMonitor(self.radxa)
         self.rollers = [ self.create_roller(json) for json in json_settings.get("rollers") ]
 
         switchboard_settings = self.settings.get("switchboard")
@@ -55,6 +58,22 @@ class Controller:
     def on_view_ready(self):
         for roller in self.rollers:
             roller.on_view_ready()
+
+    def check_serial_connection(self):
+        assert not self.radxa is None
+        return self.serial_monitor.check_serial_connect(self)
+
+    def on_serial_disconnect(self):
+        self.view.restore_button.setEnabled(False)
+        self.view.stop_button.setEnabled(False)
+        for roller in self.rollers:
+            roller.on_serial_connection_lost()
+
+    def on_serial_connect(self):
+        self.view.restore_button.setEnabled(True)
+        self.view.stop_button.setEnabled(True)
+        for roller in self.rollers:
+            roller.on_serial_connection_regained()
 
     def show(self, parent_frame):
         if self.view is None:
