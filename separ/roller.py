@@ -98,6 +98,8 @@ class StepperRoller(BaseRoller):
             self.__update_move_angle()
             self.view.update_roller_view()
             self.check_move_started(None)
+            if not self.is_moving():
+                self.send_rotation_speed()
 
     def on_serial_connection_regained(self):
         if self.ensure_arduino(False):
@@ -105,6 +107,8 @@ class StepperRoller(BaseRoller):
             self.__update_move_angle()
             self.view.update_roller_view()
             self.check_move_started(None)
+            if not self.is_moving():
+                self.send_rotation_speed()
 
     def on_serial_connection_lost(self):
         self.view.disable_buttons()
@@ -153,7 +157,6 @@ class StepperRoller(BaseRoller):
         self.serial_client.write(enter(f"c{cur_step}"))
 
     def read_current_step(self):
-        #self.serial_client.write(enter("g"))
         bits = self.serial_client.ask(enter("g"))
         if bits is None:
             return None, None
