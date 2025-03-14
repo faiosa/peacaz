@@ -9,8 +9,83 @@ from separ.qt5_roller_view import RollerViewVertical, RollerViewHorizontal
 from utils.ptz_controller import send_pelco_command
 import time
 
-
 class BaseRoller:
+    def __init__(self, controller, min_angle, max_angle, is_vertical):
+        self.min_angle = min_angle
+        self.max_angle = max_angle
+        self.is_vertical = is_vertical
+        self.controller = controller
+        self.view = None
+
+        self.current_angle = 0.
+        self.moving = False
+        self.connected = True
+        self.ms_to_wait = 20
+
+    def turn_ptz_move(self, target_angle):
+        if self.connected and not self.moving:
+            self._start_move_angle(target_angle)
+
+    def stop_ptz(self):
+        if self.connected and self.moving:
+            self._stop_move_angle()
+
+    def state_update(self, is_connected, is_moving = None, current_angle=None):
+        if self.connected and not is_connected:
+            self.connected = False
+            self.on_connection_off()
+        elif not self.connected and is_connected:
+            self.connected = True
+            self.on_connection_on()
+        if self.connected:
+            if not is_moving is None:
+                if self.moving and not is_moving:
+                    self.moving = False
+                    self.on_move_off()
+                elif not self.moving and is_moving:
+                    self.moving = True
+                    self.on_move_on()
+            if not current_angle is None:
+                self.current_angle = current_angle
+
+    def on_connection_on(self):
+        pass
+
+    def on_connection_off(self):
+        pass
+
+    def on_move_on(self):
+        self.view.disable_buttons()
+        self.controller.roller_start(self)
+        self._check_move()
+
+
+    def on_move_off(self):
+        self.view.enable_buttons()
+        self.controller.roller_finish(self)
+
+    def _start_move_angle(self, dst_angle):
+        #should call self.state_update
+        pass
+
+    def _stop_move_angle(self):
+        pass
+
+    def _check_move_angle(self):
+        #shold call self.state_update
+        pass
+
+    def _check_move(self):
+        self._check_move_angle()
+        if self.connected and self.moving:
+            QTimer.singleShot(
+                self.ms_to_wait,
+                lambda: self._check_move()
+            )
+
+
+
+class BaseRoller2:
     def __init__(self, controller, min_angle, max_angle, current_angle, serial_port, is_vertical):
         self.min_angle = min_angle
         self.max_angle = max_angle
@@ -82,7 +157,7 @@ def enter(s):
 
 class StepperRoller(BaseRoller):
     def __init__(self, controller, rotation_speed, steps, min_angle, max_angle, is_vertical):
-        super().__init__(controller, min_angle, max_angle, 0., None, is_vertical)
+        super().__init__(controller, min_angle, max_angle, is_vertical)
         assert self.controller.radxa is not None
         self.rotation_speed = rotation_speed
         self.steps = steps
@@ -90,17 +165,72 @@ class StepperRoller(BaseRoller):
         self.serial_client = PearaxClient(STEPPER_MOTOR_INDEX, self.controller.radxa)
         self.moving = False
 
+        self.prev_check = "None"
+        self.rec_count = 0
+
+    def _start_move_angle(self, dst_angle):
+        trg_step = self.angle_to_step(dst_angle)
+        self.send_move_command(trg_step)
+        assert self.connected
+        self.state_update(True, True)
+
+    def do_patrol(self, min_angle: float, max_angle: float, rotation_speed: float):
+        if self.connected and not self.is_moving():
+            trg_step_1 = self.angle_to_step(min_angle)
+            trg_step_2 = self.angle_to_step(max_angle)
+            velocity_delay = 360.0 / (float(self.steps) * rotation_speed)
+            j_patrol_task = {
+                "run_final_on_stop": 2,
+                "tasks": [
+                    {"class": "RememberOldVelocity"},
+                    {"class": "StepperParametersTask", "velocity_delay": velocity_delay},
+                    {"class": "StepperParametersTask", "target_step": trg_step_1},
+                    {"class": "MoveToTargetStep", "target_step": trg_step_1},
+                    {"class": "StepperParametersTask", "target_step": trg_step_2},
+                    {"class": "MoveToTargetStep", "target_step": trg_step_2},
+                    {"class": "GoToTask", "goto_index": 2},
+                    {"class": "EnsureOddStep"},
+                    {"class": "RecallOldVelocity"}
+                ]
+            }
+            self.serial_client.write(enter(json.dumps(j_patrol_task)))
+            self.state_update(True, True)
+
+    def _check_move_angle(self):
+        while True:
+            resp = self.serial_client.read()
+            if resp is None:
+                break
+            else:
+                s = resp.decode("utf-8").strip()
+                self.rec_count = self.rec_count - 1
+                if self.prev_check == s:
+                    continue
+                status = s[:1]
+                cur_step = int(s[1:])
+                self.state_update(True, status == 'r', self.step_to_angle(cur_step))
+                self.view.update_roller_view()
+                self.prev_check = s
+        if self.is_moving():
+            if self.rec_count < 1:
+                self.serial_client.write(enter("g"))
+                self.rec_count = self.rec_count + 1
+
+    def _stop_move_angle(self):
+        self.serial_client.write(enter("s"))
+
+    #---------------------------------------------
+
     def is_moving(self):
         return self.moving
 
     def on_view_ready(self):
-        if self.ensure_arduino(False):
-            self.__update_move_angle()
-            self.view.update_roller_view()
-            self.check_move_started(None)
-            if not self.is_moving():
-                self.send_rotation_speed()
+        self.state_update(True, True)
+        self.view.update_roller_view()
+        if not self.is_moving():
+            self.send_rotation_speed()
 
+    '''
     def on_serial_connection_regained(self):
         if self.ensure_arduino(False):
             self.view.enable_buttons()
@@ -128,7 +258,7 @@ class StepperRoller(BaseRoller):
             else:
                 print(text)
             return False
-
+    '''
     def send_rotation_speed(self):
         motor_delay =  360.0 / (float(self.steps) * self.rotation_speed)
         self.serial_client.write(enter(f"v{motor_delay}"))
@@ -142,7 +272,7 @@ class StepperRoller(BaseRoller):
 
     def send_move_command(self, trg_step):
         j_move_task = {
-            "run_final_on_stop": False,
+            "run_final_on_stop": 0,
             "tasks": [
                 {"class": "StepperParametersTask", "target_step": trg_step},
                 {"class": "MoveToTargetStep", "target_step": trg_step}
@@ -153,6 +283,7 @@ class StepperRoller(BaseRoller):
     def send_stop_command(self):
         self.serial_client.write(enter("s"))
 
+    '''
     def set_current_command(self, cur_step):
         self.serial_client.write(enter(f"c{cur_step}"))
 
@@ -187,28 +318,8 @@ class StepperRoller(BaseRoller):
     def check_ptz_move(self, target_angle):
         if self.ensure_arduino():
             super().check_ptz_move(target_angle)
+    '''
 
-    def do_patrol(self, min_angle: float, max_angle: float, rotation_speed: float):
-        if self.ensure_arduino() and not self.is_moving():
-            self.moving = True
-            trg_step_1 = self.angle_to_step(min_angle)
-            trg_step_2 = self.angle_to_step(max_angle)
-            velocity_delay = 360.0 / (float(self.steps) * rotation_speed)
-            j_patrol_task = {
-                "run_final_on_stop": True,
-                "tasks": [
-                    {"class": "RememberOldVelocity"},
-                    {"class": "StepperParametersTask", "velocity_delay": velocity_delay},
-                    {"class": "StepperParametersTask", "target_step": trg_step_1},
-                    {"class": "MoveToTargetStep", "target_step": trg_step_1},
-                    {"class": "StepperParametersTask", "target_step": trg_step_2},
-                    {"class": "MoveToTargetStep", "target_step": trg_step_2},
-                    {"class": "GoToTask", "goto_index": 2},
-                    {"class": "RecallOldVelocity"}
-                ]
-            }
-            self.serial_client.write(enter(json.dumps(j_patrol_task)))
-            self.check_move_started(min_angle)
 
     def show(self, parent_frame):
         if self.is_vertical:

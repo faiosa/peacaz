@@ -37,7 +37,7 @@ class Controller:
             radxa_serial_port = self.settings.get("radxa_serial_port")
             self.radxa = ManagePeer(lambda: func.serial_connect(radxa_serial_port, PEARAX_BAUD_RATE), [STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX])
             self.radxa.start(f"Controller_{self.name}_radxa")
-            self.serial_monitor = SerialMonitor(self.radxa)
+            #self.serial_monitor = SerialMonitor(self.radxa)
         self.rollers = [ self.create_roller(json) for json in json_settings.get("rollers") ]
 
         switchboard_settings = self.settings.get("switchboard")
