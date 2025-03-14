@@ -118,6 +118,7 @@ class GridBluePrint(BluePrint):
             self.__set_rollers_slots()
         controller.show(self.rollers_frame)
         controller_view = controller.view
+        controller.on_view_ready()
 
         self.roller_layout.addWidget(controller_view.frame, index, 0, alignment=QtCore.Qt.AlignLeft)
         self.roller_frames[index] = controller_view.frame

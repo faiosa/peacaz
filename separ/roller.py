@@ -227,8 +227,6 @@ class StepperRoller(BaseRoller):
     def on_view_ready(self):
         self.state_update(True, True)
         self.view.update_roller_view()
-        if not self.is_moving():
-            self.send_rotation_speed()
 
     '''
     def on_serial_connection_regained(self):
@@ -258,11 +256,11 @@ class StepperRoller(BaseRoller):
             else:
                 print(text)
             return False
-    '''
+    
     def send_rotation_speed(self):
         motor_delay =  360.0 / (float(self.steps) * self.rotation_speed)
         self.serial_client.write(enter(f"v{motor_delay}"))
-
+    '''
 
     def angle_to_step(self, angle):
         return int(angle * self.steps / 360)
@@ -271,9 +269,11 @@ class StepperRoller(BaseRoller):
         return 360.0 * step / self.steps
 
     def send_move_command(self, trg_step):
+        motor_delay = 360.0 / (float(self.steps) * self.rotation_speed)
         j_move_task = {
             "run_final_on_stop": 0,
             "tasks": [
+                {"class": "StepperParametersTask", "velocity_delay": motor_delay},
                 {"class": "StepperParametersTask", "target_step": trg_step},
                 {"class": "MoveToTargetStep", "target_step": trg_step}
             ]
