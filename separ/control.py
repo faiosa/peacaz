@@ -3,7 +3,8 @@ from pearax.client import PearaxClient
 from separ.pearax_util import SerialMonitor
 from separ.qt5_control_view import ControllerView
 from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
-from pearax import func, STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX, PEARAX_BAUD_RATE, PINNER_INT_BYTE_SIZE, PINNER_INT_BYTE_ORDER
+from pearax import func, STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX, PEARAX_BAUD_RATE, PINNER_INT_BYTE_SIZE, \
+    PINNER_INT_BYTE_ORDER, HEART_BEAT_INDEX
 from pearax.core import ManagePeer
 
 
@@ -35,9 +36,10 @@ class Controller:
         self.serial_monitor = None
         if self.settings.get("use_radxa"):
             radxa_serial_port = self.settings.get("radxa_serial_port")
-            self.radxa = ManagePeer(lambda: func.serial_connect(radxa_serial_port, PEARAX_BAUD_RATE), [STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX])
+            self.radxa = ManagePeer(lambda: func.serial_connect(radxa_serial_port, PEARAX_BAUD_RATE), [STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX, HEART_BEAT_INDEX])
             self.radxa.start(f"Controller_{self.name}_radxa")
-            #self.serial_monitor = SerialMonitor(self.radxa)
+            self.serial_monitor = SerialMonitor(self.radxa, [self])
+            #self.serial_monitor.start_monitor()
         self.rollers = [ self.create_roller(json) for json in json_settings.get("rollers") ]
 
         switchboard_settings = self.settings.get("switchboard")
@@ -56,24 +58,26 @@ class Controller:
         self.switchboard = FullControlSwitchBoard(self.radxa, switchboard_serial_port, switchboard_pins) if switchboard_settings.get("full_control") else SimplySwitchBoard(self.radxa, switchboard_serial_port, switchboard_pins)
 
     def on_view_ready(self):
-        for roller in self.rollers:
-            roller.on_view_ready()
-
+        #for roller in self.rollers:
+        #    roller.on_view_ready()
+        self.on_serial_disconnect()
+        self.serial_monitor.start_monitor()
+    '''
     def check_serial_connection(self):
         assert not self.radxa is None
         return self.serial_monitor.check_serial_connect(self)
-
+    '''
     def on_serial_disconnect(self):
         self.view.restore_button.setEnabled(False)
         self.view.stop_button.setEnabled(False)
         for roller in self.rollers:
-            roller.on_serial_connection_lost()
+            roller.state_update(False, False)
 
     def on_serial_connect(self):
         self.view.restore_button.setEnabled(True)
         self.view.stop_button.setEnabled(True)
         for roller in self.rollers:
-            roller.on_serial_connection_regained()
+            roller.state_update(True, True)
 
     def show(self, parent_frame):
         if self.view is None:
@@ -153,6 +157,7 @@ class Controller:
 
     def close(self):
         if self.radxa:
+            self.serial_monitor.stop_monitor()
             self.radxa.stop()
         if self.switchboard:
             if self.switchboard.switchboard_pearax:

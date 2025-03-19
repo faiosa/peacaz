@@ -32,11 +32,15 @@ class BaseRoller:
 
     def state_update(self, is_connected, is_moving = None, current_angle=None):
         if self.connected and not is_connected:
+            if self.moving and (not is_moving is None) and not is_moving:
+                self.on_move_off()
+                self.moving = False
             self.connected = False
             self.on_connection_off()
         elif not self.connected and is_connected:
             self.connected = True
             self.on_connection_on()
+
         if self.connected:
             if not is_moving is None:
                 if self.moving and not is_moving:
@@ -45,6 +49,7 @@ class BaseRoller:
                 elif not self.moving and is_moving:
                     self.moving = True
                     self.on_move_on()
+
             if not current_angle is None:
                 self.current_angle = current_angle
 
@@ -165,9 +170,6 @@ class StepperRoller(BaseRoller):
         self.serial_client = PearaxClient(STEPPER_MOTOR_INDEX, self.controller.radxa)
         self.moving = False
 
-        self.prev_check = "None"
-        self.rec_count = 0
-
     def _start_move_angle(self, dst_angle):
         trg_step = self.angle_to_step(dst_angle)
         self.send_move_command(trg_step)
@@ -203,64 +205,25 @@ class StepperRoller(BaseRoller):
                 break
             else:
                 s = resp.decode("utf-8").strip()
-                self.rec_count = self.rec_count - 1
-                if self.prev_check == s:
-                    continue
                 status = s[:1]
                 cur_step = int(s[1:])
                 self.state_update(True, status == 'r', self.step_to_angle(cur_step))
                 self.view.update_roller_view()
-                self.prev_check = s
         if self.is_moving():
-            if self.rec_count < 1:
-                self.serial_client.write(enter("g"))
-                self.rec_count = self.rec_count + 1
+            self.serial_client.write(enter("g"))
 
     def _stop_move_angle(self):
         self.serial_client.write(enter("s"))
 
-    #---------------------------------------------
-
     def is_moving(self):
         return self.moving
 
-    def on_view_ready(self):
-        self.state_update(True, True)
+    def on_connection_on(self):
+        self.view.enable_buttons()
         self.view.update_roller_view()
 
-    '''
-    def on_serial_connection_regained(self):
-        if self.ensure_arduino(False):
-            self.view.enable_buttons()
-            self.__update_move_angle()
-            self.view.update_roller_view()
-            self.check_move_started(None)
-            if not self.is_moving():
-                self.send_rotation_speed()
-
-    def on_serial_connection_lost(self):
+    def on_connection_off(self):
         self.view.disable_buttons()
-
-    def ensure_arduino(self, show_message = False):
-        if self.controller.check_serial_connection():
-            return True
-        else:
-            text = f"Не вдається підключитись до серійного порта контролера {self.serial_port}. Підключіть девайс або змініть адресу порта в налаштуваннях."
-            if show_message:
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Critical)
-                msg.setText("Не підключено серійний порт контролера")
-                msg.setInformativeText(text)
-                msg.setWindowTitle("Помилка конфігурації")
-                msg.exec_()
-            else:
-                print(text)
-            return False
-    
-    def send_rotation_speed(self):
-        motor_delay =  360.0 / (float(self.steps) * self.rotation_speed)
-        self.serial_client.write(enter(f"v{motor_delay}"))
-    '''
 
     def angle_to_step(self, angle):
         return int(angle * self.steps / 360)
@@ -282,44 +245,6 @@ class StepperRoller(BaseRoller):
 
     def send_stop_command(self):
         self.serial_client.write(enter("s"))
-
-    '''
-    def set_current_command(self, cur_step):
-        self.serial_client.write(enter(f"c{cur_step}"))
-
-    def read_current_step(self):
-        bits = self.serial_client.ask(enter("g"))
-        if bits is None:
-            return None, None
-        else:
-            s = bits.decode("utf-8").strip()
-            return s[:1], int(s[1:])
-
-    def _start_move_angle(self, dst_angle):
-        if self.ensure_arduino() and not self.is_moving():
-            self.moving = True
-            trg_step = self.angle_to_step(dst_angle)
-            self.send_move_command(trg_step)
-
-    def __update_move_angle(self):
-        status, self.cur_step = self.read_current_step()
-        if not status is None:
-            self.moving = True if status == 'r' else False
-            self.current_angle = self.step_to_angle(self.cur_step)
-
-    def _check_move_angle(self, dest_angle):
-        if self.is_moving():
-            self.__update_move_angle()
-
-    def _stop_move_angle(self):
-        if self.is_moving():
-            self.send_stop_command()
-
-    def check_ptz_move(self, target_angle):
-        if self.ensure_arduino():
-            super().check_ptz_move(target_angle)
-    '''
-
 
     def show(self, parent_frame):
         if self.is_vertical:

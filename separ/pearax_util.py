@@ -1,5 +1,9 @@
+import time
+
 from PyQt5.QtCore import QTimer
-from pearax.core import Pearax
+from pearax import HEART_BEAT_INDEX
+from pearax.client import PearaxClient
+from pearax.core import Pearax, STANDARD_TTL
 
 
 def method_inspect(client, method_name):
@@ -13,42 +17,52 @@ def _inspect_client(client):
     assert method_inspect(client, "on_serial_disconnect")
     assert method_inspect(client, "on_serial_connect")
 
-class SerialMonitor:
-    def __init__(self, pearax: Pearax):
-        self.pearax = pearax
-        self.waiters = {}
-        self.serial_alive = True
+class SerialMonitor(PearaxClient):
+    def __init__(self, pearax, listeners):
+        super().__init__(HEART_BEAT_INDEX, pearax)
+        self.connected = False
+        self.disconnected_count = 0
+        self.disconnected_limit = 5
+        self.rate_ms = 20
+        self.is_running = False
+        for waiter in listeners:
+            _inspect_client(waiter)
+        self.listeners = listeners
 
-    def check_serial_connect(self, client):
-        _inspect_client(client)
-        if self.serial_alive:
-            assert len(self.waiters) == 0
-            if self.pearax.is_serial_alive():
-                return True
+    def stop_monitor(self):
+        self.is_running = False
+
+    def start_monitor(self):
+        self.is_running = True
+        self.__monitor()
+
+    def __monitor(self):
+        if not self.is_running:
+            return
+        cur_time = time.time()
+        connected = False
+        while True:
+            data = self.read(cur_time)
+            if data is None:
+                break
             else:
-                client.on_serial_disconnect()
-                self.waiters[id(client)] = client
-                self.serial_alive = False
-                self.__check_connection_regain()
-                return self.serial_alive
-        else:
-            client_id = id(client)
-            if not client_id in self.waiters:
-                client.on_serial_disconnect()
-                self.waiters[client_id] = client
-            return False
+                connected = True
+        if connected:
+            if not self.connected:
+                self.connected = True
+                for listener in self.listeners:
+                    listener.on_serial_connect()
+            self.disconnected_count = 0
+        elif self.connected:
+            if self.disconnected_count < self.disconnected_limit:
+                self.disconnected_count += 1
+            else:
+                self.connected = False
+                for listener in self.listeners:
+                    listener.on_serial_disconnect()
 
-    def __check_connection_regain(self):
-        assert self.serial_alive is False
-        if self.pearax.is_serial_alive():
-            self.serial_alive = True
-            old_waiters = self.waiters
-            self.waiters = {}
-            for key in old_waiters:
-                old_waiters[key].on_serial_connect()
-        else:
-            QTimer.singleShot(
-                10,
-                lambda: self.__check_connection_regain()
-            )
-
+        self.write(str(cur_time).encode("utf-8"), cur_time, STANDARD_TTL)
+        QTimer.singleShot(
+            self.rate_ms,
+            lambda: self.__monitor()
+        )
