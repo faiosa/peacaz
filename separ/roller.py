@@ -54,10 +54,11 @@ class BaseRoller:
                 self.current_angle = current_angle
 
     def on_connection_on(self):
-        pass
+        self.view.enable_buttons()
+        self.view.update_roller_view()
 
     def on_connection_off(self):
-        pass
+        self.view.disable_buttons()
 
     def on_move_on(self):
         self.view.disable_buttons()
@@ -87,6 +88,12 @@ class BaseRoller:
                 self.ms_to_wait,
                 lambda: self._check_move()
             )
+
+    def show(self, parent_frame):
+        if self.is_vertical:
+            self.view = RollerViewVertical(self, parent_frame, True)
+        else:
+            self.view = RollerViewHorizontal(self, parent_frame, True)
 
 
 
@@ -218,13 +225,6 @@ class StepperRoller(BaseRoller):
     def is_moving(self):
         return self.moving
 
-    def on_connection_on(self):
-        self.view.enable_buttons()
-        self.view.update_roller_view()
-
-    def on_connection_off(self):
-        self.view.disable_buttons()
-
     def angle_to_step(self, angle):
         return int(angle * self.steps / 360)
 
@@ -246,16 +246,12 @@ class StepperRoller(BaseRoller):
     def send_stop_command(self):
         self.serial_client.write(enter("s"))
 
-    def show(self, parent_frame):
-        if self.is_vertical:
-            self.view = RollerViewVertical(self, parent_frame, True)
-        else:
-            self.view = RollerViewHorizontal(self, parent_frame, True)
-
 
 class TimeRoller(BaseRoller):
     def __init__(self, controller, rotation_speed, min_angle, max_angle, current_angle, serial_port, is_vertical):
-        super().__init__(controller, min_angle, max_angle, current_angle, serial_port, is_vertical)
+        super().__init__(controller, min_angle, max_angle, is_vertical)
+        self.current_angle = current_angle
+        self.serial_port = serial_port
         self.rotation_speed = rotation_speed
         self.start_move_time = 0
         self.is_moving_increase = False
@@ -277,9 +273,13 @@ class TimeRoller(BaseRoller):
 
     def __start_increase_angle(self, dst_angle):
         if not (self.is_moving_increase or self.is_moving_decrease):
-            self.is_moving_increase = True
             self.start_move_time = time.time()
-            send_pelco_command(self.increase_angle_command(), self.serial_port)
+            if send_pelco_command(self.increase_angle_command(), self.serial_port):
+                self.is_moving_increase = True
+                self.state_update(True, True)
+            else:
+                self.state_update(False)
+
 
     def __update_increase_angle(self):
         if self.is_moving_increase:
@@ -299,14 +299,20 @@ class TimeRoller(BaseRoller):
         if self.is_moving_increase:
             if update:
                 self.__update_increase_angle()
-            send_pelco_command(STOP, self.serial_port)
-            self.is_moving_increase = False
+            if send_pelco_command(STOP, self.serial_port):
+                self.is_moving_increase = False
+                self.state_update(True, False)
+            else:
+                self.state_update(False)
 
     def __start_decrease_angle(self, dst_angle):
         if not (self.is_moving_increase or self.is_moving_decrease):
-            self.is_moving_decrease = True
             self.start_move_time = time.time()
-            send_pelco_command(self.decrease_angle_command(), self.serial_port)
+            if send_pelco_command(self.decrease_angle_command(), self.serial_port):
+                self.is_moving_decrease = True
+                self.state_update(True, True)
+            else:
+                self.state_update(False)
 
     def __update_decrease_angle(self):
         if self.is_moving_decrease:
@@ -326,8 +332,11 @@ class TimeRoller(BaseRoller):
         if self.is_moving_decrease:
             if update:
                 self.__update_decrease_angle()
-            send_pelco_command(STOP, self.serial_port)
-            self.is_moving_decrease = False
+            if send_pelco_command(STOP, self.serial_port):
+                self.is_moving_decrease = False
+                self.state_update(True, False)
+            else:
+                self.state_update(False)
 
     def _stop_move_angle(self):
         if self.is_moving_increase:
