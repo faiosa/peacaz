@@ -104,7 +104,7 @@ def calculate_checksum(command):
 
 
 # Function to send a Pelco-D command
-def send_pelco_command(command: bytes, selected_controller: str) -> None:
+def send_pelco_command(command: bytes, selected_controller: str) -> bool:
     try:
         checksum = calculate_checksum(command)
         full_command = command + checksum
@@ -114,5 +114,7 @@ def send_pelco_command(command: bytes, selected_controller: str) -> None:
         ) as ser:
             ser.write(full_command)
             ser.read(size=8)
+        return True
     except serial.SerialException as e:
         print(f"Serial error: {e}")
+        return False
