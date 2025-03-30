@@ -19,7 +19,7 @@ def _inspect_client(client):
 
 class SerialMonitor(PearaxClient):
     def __init__(self, pearax, listeners):
-        super().__init__(HEART_BEAT_INDEX, pearax)
+        super().__init__(pearax.mail_agent(HEART_BEAT_INDEX))
         self.connected = False
         self.disconnected_count = 0
         self.disconnected_limit = 5

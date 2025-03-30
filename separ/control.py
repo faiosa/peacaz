@@ -1,4 +1,4 @@
-from pearax.channel import SerialConnection, socket_client_channel
+from pearax.channel import socket_client_channel
 from pearax.client import PearaxClient
 
 from separ.pearax_util import SerialMonitor
@@ -6,7 +6,7 @@ from separ.qt5_control_view import ControllerView
 from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
 from pearax import func, STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX, PEARAX_BAUD_RATE, PINNER_INT_BYTE_SIZE, \
     PINNER_INT_BYTE_ORDER, HEART_BEAT_INDEX
-from pearax.core import ManagePeer
+from pearax.core import Pearax
 
 
 class Manager:
@@ -33,13 +33,13 @@ class Controller:
         self.view = None
         self.lambda_queue = []
         self.settings = json_settings
-        self.radxa: ManagePeer = None
+        self.radxa: Pearax = None
         self.serial_monitor = None
         if self.settings.get("use_radxa"):
             radxa_serial_port = self.settings.get("radxa_serial_port")
             #connection_provider = lambda: SerialConnection(func.serial_connect(radxa_serial_port, PEARAX_BAUD_RATE))
             connection_provider = lambda: socket_client_channel('192.168.0.103', 3799)
-            self.radxa = ManagePeer(connection_provider, [STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX, HEART_BEAT_INDEX])
+            self.radxa = Pearax(connection_provider, [STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX, HEART_BEAT_INDEX])
             self.radxa.start(f"Controller_{self.name}_radxa")
             self.serial_monitor = SerialMonitor(self.radxa, [self])
         self.rollers = [ self.create_roller(json) for json in json_settings.get("rollers") ]
@@ -162,7 +162,7 @@ class Controller:
                 self.switchboard.switchboard_pearax.stop()
 
 class SwitchBoard:
-    def __init__(self, pearax: ManagePeer, switchboard_serial_port: str, pins, is_full_control):
+    def __init__(self, pearax: Pearax, switchboard_serial_port: str, pins, is_full_control):
         self.pins = [int(sp) for sp in pins]
         self.states = []
         self.app_index = 16
@@ -172,11 +172,11 @@ class SwitchBoard:
             if pearax is None:
                 func.func_logger.fatal("Controller missing pearax for swithcboard configured with 'radxa'")
             else:
-                self.serial_client = PearaxClient(self.app_index, pearax)
+                self.serial_client = PearaxClient(pearax.mail_agent(self.app_index))
         else:
-            self.switchboard_pearax = ManagePeer(lambda: func.serial_connect(switchboard_serial_port, PEARAX_BAUD_RATE), [self.app_index])
+            self.switchboard_pearax = Pearax(lambda: func.serial_connect(switchboard_serial_port, PEARAX_BAUD_RATE), [self.app_index])
             self.switchboard_pearax.start("SwitchBoardPearax")
-            self.serial_client = PearaxClient(self.app_index, self.switchboard_pearax)
+            self.serial_client = PearaxClient(self.switchboard_pearax.mail_agent(self.app_index))
         self.is_full_control = is_full_control
         self.ints_to_bytes = func.ints_to_bytes_lambda(PINNER_INT_BYTE_SIZE, PINNER_INT_BYTE_ORDER)
         self._initial_command()

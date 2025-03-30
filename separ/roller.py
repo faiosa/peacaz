@@ -96,7 +96,7 @@ class BaseRoller:
             self.view = RollerViewHorizontal(self, parent_frame, True)
 
 
-
+'''
 class BaseRoller2:
     def __init__(self, controller, min_angle, max_angle, current_angle, serial_port, is_vertical):
         self.min_angle = min_angle
@@ -162,10 +162,10 @@ class BaseRoller2:
 
     def on_serial_connection_lost(self):
         pass
+'''
 
 def enter(s):
     return s.encode('utf-8')
-
 
 class StepperRoller(BaseRoller):
     def __init__(self, controller, rotation_speed, steps, min_angle, max_angle, is_vertical):
