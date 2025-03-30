@@ -1,5 +1,6 @@
 import json
 import os
+from pearax.func import func_logger
 
 from PyQt5.QtCore import QStandardPaths
 
@@ -20,6 +21,7 @@ class Tweak():
             if os.path.isfile(p):
                 try:
                     with open(os.path.abspath(p), "r", encoding="utf-8") as f:
+                        func_logger.info(f"Loading settings from {os.path.abspath(p)}")
                         return json.load(f)
                 except FileNotFoundError:
                     continue

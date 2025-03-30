@@ -20,7 +20,8 @@
                     "min_angle": 0.0,
                     "max_angle": 359.9999,
                     "rotation_speed": 60.0,
-                    "steps": 400
+                    "steps": 400,
+                    "view_angle_shift": 90
                 }
             ]
         },
@@ -49,7 +50,8 @@
                     "max_angle": 359.999,
                     "current_angle": 0.0,
                     "serial_port": "NOT_EXISTING_PORT",
-                    "rotation_speed": 16.0
+                    "rotation_speed": 16.0,
+                    "view_angle_shift": 90
                 }
             ]
         },
@@ -69,7 +71,8 @@
                     "max_angle": 359.999,
                     "current_angle": 0.0,
                     "serial_port": "NOT_EXISTING_PORT",
-                    "rotation_speed": 16.0
+                    "rotation_speed": 16.0,
+                    "view_angle_shift": 90
                 }
             ]
         }

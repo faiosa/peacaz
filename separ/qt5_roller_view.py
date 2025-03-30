@@ -165,11 +165,14 @@ class SliderCanvas(QFrame):
         self.roller_view.roller.turn_ptz_move(dangle)
 
 class RollerViewHorizontal(BaseRollerView):
-    def __init__(self, roller, frame, support_patrol = False):
+    def __init__(self, roller, frame, angle_shift, support_patrol = False):
         super().__init__(roller, frame, support_patrol)
 
         self.slider_height = self.canvas_height
         self.slider_width = self.canvas_height + 30
+
+        self.angle_shift = angle_shift
+        self.radin_shift = math.radians(self.angle_shift)
 
         self.canvas_frame = ArrowCanvas(frame, self)
         self.canvas_frame.setFixedWidth(self.slider_width)
@@ -203,7 +206,7 @@ class ArrowCanvas(QFrame):
             else:
                 trad = math.pi - trad
 
-        trad = trad + math.pi / 2
+        trad = trad + self.roller_view.radin_shift
         if trad > 2 * math.pi:
             trad = trad - 2 * math.pi
         if trad < 0:
@@ -227,7 +230,7 @@ class ArrowCanvas(QFrame):
             mcenter_x = msize.width() // 2
             mcenter_y = msize.height() // 2
             marrow_length = msize.height() // 2 - 20
-            madjusted_angle_rad = math.radians(self.roller_view.roller.current_angle - 90)  # Adjust angle to make 0 at the top
+            madjusted_angle_rad = math.radians(self.roller_view.roller.current_angle - self.roller_view.angle_shift)  # Adjust angle to make 0 at the top
             mx = int(mcenter_x + marrow_length * math.cos(madjusted_angle_rad))
             my = int(mcenter_y + marrow_length * math.sin(madjusted_angle_rad))
             mqp.drawLine(mcenter_x, mcenter_y, mx, my)
@@ -257,7 +260,7 @@ class ArrowCanvas(QFrame):
         center_y = size.height() // 2
         radius = center_y - 15
         for angle in range(0, 360, 10):
-            adjusted_angle = angle - 90  # Adjust angle to make 0 at the top
+            adjusted_angle = angle - self.roller_view.angle_shift  # Adjust angle to make 0 at the top
             x = int(center_x + radius * math.cos(math.radians(adjusted_angle)))
             y = int(center_y + radius * math.sin(math.radians(adjusted_angle)))
             qp.drawEllipse(x, y, 3, 3)
@@ -269,6 +272,15 @@ class ArrowCanvas(QFrame):
 
                 #qp.drawEllipse(tx, ty, 3, 3)
                 qp.drawStaticText( int(tx - tsize.width() / 2), int(ty - tsize.height() / 2), text)
+
+        #write red roller ridge
+        zradius = center_y - 13
+        zx = int(center_x + zradius * math.cos(-self.roller_view.radin_shift))
+        zy = int(center_y + zradius * math.sin(-self.roller_view.radin_shift))
+        qp.setPen(QPen(Qt.QColor(200, 20, 20), 2))
+        qp.drawLine(center_x, center_y, zx, zy)
+        #end write red roller ridge
+
         qp.end()
         draw_direction()
 

@@ -215,9 +215,14 @@ class ControllerSettings(SettingsComposer):
         serial_port_policy = StrPolicy("serial_port", 6, "Серійний порт")
         is_radxa_engine_policy.addSubPolicy(serial_port_policy, ["line", "__disabled__"])
         num_steps_policy = IntPolicy("steps", 8, "кроків в повному оберті")
+
+        roller_direction_policy = ComboPolicy("type", 0, "тип ролера", ["vertical", "horizontal"], False)
+        view_angle_policy = DoublePolicy("view_angle_shift", 9, "Відхилення шкали ролера (град.)")
+        roller_direction_policy.addSubPolicy(view_angle_policy, ["horizontal"])
+
         is_radxa_engine_policy.addSubPolicy(num_steps_policy, ["stepper"])
         roller_policies = [
-            ComboPolicy("type", 0, "тип ролера", ["vertical", "horizontal"], False),
+            roller_direction_policy,
             no_radxa_engine_policy,
             is_radxa_engine_policy,
             DoublePolicy("min_angle", 3, "Мін кут"),
@@ -225,7 +230,8 @@ class ControllerSettings(SettingsComposer):
             current_angle_policy,
             serial_port_policy,
             DoublePolicy("rotation_speed", 7, "Швидкість повертання (градус/с)"),
-            num_steps_policy
+            num_steps_policy,
+            view_angle_policy
         ]
 
         settings_view = DictionarySettings(f"{roller_settings['type']} roller", roller_layout, roller_settings, roller_policies)

@@ -35,7 +35,7 @@ class ControllerView:
 
         for indx in range(0, len(self.controller.rollers)):
             roller = self.controller.rollers[indx]
-            roller.show(self.frame)
+            roller.show(self.frame, indx)
 
         self.stop_button = QPushButton(self.frame)
         self.stop_button.setIcon(QIcon("assets/stop.png"))

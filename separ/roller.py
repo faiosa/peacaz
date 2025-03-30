@@ -89,11 +89,12 @@ class BaseRoller:
                 lambda: self._check_move()
             )
 
-    def show(self, parent_frame):
+    def show(self, parent_frame, roller_index):
         if self.is_vertical:
             self.view = RollerViewVertical(self, parent_frame, True)
         else:
-            self.view = RollerViewHorizontal(self, parent_frame, True)
+            view_angle_shift = self.controller.settings["rollers"][roller_index]["view_angle_shift"] if "view_angle_shift" in self.controller.settings["rollers"][roller_index] else 0
+            self.view = RollerViewHorizontal(self, parent_frame, view_angle_shift, True)
 
 def enter(s):
     return s.encode('utf-8')
