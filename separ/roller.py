@@ -178,6 +178,10 @@ class StepperRoller(BaseRoller):
     def send_stop_command(self):
         self.serial_client.write(enter("s"))
 
+    def set_cur_angle_command(self, new_cur_angle):
+        new_cur_step = self.angle_to_step(new_cur_angle)
+        self.serial_client.write(enter(f"c{new_cur_step}"))
+
 
 class TimeRoller(BaseRoller):
     def __init__(self, controller, rotation_speed, min_angle, max_angle, current_angle, serial_port, is_vertical):

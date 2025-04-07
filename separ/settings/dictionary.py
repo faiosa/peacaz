@@ -68,12 +68,15 @@ class DictionarySettings:
     def get_settings(self):
         settings = {}
         for policy in self.policies:
-            if not policy is None:
+            if (not policy is None) and not policy.spec:
                 settings[policy.key] = policy.value()
         return settings
 
     def save_settings(self):
         self.settings = self.get_settings()
+        for policy in self.policies:
+            if (not policy is None) and policy.spec:
+                policy.save()
 
 class SettingsView:
     def __init__(self, title):
@@ -110,13 +113,14 @@ class SettingsView:
 
 
 class Policy:
-    def __init__(self, key: str, index: int, label: str):
+    def __init__(self, key: str, index: int, label: str, spec = False):
         self.key = key
         self.index = index
         self.label = label
         self.ds = None
         self.subp = []
         self.disabled_value = None
+        self.spec = spec #means that policy value is not saved within tweak file, have its own save method
 
     def addSubPolicy(self, policy, enable_val_list):
         self.subp.append((policy, enable_val_list))
@@ -143,7 +147,7 @@ class Policy:
         else:
             return None
 
-    def _vidget_value(self, widget):
+    def _widget_value(self, widget):
         pass
 
     def status(self):
@@ -157,8 +161,13 @@ class Policy:
         if widget is None:
             return self.disabled_value
         else:
-            return self._vidget_value(widget)
+            return self._widget_value(widget)
 
+    def _initial_value(self, default = None): #used within create_widget to set initial value
+        return str(self.ds.settings[self.key] if self.key in self.ds.settings else default)
+
+    def save(self):
+        assert self.spec #only specific policies has special way to be saved
 
 class IntPolicy(Policy):
     def __init__(self, key: str, index: int, label: str):
@@ -167,16 +176,16 @@ class IntPolicy(Policy):
     def create_widget(self, frame):
         widget = QLineEdit(frame)
         widget.setValidator(QIntValidator())
-        value = str(self.ds.settings[self.key] if self.key in self.ds.settings else 0)
+        value = self._initial_value(0)
         widget.setText(value)
         return widget
 
-    def _vidget_value(self, widget):
+    def _widget_value(self, widget):
         return int(widget.text())
 
 class DoublePolicy(Policy):
-    def __init__(self, key: str, index: int, label: str):
-        super().__init__(key, index, label)
+    def __init__(self, key: str, index: int, label: str, specific = False):
+        super().__init__(key, index, label, specific)
 
     def create_widget(self, frame):
         widget = QLineEdit(frame)
@@ -184,11 +193,11 @@ class DoublePolicy(Policy):
         locale = QtCore.QLocale(QLocale.English, QLocale.UnitedStates)
         validator.setLocale(locale)
         widget.setValidator(validator)
-        value = str(self.ds.settings[self.key] if self.key in self.ds.settings else 0.0)
+        value = self._initial_value(0.0)
         widget.setText(value)
         return widget
 
-    def _vidget_value(self, widget):
+    def _widget_value(self, widget):
         return float(widget.text())
 
 class StrPolicy(Policy):
@@ -198,12 +207,12 @@ class StrPolicy(Policy):
 
     def create_widget(self, frame):
         widget = QLineEdit(frame)
-        value = str(self.ds.settings[self.key] if self.key in self.ds.settings else "")
+        value = self._initial_value("")
         widget.setText(value)
         widget.setEnabled(self.enabled)
         return widget
 
-    def _vidget_value(self, widget):
+    def _widget_value(self, widget):
         return str(widget.text())
 
 class PinsPolicy(StrPolicy):
@@ -215,7 +224,7 @@ class PinsPolicy(StrPolicy):
         regex = QRegExp("[0-9]{1,3}([ ]*,[ ]*[0-9]{1,3})*")
         validator = QRegExpValidator(regex, widget)
         widget.setValidator(validator)
-        value = str(self.ds.settings[self.key] if  self.key in self.ds.settings else "")
+        value = self._initial_value("")
         widget.setText(value)
         return widget
 
@@ -225,11 +234,11 @@ class BoolPolicy(Policy):
 
     def create_widget(self, frame):
         widget = QCheckBox(self.ds.view.frame)
-        widget.setChecked(self.ds.settings[self.key] if self.key in self.ds.settings else False)
+        widget.setChecked(self._initial_value(False))
         widget.stateChanged.connect(lambda idx: self.normalizeSubPolicies())
         return widget
 
-    def _vidget_value(self, widget):
+    def _widget_value(self, widget):
         return widget.isChecked()
 
 class ComboPolicy(Policy):
@@ -248,7 +257,7 @@ class ComboPolicy(Policy):
         combo.currentIndexChanged.connect(lambda idx: self.normalizeSubPolicies())
         return combo
 
-    def _vidget_value(self, widget):
+    def _widget_value(self, widget):
         return widget.currentText()
 
 
@@ -259,16 +268,7 @@ class SettingsComposer(QFrame):
 
         self.layout = QVBoxLayout(self)
         self.setLayout(self.layout)
-    '''
-    def get_dictionary_settings(self, frame, labels, policies, src=None):
-        if src is None:
-            src = self.settings
-        settings = {}
-        for key, label in labels.items():
-            if key in src:
-                settings[key] = src[key]
-        return DictionarySettings(frame, labels, settings, policies)
-    '''
+
 
 
 

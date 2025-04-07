@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QFrame, QVBoxLayout, QTabWidget, QGroupBox, QHBoxLay
     QMessageBox
 
 from separ.settings.dictionary import SettingsComposer, DictionarySettings, ComboPolicy, PinsPolicy, StrPolicy, BoolPolicy, DoublePolicy, IntPolicy
+from separ.settings.specific import SetCurrentAnglePolicy
 from utils.settings import SEPAR_SETTINGS_FILE
 
 
@@ -43,16 +44,16 @@ class TotalSettings(SettingsComposer):
         self.right_side = self.controller_tabs.tabBar().RightSide
 
         self.controllers_settings = []
-        for c_settings in self.settings["controller_values"].values():
-            self.__add_settings_controller(c_settings)
+        for controller in self.main_view.roller_manager.controllers:
+            self.__add_settings_controller(controller)
 
         self.layout.addWidget(self.controller_tabs)
 
-    def __add_settings_controller(self, settings):
+    def __add_settings_controller(self, controller):
         index = len(self.controllers_settings)
-        controller = ControllerSettings(self, settings)
-        self.controllers_settings.append(controller)
-        self.controller_tabs.addTab(controller, controller.settings["name"])
+        controller_set = ControllerSettings(self, controller)
+        self.controllers_settings.append(controller_set)
+        self.controller_tabs.addTab(controller_set, controller_set.settings["name"])
         #del_button = QPushButton()
         #del_button.setIcon(self.style().standardIcon(getattr(QStyle, "SP_BrowserStop")))
         #del_button.clicked.connect((lambda cs=controller: lambda: self.__delete_controller(cs))())
@@ -99,8 +100,9 @@ class TotalSettings(SettingsComposer):
         self.settings = self.get_settings()
 
 class ControllerSettings(SettingsComposer):
-    def __init__(self, parent_frame, json_settings):
-        super().__init__(parent_frame, json_settings)
+    def __init__(self, parent_frame, controller):
+        super().__init__(parent_frame, controller.settings)
+        self.controller = controller
 
         switchboard_use_radxa_policy = BoolPolicy("use_radxa", 2, "Використовує спільний порт (radxa)")
         switchboard_serial_port = StrPolicy("serial_port", 3, "Серійний порт комутатора:")
@@ -134,21 +136,23 @@ class ControllerSettings(SettingsComposer):
         self.vroller_add_button = None
         self.hroller_add_button = None
 
+
         if "rollers" in self.settings:
-            for roller in self.settings["rollers"]:
-                if roller["type"] == "vertical":
+            for index in range(len(self.settings["rollers"])):
+                roller_settings = self.settings["rollers"][index]
+                if roller_settings["type"] == "vertical":
                     vertical_roller_frame = QFrame(self)
                     self.vertical_roller_layout = QVBoxLayout(vertical_roller_frame)
                     vertical_roller_frame.setLayout(self.vertical_roller_layout)
                     self.layout.addWidget(vertical_roller_frame)
-                    self.vroller_settings_view = self.__create_roller(roller, self.vertical_roller_layout, use_radxa_policy)
+                    self.vroller_settings_view = self.__create_roller(roller_settings, self.vertical_roller_layout, use_radxa_policy)
                     self.vroller_settings_view.showView()
-                elif roller["type"] == "horizontal":
+                elif roller_settings["type"] == "horizontal":
                     horizontal_roller_frame = QFrame(self)
                     self.horizontal_roller_layout = QVBoxLayout(horizontal_roller_frame)
                     horizontal_roller_frame.setLayout(self.horizontal_roller_layout)
                     self.layout.addWidget(horizontal_roller_frame)
-                    self.hroller_settings_view = self.__create_roller(roller, self.horizontal_roller_layout, use_radxa_policy)
+                    self.hroller_settings_view = self.__create_roller(roller_settings, self.horizontal_roller_layout, use_radxa_policy, self.controller.rollers[index])
                     self.hroller_settings_view.showView()
 
         '''
@@ -199,7 +203,7 @@ class ControllerSettings(SettingsComposer):
             self.hroller_add_button = None
     '''
 
-    def __create_roller(self, roller_settings, roller_layout, is_radxa_policy):
+    def __create_roller(self, roller_settings, roller_layout, is_radxa_policy, roller = None):
         '''
         labels = self.stepper_roller_labels if roller_settings["engine"] == "stepper" else self.line_roller_labels
         policies = self.stepper_roller_policies if roller_settings["engine"] == "stepper" else self.line_roller_policies
@@ -221,6 +225,10 @@ class ControllerSettings(SettingsComposer):
         roller_direction_policy.addSubPolicy(view_angle_policy, ["horizontal"])
 
         is_radxa_engine_policy.addSubPolicy(num_steps_policy, ["stepper"])
+
+        set_stepper_cur_angle_policy = SetCurrentAnglePolicy(10, "Поточний кут", roller)
+        is_radxa_engine_policy.addSubPolicy(set_stepper_cur_angle_policy, ["stepper"])
+
         roller_policies = [
             roller_direction_policy,
             no_radxa_engine_policy,
@@ -272,4 +280,8 @@ class ControllerSettings(SettingsComposer):
         return settings
 
     def save_settings(self):
+        if self.hroller_settings_view:
+            self.hroller_settings_view.save_settings()
+        if self.vroller_settings_view:
+            self.vroller_settings_view.save_settings()
         self.settings = self.get_settings()
