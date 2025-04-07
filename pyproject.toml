@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "peacaz"
-version = "0.2"
+version = "0.3"
 description = ""
 authors = ["Oleh Myhal <odmyhal@gmail.com>","Vitalii <tomchyshakvitalik@gmail.com>"]
 readme = "README.md"
