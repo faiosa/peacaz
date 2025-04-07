@@ -95,75 +95,6 @@ class BaseRoller:
         else:
             self.view = RollerViewHorizontal(self, parent_frame, True)
 
-
-'''
-class BaseRoller2:
-    def __init__(self, controller, min_angle, max_angle, current_angle, serial_port, is_vertical):
-        self.min_angle = min_angle
-        self.max_angle = max_angle
-        self.current_angle = current_angle
-        self.serial_port = serial_port
-        self.is_vertical = is_vertical
-        self.controller = controller
-        self.view = None
-
-    def check_move_started(self, target_angle):
-        if self.is_moving():
-            self.view.disable_buttons()
-            self.controller.roller_start(self)
-            self.check_ptz_move(target_angle)
-
-    def turn_ptz_move(self, target_angle):
-        self._start_move_angle(target_angle)
-        self.check_move_started(target_angle)
-
-    def check_ptz_move(self, target_angle):
-        self._check_move_angle(target_angle)
-        self.view.update_roller_view()
-        if self.is_moving():
-            QTimer.singleShot(
-                20,
-                lambda: self.check_ptz_move(target_angle)
-            )
-        else:
-            self.view.enable_buttons()
-            self.controller.roller_finish(self)
-
-    def stop_ptz(self):
-        if self.is_moving():
-            self._stop_move_angle()
-            self.view.update_roller_view()
-            self.view.enable_buttons()
-            self.controller.roller_finish(self)
-
-    def _start_move_angle(self, dst_angle):
-        pass
-
-    def _check_move_angle(self, dest_angle):
-        pass
-
-    def _stop_move_angle(self):
-        pass
-
-    def on_view_ready(self):
-        pass
-
-    def is_moving(self):
-        pass
-
-    def show(self, parent_frame):
-        if self.is_vertical:
-            self.view = RollerViewVertical(self, parent_frame)
-        else:
-            self.view = RollerViewHorizontal(self, parent_frame)
-
-    def on_serial_connection_regained(self):
-        pass
-
-    def on_serial_connection_lost(self):
-        pass
-'''
-
 def enter(s):
     return s.encode('utf-8')
 
@@ -174,7 +105,7 @@ class StepperRoller(BaseRoller):
         self.rotation_speed = rotation_speed
         self.steps = steps
         self.cur_step = self.angle_to_step(self.current_angle)
-        self.serial_client = PearaxClient(STEPPER_MOTOR_INDEX, self.controller.radxa)
+        self.serial_client = PearaxClient(self.controller.radxa.mail_agent(STEPPER_MOTOR_INDEX))
         self.moving = False
 
     def _start_move_angle(self, dst_angle):

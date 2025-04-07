@@ -38,7 +38,7 @@ class Controller:
         if self.settings.get("use_radxa"):
             radxa_serial_port = self.settings.get("radxa_serial_port")
             #connection_provider = lambda: SerialConnection(func.serial_connect(radxa_serial_port, PEARAX_BAUD_RATE))
-            connection_provider = lambda: socket_client_channel('192.168.0.103', 3799)
+            connection_provider = lambda: socket_client_channel('192.168.0.104', 3799)
             self.radxa = Pearax(connection_provider, [STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX, HEART_BEAT_INDEX])
             self.radxa.start(f"Controller_{self.name}_radxa")
             self.serial_monitor = SerialMonitor(self.radxa, [self])
