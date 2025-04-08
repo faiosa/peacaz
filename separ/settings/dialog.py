@@ -239,7 +239,8 @@ class ControllerSettings(SettingsComposer):
             serial_port_policy,
             DoublePolicy("rotation_speed", 7, "Швидкість повертання (градус/с)"),
             num_steps_policy,
-            view_angle_policy
+            view_angle_policy,
+            set_stepper_cur_angle_policy
         ]
 
         settings_view = DictionarySettings(f"{roller_settings['type']} roller", roller_layout, roller_settings, roller_policies)

@@ -234,7 +234,8 @@ class BoolPolicy(Policy):
 
     def create_widget(self, frame):
         widget = QCheckBox(self.ds.view.frame)
-        widget.setChecked(self._initial_value(False))
+        widget.setChecked(self.ds.settings[self.key] if self.key in self.ds.settings else False)
+        #widget.setChecked(self._initial_value(False))
         widget.stateChanged.connect(lambda idx: self.normalizeSubPolicies())
         return widget
 
