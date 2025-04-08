@@ -7,7 +7,7 @@ from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
 from pearax import func, STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX, PEARAX_BAUD_RATE, PINNER_INT_BYTE_SIZE, \
     PINNER_INT_BYTE_ORDER, HEART_BEAT_INDEX
 from pearax.core import Pearax
-
+import time
 
 class Manager:
     def __init__(self, json_settings):
@@ -39,8 +39,9 @@ class Controller:
             radxa_serial_port = self.settings.get("radxa_serial_port")
             #connection_provider = lambda: SerialConnection(func.serial_connect(radxa_serial_port, PEARAX_BAUD_RATE))
             connection_provider = lambda: socket_client_channel('192.168.0.104', 3799)
+            #connection_provider = lambda: repeat_call(lambda: socket_client_channel('192.168.0.104', 3799), 8, 0.05)
             self.radxa = Pearax(connection_provider, [STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX, HEART_BEAT_INDEX])
-            self.radxa.start(f"Controller_{self.name}_radxa")
+            self.radxa.start(f"Controller_{self.name}_radxa_{time.time()}")
             self.serial_monitor = SerialMonitor(self.radxa, [self])
         self.rollers = [ self.create_roller(json) for json in json_settings.get("rollers") ]
 

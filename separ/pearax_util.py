@@ -22,8 +22,8 @@ class SerialMonitor(PearaxClient):
         super().__init__(pearax.mail_agent(HEART_BEAT_INDEX))
         self.connected = False
         self.disconnected_count = 0
-        self.disconnected_limit = 5
-        self.rate_ms = 20
+        self.disconnected_limit = 7
+        self.rate_ms = 25
         self.is_running = False
         for waiter in listeners:
             _inspect_client(waiter)
