@@ -17,8 +17,8 @@ class TotalSettings(SettingsComposer):
         self.main_view = main_view
         self.tweak = self.main_view.tweak
         self.global_policies = [
-            ComboPolicy("theme", 0, "Тема інтерфейсу", ["Світла", "Темна"]),
-            ComboPolicy("language", 1, "Мова інтерфейсу", ["Українська", "English"])
+            ComboPolicy("theme", "Тема інтерфейсу", ["Світла", "Темна"]),
+            ComboPolicy("language", "Мова інтерфейсу", ["Українська", "English"])
         ]
 
         top_frame = QFrame(self)
@@ -105,25 +105,25 @@ class ControllerSettings(SettingsComposer):
         super().__init__(parent_frame, controller.settings)
         self.controller = controller
 
-        switchboard_use_radxa_policy = BoolPolicy("use_radxa", 2, "Використовує спільний контролер (radxa)")
+        switchboard_use_radxa_policy = BoolPolicy("use_radxa", "Використовує спільний контролер (radxa)")
 
-        pearax_connection_protocol_policy = ComboPolicy("pearax_protocol", 2, "протокол комунікації з контролером", ["uart", "tcp", "udp"])
+        pearax_connection_protocol_policy = ComboPolicy("pearax_protocol","протокол комунікації з контролером", ["uart", "tcp", "udp"])
 
-        switchboard_serial_port = StrPolicy("serial_port", 3, "Серійний порт комутатора:")
+        switchboard_serial_port = StrPolicy("serial_port", "Серійний порт комутатора:")
 
         self.switchboard_policies = [
-            PinsPolicy("pins", 0, "Піни комутатора:"),
-            BoolPolicy("full_control", 1, "Повний контроль"),
+            PinsPolicy("pins", "Піни комутатора:"),
+            BoolPolicy("full_control", "Повний контроль"),
             switchboard_use_radxa_policy,
             switchboard_serial_port
         ]
         switchboard_use_radxa_policy.addSubPolicy(switchboard_serial_port, [False, "__disabled__"])
 
-        use_radxa_policy = BoolPolicy("use_radxa", 1, "Використовує спільний порт (radxa)")
-        radxa_port_policy = StrPolicy("radxa_serial_port", 3, "Спільний серійний порт (radxa)")
+        use_radxa_policy = BoolPolicy("use_radxa", "Використовує спільний порт (radxa)")
+        radxa_port_policy = StrPolicy("radxa_serial_port", "Спільний серійний порт (radxa)")
 
-        radxa_ip_host_policy = IpHostPolicy("radxa_ip_host", 4, "ip адреса (host):")
-        radxa_ip_port_policy = IntPolicy("radxa_ip_port", 5, "ip порт (port):")
+        radxa_ip_host_policy = IpHostPolicy("radxa_ip_host",  "ip адреса (host):")
+        radxa_ip_port_policy = IntPolicy("radxa_ip_port", "ip порт (port):")
 
         use_radxa_policy.addSubPolicy(pearax_connection_protocol_policy, [True])
         use_radxa_policy.addSubPolicy(switchboard_use_radxa_policy, [True])
@@ -132,7 +132,7 @@ class ControllerSettings(SettingsComposer):
         pearax_connection_protocol_policy.addSubPolicy(radxa_ip_host_policy, ["tcp", "udp"])
         pearax_connection_protocol_policy.addSubPolicy(radxa_ip_port_policy, ["tcp", "udp"])
         self.controller_policies = [
-            StrPolicy("name", 0, "Назва контроллера"),
+            StrPolicy("name", "Назва контроллера"),
             use_radxa_policy,
             pearax_connection_protocol_policy,
             radxa_port_policy,
@@ -225,34 +225,34 @@ class ControllerSettings(SettingsComposer):
         settings_view = DictionarySettings(QGroupBox(f"{roller_settings['type']} roller"), labels, roller_settings, policies)
         '''
 
-        no_radxa_engine_policy = ComboPolicy("engine", 1, "тип двигуна", ["line"], False)
+        no_radxa_engine_policy = ComboPolicy("engine", "тип двигуна", ["line"], False)
         is_radxa_policy.addSubPolicy(no_radxa_engine_policy, [False, "__disabled__"])
-        is_radxa_engine_policy = ComboPolicy("engine", 2, "тип двигуна", ["stepper", "line"])
+        is_radxa_engine_policy = ComboPolicy("engine", "тип двигуна", ["stepper", "line"])
         is_radxa_policy.addSubPolicy(is_radxa_engine_policy, [True])
-        current_angle_policy = DoublePolicy("current_angle", 5, "Поточний кут")
+        current_angle_policy = DoublePolicy("current_angle",  "Поточний кут")
         is_radxa_engine_policy.addSubPolicy(current_angle_policy, ["line", "__disabled__"])
-        serial_port_policy = StrPolicy("serial_port", 6, "Серійний порт")
+        serial_port_policy = StrPolicy("serial_port",  "Серійний порт")
         is_radxa_engine_policy.addSubPolicy(serial_port_policy, ["line", "__disabled__"])
-        num_steps_policy = IntPolicy("steps", 8, "кроків в повному оберті")
+        num_steps_policy = IntPolicy("steps",  "кроків в повному оберті")
 
-        roller_direction_policy = ComboPolicy("type", 0, "тип ролера", ["vertical", "horizontal"], False)
-        view_angle_policy = DoublePolicy("view_angle_shift", 9, "Відхилення шкали ролера (град.)")
+        roller_direction_policy = ComboPolicy("type", "тип ролера", ["vertical", "horizontal"], False)
+        view_angle_policy = DoublePolicy("view_angle_shift", "Відхилення шкали ролера (град.)")
         roller_direction_policy.addSubPolicy(view_angle_policy, ["horizontal"])
 
         is_radxa_engine_policy.addSubPolicy(num_steps_policy, ["stepper"])
 
-        set_stepper_cur_angle_policy = SetCurrentAnglePolicy(10, "Поточний кут", roller)
+        set_stepper_cur_angle_policy = SetCurrentAnglePolicy("Поточний кут", roller)
         is_radxa_engine_policy.addSubPolicy(set_stepper_cur_angle_policy, ["stepper"])
 
         roller_policies = [
             roller_direction_policy,
             no_radxa_engine_policy,
             is_radxa_engine_policy,
-            DoublePolicy("min_angle", 3, "Мін кут"),
-            DoublePolicy("max_angle", 4, "Макс кут"),
+            DoublePolicy("min_angle",  "Мін кут"),
+            DoublePolicy("max_angle", "Макс кут"),
             current_angle_policy,
             serial_port_policy,
-            DoublePolicy("rotation_speed", 7, "Швидкість повертання (градус/с)"),
+            DoublePolicy("rotation_speed",  "Швидкість повертання (градус/с)"),
             num_steps_policy,
             view_angle_policy,
             set_stepper_cur_angle_policy

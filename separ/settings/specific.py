@@ -1,8 +1,8 @@
 from separ.settings.dictionary import DoublePolicy
 
 class SetCurrentAnglePolicy(DoublePolicy):
-    def __init__(self, index, label, roller):
-        super().__init__("set_stepper_cur_angle", index, label, True)
+    def __init__(self, label, roller):
+        super().__init__("set_stepper_cur_angle", label, True)
         self.roller = roller
         self.edit = False
 

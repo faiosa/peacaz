@@ -14,8 +14,10 @@ class DictionarySettings:
         self.settings = json_settings
         self.policies = policies
 
-        for policy in self.policies:
+        for index in range(len(self.policies)):
+            policy = self.policies[index]
             policy.ds = self
+            policy.set_index(index)
 
         self.view = None
         self.need_refresh = False
@@ -113,14 +115,20 @@ class SettingsView:
 
 
 class Policy:
-    def __init__(self, key: str, index: int, label: str, spec = False):
+    def __init__(self, key: str, label: str, spec = False):
         self.key = key
-        self.index = index
+        self.index = None
         self.label = label
         self.ds = None
         self.subp = []
         self.disabled_value = None
         self.spec = spec #means that policy value is not saved within tweak file, have its own save method
+
+    def set_index(self, index):
+        if self.index is None:
+            self.index = index
+        else:
+            raise Exception("Policy index is already set")
 
     def addSubPolicy(self, policy, enable_val_list):
         self.subp.append((policy, enable_val_list))
@@ -170,8 +178,8 @@ class Policy:
         assert self.spec #only specific policies has special way to be saved
 
 class IntPolicy(Policy):
-    def __init__(self, key: str, index: int, label: str):
-        super().__init__(key, index, label)
+    def __init__(self, key: str, label: str):
+        super().__init__(key, label)
 
     def create_widget(self, frame):
         widget = QLineEdit(frame)
@@ -184,8 +192,8 @@ class IntPolicy(Policy):
         return int(widget.text())
 
 class DoublePolicy(Policy):
-    def __init__(self, key: str, index: int, label: str, specific = False):
-        super().__init__(key, index, label, specific)
+    def __init__(self, key: str, label: str, specific = False):
+        super().__init__(key, label, specific)
 
     def create_widget(self, frame):
         widget = QLineEdit(frame)
@@ -201,8 +209,8 @@ class DoublePolicy(Policy):
         return float(widget.text())
 
 class StrPolicy(Policy):
-    def __init__(self, key: str, index: int, label: str, enabled = True):
-        super().__init__(key, index, label)
+    def __init__(self, key: str, label: str, enabled = True):
+        super().__init__(key, label)
         self.enabled = enabled
 
     def create_widget(self, frame):
@@ -216,8 +224,8 @@ class StrPolicy(Policy):
         return str(widget.text())
 
 class RegExpPolicy(StrPolicy):
-    def __init__(self, key: str, index: int, label: str, regex_str: str):
-        super().__init__(key, index, label)
+    def __init__(self, key: str, label: str, regex_str: str):
+        super().__init__(key, label)
         self.regex_str = regex_str
 
     def create_widget(self, frame):
@@ -230,16 +238,16 @@ class RegExpPolicy(StrPolicy):
         return widget
 
 class PinsPolicy(RegExpPolicy):
-    def __init__(self, key: str, index: int, label: str):
-        super().__init__(key, index, label, "[0-9]{1,3}([ ]*,[ ]*[0-9]{1,3})*")
+    def __init__(self, key: str, label: str):
+        super().__init__(key, label, "[0-9]{1,3}([ ]*,[ ]*[0-9]{1,3})*")
 
 class IpHostPolicy(RegExpPolicy):
-    def __init__(self, key: str, index: int, label: str):
-        super().__init__(key, index, label, "^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)$")
+    def __init__(self, key: str, label: str):
+        super().__init__(key, label, "^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)$")
 
 class BoolPolicy(Policy):
-    def __init__(self, key: str, index: int, label: str):
-        super().__init__(key, index, label)
+    def __init__(self, key: str, label: str):
+        super().__init__(key, label)
 
     def create_widget(self, frame):
         widget = QCheckBox(self.ds.view.frame)
@@ -252,8 +260,8 @@ class BoolPolicy(Policy):
         return widget.isChecked()
 
 class ComboPolicy(Policy):
-    def __init__(self, key: str, index: int, label: str, items, enabled = True):
-        super().__init__(key, index, label)
+    def __init__(self, key: str, label: str, items, enabled = True):
+        super().__init__(key, label)
         self.items = items
         self.enabled = enabled
 
