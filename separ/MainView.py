@@ -99,6 +99,10 @@ class MainRollerView(QMainWindow):
         for index in range(len(self.roller_manager.controllers)):
             self.blue_print.add_roller(self.roller_manager.controllers[index], index)
 
+    def closeEvent(self, event):
+        if self.roller_manager:
+            self.roller_manager.close()
+        event.accept()
 
     def open_settings_window(self):
         dlg = QDialog()
