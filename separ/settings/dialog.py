@@ -5,7 +5,8 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QFrame, QVBoxLayout, QTabWidget, QGroupBox, QHBoxLayout, QGridLayout, QPushButton, QStyle, \
     QMessageBox
 
-from separ.settings.dictionary import SettingsComposer, DictionarySettings, ComboPolicy, PinsPolicy, StrPolicy, BoolPolicy, DoublePolicy, IntPolicy
+from separ.settings.dictionary import SettingsComposer, DictionarySettings, ComboPolicy, PinsPolicy, StrPolicy, \
+    BoolPolicy, DoublePolicy, IntPolicy, IpHostPolicy
 from separ.settings.specific import SetCurrentAnglePolicy
 from utils.settings import SEPAR_SETTINGS_FILE
 
@@ -104,8 +105,12 @@ class ControllerSettings(SettingsComposer):
         super().__init__(parent_frame, controller.settings)
         self.controller = controller
 
-        switchboard_use_radxa_policy = BoolPolicy("use_radxa", 2, "Використовує спільний порт (radxa)")
+        switchboard_use_radxa_policy = BoolPolicy("use_radxa", 2, "Використовує спільний контролер (radxa)")
+
+        pearax_connection_protocol_policy = ComboPolicy("pearax_protocol", 2, "протокол комунікації з контролером", ["uart", "tcp", "udp"])
+
         switchboard_serial_port = StrPolicy("serial_port", 3, "Серійний порт комутатора:")
+
         self.switchboard_policies = [
             PinsPolicy("pins", 0, "Піни комутатора:"),
             BoolPolicy("full_control", 1, "Повний контроль"),
@@ -115,14 +120,24 @@ class ControllerSettings(SettingsComposer):
         switchboard_use_radxa_policy.addSubPolicy(switchboard_serial_port, [False, "__disabled__"])
 
         use_radxa_policy = BoolPolicy("use_radxa", 1, "Використовує спільний порт (radxa)")
-        radxa_port_policy = StrPolicy("radxa_serial_port", 2, "Спільний серійний порт (radxa)")
+        radxa_port_policy = StrPolicy("radxa_serial_port", 3, "Спільний серійний порт (radxa)")
 
-        use_radxa_policy.addSubPolicy(radxa_port_policy, [True])
+        radxa_ip_host_policy = IpHostPolicy("radxa_ip_host", 4, "ip адреса (host):")
+        radxa_ip_port_policy = IntPolicy("radxa_ip_port", 5, "ip порт (port):")
+
+        use_radxa_policy.addSubPolicy(pearax_connection_protocol_policy, [True])
         use_radxa_policy.addSubPolicy(switchboard_use_radxa_policy, [True])
+
+        pearax_connection_protocol_policy.addSubPolicy(radxa_port_policy, ["uart"])
+        pearax_connection_protocol_policy.addSubPolicy(radxa_ip_host_policy, ["tcp", "udp"])
+        pearax_connection_protocol_policy.addSubPolicy(radxa_ip_port_policy, ["tcp", "udp"])
         self.controller_policies = [
             StrPolicy("name", 0, "Назва контроллера"),
             use_radxa_policy,
-            radxa_port_policy
+            pearax_connection_protocol_policy,
+            radxa_port_policy,
+            radxa_ip_host_policy,
+            radxa_ip_port_policy
         ]
 
         self.controller_settings_view = DictionarySettings("general", self.layout, self.settings, self.controller_policies)

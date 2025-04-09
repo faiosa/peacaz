@@ -215,18 +215,27 @@ class StrPolicy(Policy):
     def _widget_value(self, widget):
         return str(widget.text())
 
-class PinsPolicy(StrPolicy):
-    def __init__(self, key: str, index: int, label: str):
+class RegExpPolicy(StrPolicy):
+    def __init__(self, key: str, index: int, label: str, regex_str: str):
         super().__init__(key, index, label)
+        self.regex_str = regex_str
 
     def create_widget(self, frame):
         widget = QLineEdit(self.ds.view.frame)
-        regex = QRegExp("[0-9]{1,3}([ ]*,[ ]*[0-9]{1,3})*")
+        regex = QRegExp(self.regex_str)
         validator = QRegExpValidator(regex, widget)
         widget.setValidator(validator)
         value = self._initial_value("")
         widget.setText(value)
         return widget
+
+class PinsPolicy(RegExpPolicy):
+    def __init__(self, key: str, index: int, label: str):
+        super().__init__(key, index, label, "[0-9]{1,3}([ ]*,[ ]*[0-9]{1,3})*")
+
+class IpHostPolicy(RegExpPolicy):
+    def __init__(self, key: str, index: int, label: str):
+        super().__init__(key, index, label, "^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)$")
 
 class BoolPolicy(Policy):
     def __init__(self, key: str, index: int, label: str):

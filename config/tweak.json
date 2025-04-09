@@ -7,6 +7,7 @@
         "1": {
             "name": "Маленький контролер",
             "use_radxa": true,
+            "pearax_protocol": "uart",
             "radxa_serial_port": "/dev/ttyACM0",
             "switchboard": {
                 "pins": "71,72,75",
@@ -21,7 +22,7 @@
                     "max_angle": 359.9999,
                     "rotation_speed": 60.0,
                     "steps": 400,
-                    "view_angle_shift": 90
+                    "view_angle_shift": -90
                 }
             ]
         },
@@ -51,7 +52,7 @@
                     "current_angle": 0.0,
                     "serial_port": "NOT_EXISTING_PORT",
                     "rotation_speed": 16.0,
-                    "view_angle_shift": 90
+                    "view_angle_shift": -90
                 }
             ]
         },
@@ -72,7 +73,7 @@
                     "current_angle": 0.0,
                     "serial_port": "NOT_EXISTING_PORT",
                     "rotation_speed": 16.0,
-                    "view_angle_shift": 90
+                    "view_angle_shift": -90
                 }
             ]
         }

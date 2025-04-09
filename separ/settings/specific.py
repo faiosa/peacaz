@@ -10,7 +10,11 @@ class SetCurrentAnglePolicy(DoublePolicy):
         self.edit = True
 
     def _initial_value(self, default=None):
-        return str(self.roller.current_angle)
+        try:
+            result = self.roller.current_angle
+        except Exception:
+            result = default
+        return str(result)
 
     def create_widget(self, frame):
         widget = super().create_widget(frame)
