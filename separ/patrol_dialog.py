@@ -5,9 +5,9 @@ from separ.settings.dictionary import DoublePolicy, DictionarySettings
 
 def _patrol_policies():
     return [
-        DoublePolicy("min_angle", 0, "Мін кут"),
-        DoublePolicy("max_angle", 1, "Макс кут"),
-        DoublePolicy("rotation_speed", 2, "Швидкість патрулювання (градус/с)")
+        DoublePolicy("min_angle", "Мін кут"),
+        DoublePolicy("max_angle", "Макс кут"),
+        DoublePolicy("rotation_speed", "Швидкість патрулювання (градус/с)")
     ]
 
 
