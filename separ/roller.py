@@ -106,7 +106,7 @@ class StepperRoller(BaseRoller):
         self.rotation_speed = rotation_speed
         self.steps = steps
         self.cur_step = self.angle_to_step(self.current_angle)
-        self.serial_client = PearaxClient(self.controller.radxa.mail_agent(STEPPER_MOTOR_INDEX))
+        self.serial_client = PearaxClient(self.controller.radxa.mail.bind_client(STEPPER_MOTOR_INDEX))
         self.moving = False
 
     def _start_move_angle(self, dst_angle):
@@ -134,12 +134,12 @@ class StepperRoller(BaseRoller):
                     {"class": "RecallOldVelocity"}
                 ]
             }
-            self.serial_client.write(enter(json.dumps(j_patrol_task)))
+            self.serial_client.send(enter(json.dumps(j_patrol_task)))
             self.state_update(True, True)
 
     def _check_move_angle(self):
         while True:
-            resp = self.serial_client.read()
+            resp = self.serial_client.receive()
             if resp is None:
                 break
             else:
@@ -149,10 +149,10 @@ class StepperRoller(BaseRoller):
                 self.state_update(True, status == 'r', self.step_to_angle(cur_step))
                 self.view.update_roller_view()
         if self.is_moving():
-            self.serial_client.write(enter("g"))
+            self.serial_client.send(enter("g"))
 
     def _stop_move_angle(self):
-        self.serial_client.write(enter("s"))
+        self.serial_client.send(enter("s"))
 
     def is_moving(self):
         return self.moving
@@ -173,14 +173,14 @@ class StepperRoller(BaseRoller):
                 {"class": "MoveToTargetStep", "target_step": trg_step}
             ]
         }
-        self.serial_client.write(enter(json.dumps(j_move_task)))
+        self.serial_client.send(enter(json.dumps(j_move_task)))
 
     def send_stop_command(self):
-        self.serial_client.write(enter("s"))
+        self.serial_client.send(enter("s"))
 
     def set_cur_angle_command(self, new_cur_angle):
         new_cur_step = self.angle_to_step(new_cur_angle)
-        self.serial_client.write(enter(f"c{new_cur_step}"))
+        self.serial_client.send(enter(f"c{new_cur_step}"))
 
 
 class TimeRoller(BaseRoller):

@@ -3,7 +3,7 @@ import time
 from PyQt5.QtCore import QTimer
 from pearax import HEART_BEAT_INDEX
 from pearax.client import PearaxClient
-from pearax.core import Pearax, STANDARD_TTL
+from pearax.mail import STANDARD_TTL
 
 
 def method_inspect(client, method_name):
@@ -18,8 +18,8 @@ def _inspect_client(client):
     assert method_inspect(client, "on_serial_connect")
 
 class SerialMonitor(PearaxClient):
-    def __init__(self, pearax, listeners):
-        super().__init__(pearax.mail_agent(HEART_BEAT_INDEX))
+    def __init__(self, mail_agent, listeners):
+        super().__init__(mail_agent)
         self.connected = False
         self.disconnected_count = 0
         self.disconnected_limit = 7
@@ -42,7 +42,7 @@ class SerialMonitor(PearaxClient):
         cur_time = time.time()
         connected = False
         while True:
-            data = self.read(cur_time)
+            data = self.receive(cur_time)
             if data is None:
                 break
             else:
@@ -61,7 +61,7 @@ class SerialMonitor(PearaxClient):
                 for listener in self.listeners:
                     listener.on_serial_disconnect()
 
-        self.write(str(cur_time).encode("utf-8"), cur_time, STANDARD_TTL)
+        self.send(str(cur_time).encode("utf-8"), cur_time, STANDARD_TTL)
         QTimer.singleShot(
             self.rate_ms,
             lambda: self.__monitor()
