@@ -252,26 +252,59 @@ class ArrowCanvas(QFrame):
 
         qp = QPainter()
         qp.begin(self)
-        pen = QPen(Qt.QColor(5, 2, 2), 2)
+        mcolor = Qt.QColor(5, 2, 2)
+        pen = QPen(mcolor, 2)
         qp.setPen(pen)
+        qp.setBrush(QBrush(mcolor))
         qp.setFont(QFont("AnonymousPro Regular", 9))
         size = self.size()
         center_x = size.width() // 2
         center_y = size.height() // 2
         radius = center_y - 15
-        for angle in range(0, 360, 10):
-            adjusted_angle = angle - self.roller_view.angle_shift  # Adjust angle to make 0 at the top
-            x = int(center_x + radius * math.cos(math.radians(adjusted_angle)))
-            y = int(center_y + radius * math.sin(math.radians(adjusted_angle)))
-            qp.drawEllipse(x, y, 3, 3)
-            if angle % 30 == 0:
-                text = QStaticText(str(angle))
-                tsize = text.size()
-                tx = center_x + (radius + 2 + tsize.width() / 2) * math.cos(math.radians(adjusted_angle))
-                ty = center_y + (radius + 2 + tsize.height()/ 2) * math.sin(math.radians(adjusted_angle))
+        if self.roller_view.roller.zero_azimuth is None:
+            for angle in range(0, 360, 10):
+                adjusted_angle = angle - self.roller_view.angle_shift  # Adjust angle to make 0 at the top
+                x = int(center_x + radius * math.cos(math.radians(adjusted_angle)))
+                y = int(center_y + radius * math.sin(math.radians(adjusted_angle)))
+                qp.drawEllipse(x, y, 3, 3)
+                if angle % 30 == 0:
+                    text = QStaticText(str(angle))
+                    tsize = text.size()
+                    tx = center_x + (radius + 2 + tsize.width() / 2) * math.cos(math.radians(adjusted_angle))
+                    ty = center_y + (radius + 2 + tsize.height()/ 2) * math.sin(math.radians(adjusted_angle))
 
-                #qp.drawEllipse(tx, ty, 3, 3)
-                qp.drawStaticText( int(tx - tsize.width() / 2), int(ty - tsize.height() / 2), text)
+                    #qp.drawEllipse(tx, ty, 3, 3)
+                    qp.drawStaticText( int(tx - tsize.width() / 2), int(ty - tsize.height() / 2), text)
+        else:
+            for angle in range(0, 360, 10):
+                adjusted_angle = angle - self.roller_view.angle_shift + self.roller_view.roller.zero_azimuth # Adjust angle to make 0 at the top
+                x = int(center_x + radius * math.cos(math.radians(adjusted_angle)))
+                y = int(center_y + radius * math.sin(math.radians(adjusted_angle)))
+                qp.drawEllipse(x, y, 3, 3)
+                if angle % 30 == 0 and not angle % 90 == 0:
+                    text = QStaticText(str(angle))
+                    tsize = text.size()
+                    tx = center_x + (radius + 2 + tsize.width() / 2) * math.cos(math.radians(adjusted_angle))
+                    ty = center_y + (radius + 2 + tsize.height() / 2) * math.sin(math.radians(adjusted_angle))
+
+                    # qp.drawEllipse(tx, ty, 3, 3)
+                    qp.drawStaticText(int(tx - tsize.width() / 2), int(ty - tsize.height() / 2), text)
+
+            names = {0: "N", 90: "E", 180: "S", 270: "W"}
+            font = QFont("Arial", 12, QFont.Bold)  # (family, pointSize, weight)
+            qp.setFont(font)
+            qp.setPen(QPen(Qt.QColor(240, 20, 20), 2))
+            for angle in names:
+                adjusted_angle = angle - self.roller_view.angle_shift + self.roller_view.roller.zero_azimuth
+                text = QStaticText(names[angle])
+                tsize = text.size()
+                tx = center_x + (radius + 4 + tsize.width() / 2) * math.cos(math.radians(adjusted_angle))
+                ty = center_y + (radius + 4 + tsize.height() / 2) * math.sin(math.radians(adjusted_angle))
+
+                # qp.drawEllipse(tx, ty, 3, 3)
+                qp.drawStaticText(int(tx - tsize.width() / 2), int(ty - tsize.height() / 2), text)
+                if angle == 0:
+                    qp.setPen(QPen(Qt.QColor(10, 20, 240), 2))
 
         #write red roller ridge
         zradius = center_y - 13

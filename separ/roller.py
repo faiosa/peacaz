@@ -21,6 +21,7 @@ class BaseRoller:
         self.moving = False
         self.connected = True
         self.ms_to_wait = 20
+        self.zero_azimuth = None
 
     def turn_ptz_move(self, target_angle):
         if self.connected and not self.moving:
