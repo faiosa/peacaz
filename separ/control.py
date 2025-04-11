@@ -56,7 +56,7 @@ class Controller:
             else:
                 raise Exception(f"Unknown protocol '{protocol}'")
             self.radxa = Pearax(connection_provider)
-            self.serial_monitor = SerialMonitor(self.radxa.mail.bind_client(HEART_BEAT_INDEX), [self])
+            self.serial_monitor = SerialMonitor(self.radxa.mail.provide_agent(HEART_BEAT_INDEX), [self])
 
         self.rollers = [ self.create_roller(json) for json in json_settings.get("rollers") ]
 
@@ -190,10 +190,10 @@ class SwitchBoard:
             if pearax is None:
                 func.func_logger.fatal("Controller missing pearax for swithcboard configured with 'radxa'")
             else:
-                self.serial_client = PearaxClient(pearax.mail.bind_client(self.app_index))
+                self.serial_client = PearaxClient(pearax.mail.provide_agent(self.app_index))
         else:
             self.switchboard_pearax = Pearax(lambda: func.serial_connect(switchboard_serial_port, PEARAX_BAUD_RATE))
-            self.serial_client = PearaxClient(self.switchboard_pearax.mail.bind_client(self.app_index))
+            self.serial_client = PearaxClient(self.switchboard_pearax.mail.provide_agent(self.app_index))
             self.switchboard_pearax.start("SwitchBoardPearax")
         self.is_full_control = is_full_control
         self.ints_to_bytes = func.ints_to_bytes_lambda(PINNER_INT_BYTE_SIZE, PINNER_INT_BYTE_ORDER)

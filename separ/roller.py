@@ -107,7 +107,7 @@ class StepperRoller(BaseRoller):
         self.rotation_speed = rotation_speed
         self.steps = steps
         self.cur_step = self.angle_to_step(self.current_angle)
-        self.serial_client = PearaxClient(self.controller.radxa.mail.bind_client(STEPPER_MOTOR_INDEX))
+        self.serial_client = PearaxClient(self.controller.radxa.mail.provide_agent(STEPPER_MOTOR_INDEX))
         self.moving = False
 
     def _start_move_angle(self, dst_angle):
