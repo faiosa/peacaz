@@ -2,7 +2,7 @@ import time
 
 from PyQt5.QtCore import QTimer
 from pearax import HEART_BEAT_INDEX
-from pearax.client import PearaxClient
+from pearax.mail import MailClient
 from pearax.mail import STANDARD_TTL
 
 
@@ -17,7 +17,7 @@ def _inspect_client(client):
     assert method_inspect(client, "on_serial_disconnect")
     assert method_inspect(client, "on_serial_connect")
 
-class SerialMonitor(PearaxClient):
+class SerialMonitor(MailClient):
     def __init__(self, mail_agent, listeners):
         super().__init__(mail_agent)
         self.connected = False

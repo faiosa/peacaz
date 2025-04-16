@@ -1,8 +1,6 @@
 import json
 
 from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QMessageBox
-from pearax.client import PearaxClient
 from pearax import STEPPER_MOTOR_INDEX
 from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
 from separ.qt5_roller_view import RollerViewVertical, RollerViewHorizontal
@@ -100,6 +98,8 @@ class BaseRoller:
 def enter(s):
     return s.encode('utf-8')
 
+STEPPER_ROLLER_INDEX = 21
+
 class StepperRoller(BaseRoller):
     def __init__(self, controller, rotation_speed, steps, min_angle, max_angle, is_vertical):
         super().__init__(controller, min_angle, max_angle, is_vertical)
@@ -107,7 +107,7 @@ class StepperRoller(BaseRoller):
         self.rotation_speed = rotation_speed
         self.steps = steps
         self.cur_step = self.angle_to_step(self.current_angle)
-        self.serial_client = PearaxClient(self.controller.radxa.mail.provide_agent(STEPPER_MOTOR_INDEX))
+        self._communicator = self.controller.radxa.provide_proxy_mail_post(STEPPER_ROLLER_INDEX, [STEPPER_MOTOR_INDEX])
         self.moving = False
 
     def _start_move_angle(self, dst_angle):
@@ -135,12 +135,12 @@ class StepperRoller(BaseRoller):
                     {"class": "RecallOldVelocity"}
                 ]
             }
-            self.serial_client.send(enter(json.dumps(j_patrol_task)))
+            self._communicator.send_to(enter(json.dumps(j_patrol_task)), STEPPER_MOTOR_INDEX)
             self.state_update(True, True)
 
     def _check_move_angle(self):
         while True:
-            resp = self.serial_client.receive()
+            resp = self._communicator.receive_from(STEPPER_MOTOR_INDEX)
             if resp is None:
                 break
             else:
@@ -150,10 +150,10 @@ class StepperRoller(BaseRoller):
                 self.state_update(True, status == 'r', self.step_to_angle(cur_step))
                 self.view.update_roller_view()
         if self.is_moving():
-            self.serial_client.send(enter("g"))
+            self._communicator.send_to(enter("g"), STEPPER_MOTOR_INDEX)
 
     def _stop_move_angle(self):
-        self.serial_client.send(enter("s"))
+        self._communicator.send_to(enter("s"), STEPPER_MOTOR_INDEX)
 
     def is_moving(self):
         return self.moving
@@ -174,14 +174,14 @@ class StepperRoller(BaseRoller):
                 {"class": "MoveToTargetStep", "target_step": trg_step}
             ]
         }
-        self.serial_client.send(enter(json.dumps(j_move_task)))
+        self._communicator.send_to(enter(json.dumps(j_move_task)), STEPPER_MOTOR_INDEX)
 
     def send_stop_command(self):
-        self.serial_client.send(enter("s"))
+        self._communicator.send_to(enter("s"), STEPPER_MOTOR_INDEX)
 
     def set_cur_angle_command(self, new_cur_angle):
         new_cur_step = self.angle_to_step(new_cur_angle)
-        self.serial_client.send(enter(f"c{new_cur_step}"))
+        self._communicator.send_to(enter(f"c{new_cur_step}"), STEPPER_MOTOR_INDEX)
 
 
 class TimeRoller(BaseRoller):
