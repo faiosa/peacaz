@@ -1,6 +1,6 @@
 from PyQt5 import QtGui, Qt
 from PyQt5.QtCore import QPointF, QTimer
-from PyQt5.QtGui import QDoubleValidator, QFont, QPainter, QPen, QBrush, QStaticText, QPolygon, QPolygonF, QIcon
+from PyQt5.QtGui import QDoubleValidator, QFont, QPainter, QPen, QBrush, QStaticText, QPolygon, QPolygonF, QIcon, QColor
 
 from PyQt5.QtWidgets import QLabel, QLineEdit, QFrame, QWidget, QPushButton
 import math
@@ -190,12 +190,17 @@ class ArrowCanvas(QFrame):
     def __init__(self, widget, roller_view):
         super().__init__(widget)
         self.roller_view = roller_view
+        self.azimuth_button_height = 20
+        self.azimuth_button_width = 20
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         if self.roller_view.roller.controller.is_moving():
             return
         size = self.size()
+        if event.x() > size.width() - self.azimuth_button_width and event.y() < self.azimuth_button_height:
+            self.roller_view.roller.tune_zero_azimuth()
+            return
         dx = event.x() - size.width() / 2
         dy = event.y() - size.height() / 2
         sin = dy / math.sqrt(dy * dy + dx * dx)
@@ -218,6 +223,24 @@ class ArrowCanvas(QFrame):
 
 
     def paintEvent(self, event):
+        def draw_azimuth_button():
+            painter = QPainter()
+            painter.begin(self)
+            painter.setRenderHint(QPainter.Antialiasing)
+
+            # Set brush for filling
+            brush = QBrush(QColor(100, 5, 200))
+            painter.setBrush(brush)
+
+            # Optional: set pen if you want a border
+            # painter.setPen(Qt.NoPen)  # No border
+            # or: painter.setPen(QColor(0, 0, 0))  # Black border
+
+            # Draw filled rectangle
+            msize = self.size()
+            painter.drawRect(msize.width() - self.azimuth_button_width, 0, self.azimuth_button_width, self.azimuth_button_height)  # x, y, width, height
+            painter.end()
+
         def draw_direction():
             mqp = QPainter()
             mqp.begin(self)
@@ -316,5 +339,6 @@ class ArrowCanvas(QFrame):
 
         qp.end()
         draw_direction()
+        draw_azimuth_button()
 
 
