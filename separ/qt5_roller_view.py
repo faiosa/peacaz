@@ -1,6 +1,7 @@
 from PyQt5 import QtGui, Qt
 from PyQt5.QtCore import QPointF, QTimer
-from PyQt5.QtGui import QDoubleValidator, QFont, QPainter, QPen, QBrush, QStaticText, QPolygon, QPolygonF, QIcon, QColor
+from PyQt5.QtGui import QDoubleValidator, QFont, QPainter, QPen, QBrush, QStaticText, QPolygon, QPolygonF, QIcon, \
+    QColor, QPixmap
 
 from PyQt5.QtWidgets import QLabel, QLineEdit, QFrame, QWidget, QPushButton
 import math
@@ -174,9 +175,21 @@ class RollerViewHorizontal(BaseRollerView):
         self.angle_shift = angle_shift
         self.radin_shift = math.radians(self.angle_shift)
 
+        self.compass_label_side = 30
+
         self.canvas_frame = ArrowCanvas(frame, self)
         self.canvas_frame.setFixedWidth(self.slider_width)
         self.canvas_frame.setFixedHeight(self.slider_height)
+
+        #Draw compass icon
+        self.compass_label = QLabel(self.canvas_frame)
+        pixmap = QPixmap("assets/compass_30.png")
+        self.compass_label.setPixmap(pixmap)
+        self.compass_label.setParent(self.canvas_frame)
+        self.compass_label.setFixedWidth(self.compass_label_side)
+        self.compass_label.setFixedHeight(self.compass_label_side)
+        self.compass_label.move(self.canvas_frame.width() - self.compass_label_side, 0)
+        #end compass icon
 
         start_canvas_col = 1 + len(self.roller.controller.rollers)
         grid = frame.layout()
@@ -190,8 +203,8 @@ class ArrowCanvas(QFrame):
     def __init__(self, widget, roller_view):
         super().__init__(widget)
         self.roller_view = roller_view
-        self.azimuth_button_height = 20
-        self.azimuth_button_width = 20
+        self.azimuth_button_height = self.roller_view.compass_label_side
+        self.azimuth_button_width = self.roller_view.compass_label_side
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
@@ -223,23 +236,6 @@ class ArrowCanvas(QFrame):
 
 
     def paintEvent(self, event):
-        def draw_azimuth_button():
-            painter = QPainter()
-            painter.begin(self)
-            painter.setRenderHint(QPainter.Antialiasing)
-
-            # Set brush for filling
-            brush = QBrush(QColor(100, 5, 200))
-            painter.setBrush(brush)
-
-            # Optional: set pen if you want a border
-            # painter.setPen(Qt.NoPen)  # No border
-            # or: painter.setPen(QColor(0, 0, 0))  # Black border
-
-            # Draw filled rectangle
-            msize = self.size()
-            painter.drawRect(msize.width() - self.azimuth_button_width, 0, self.azimuth_button_width, self.azimuth_button_height)  # x, y, width, height
-            painter.end()
 
         def draw_direction():
             mqp = QPainter()
@@ -339,6 +335,5 @@ class ArrowCanvas(QFrame):
 
         qp.end()
         draw_direction()
-        draw_azimuth_button()
 
 
