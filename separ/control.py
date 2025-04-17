@@ -94,6 +94,7 @@ class Controller:
         self.view.stop_button.setEnabled(True)
         for roller in self.rollers:
             roller.state_update(True, True)
+            roller.on_motor_connect()
 
     def show(self, parent_frame):
         if self.view is None:

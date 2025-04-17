@@ -98,6 +98,9 @@ class BaseRoller:
     def tune_zero_azimuth(self):
         pass
 
+    def on_motor_connect(self):
+        pass
+
     @staticmethod
     def enter(s):
         return s.encode('utf-8')
@@ -147,6 +150,7 @@ class StepperRoller(BaseRoller):
             j_azimuth_task = {
                 "type": "DataJob",
                 "tasks": [
+                    #{"class": "SendCommandTask", "mail_index": DATA_STORE_MAIL_INDEX, "bytes": json.dumps({"cmd": "del", "key": "zero_azimuth"})},
                     {"class": "SendCommandTask", "mail_index": COMPASS_MAIL_INDEX, "bytes": " "},
                     {"class": "ReceiveAzimuthTask"},
                     {"class": "SendCommandTask", "mail_index": STEPPER_MOTOR_INDEX, "bytes": "g"},
@@ -154,6 +158,7 @@ class StepperRoller(BaseRoller):
                     {"class": "CalcZeroAzimuth", "steps": 400}
                 ]
             }
+            self._communicator.send_to(json.dumps({"cmd": "del", "key": "zero_azimuth"}).encode('utf-8'), DATA_STORE_MAIL_INDEX)
             self._communicator.send_to(self.enter(json.dumps(j_azimuth_task)), WORKER_MAIL_INDEX)
             self.__check_zero_azimuth()
 
@@ -161,10 +166,12 @@ class StepperRoller(BaseRoller):
         msg = self._communicator.receive_from(DATA_STORE_MAIL_INDEX)
         if msg:
             jdata = json.loads(msg.decode("utf-8"))
-            if "zero_azimuth" in jdata and jdata["zero_azimuth"] is not None:
-                self.zero_azimuth = float(jdata["zero_azimuth"])
-                self.view.update_roller_view()
-                retry = 0
+            if "zero_azimuth" in jdata:
+                if jdata["zero_azimuth"] is None:
+                    self.zero_azimuth = None
+                else:
+                    self.zero_azimuth = float(jdata["zero_azimuth"])
+                    retry = 0
 
         if retry > 0:
             self._communicator.send_to(self.enter(json.dumps({"cmd": "get", "key": "zero_azimuth"})), DATA_STORE_MAIL_INDEX)
@@ -172,6 +179,8 @@ class StepperRoller(BaseRoller):
                 self.ms_to_wait * 2,
                 lambda: self.__check_zero_azimuth(retry - 1)
             )
+        else:
+            self.view.update_roller_view()
 
     def _check_move_angle(self):
         while True:
@@ -217,6 +226,9 @@ class StepperRoller(BaseRoller):
     def set_cur_angle_command(self, new_cur_angle):
         new_cur_step = self.angle_to_step(new_cur_angle)
         self._communicator.send_to(self.enter(f"c{new_cur_step}"), STEPPER_MOTOR_INDEX)
+
+    def on_motor_connect(self):
+        self.__check_zero_azimuth(4)
 
 
 class TimeRoller(BaseRoller):
