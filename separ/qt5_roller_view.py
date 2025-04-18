@@ -296,7 +296,7 @@ class ArrowCanvas(QFrame):
                     qp.drawStaticText( int(tx - tsize.width() / 2), int(ty - tsize.height() / 2), text)
         else:
             for angle in range(0, 360, 10):
-                adjusted_angle = angle + self.roller_view.angle_shift + self.roller_view.roller.zero_azimuth # Adjust angle to make 0 at the top
+                adjusted_angle = angle + self.roller_view.angle_shift - self.roller_view.roller.zero_azimuth # Adjust angle to make 0 at the top
                 x = int(center_x + radius * math.cos(math.radians(adjusted_angle)))
                 y = int(center_y + radius * math.sin(math.radians(adjusted_angle)))
                 qp.drawEllipse(x, y, 3, 3)
@@ -314,7 +314,7 @@ class ArrowCanvas(QFrame):
             qp.setFont(font)
             qp.setPen(QPen(Qt.QColor(240, 20, 20), 2))
             for angle in names:
-                adjusted_angle = angle + self.roller_view.angle_shift + self.roller_view.roller.zero_azimuth
+                adjusted_angle = angle + self.roller_view.angle_shift - self.roller_view.roller.zero_azimuth
                 text = QStaticText(names[angle])
                 tsize = text.size()
                 tx = center_x + (radius + 4 + tsize.width() / 2) * math.cos(math.radians(adjusted_angle))
