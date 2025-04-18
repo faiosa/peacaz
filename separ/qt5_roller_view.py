@@ -74,13 +74,14 @@ class BaseRollerView:
             #messagebox.showwarning("Warning", "Введіть коректне число")
 
     def roll_desired_angle(self, desired_angle):
-        self.roller.turn_ptz_move(desired_angle)
+        print(f"ROLLING to {desired_angle} but need {self.roller.real_angle(desired_angle)}")
+        self.roller.turn_ptz_move(self.roller.real_angle(desired_angle))
 
     #Works for stepper only
     def turn_ptz_patrol(self, patrol_params):
         if self.support_patrol:
             if not self.roller.is_moving():
-                self.roller.do_patrol(patrol_params['min_angle'], patrol_params['max_angle'], patrol_params['rotation_speed'])
+                self.roller.do_patrol(self.roller.real_angle(patrol_params['min_angle']), self.roller.real_angle(patrol_params['max_angle']), patrol_params['rotation_speed'])
         else:
             func_logger.fatal("Patrol works with stepper roller only")
 
@@ -88,7 +89,7 @@ class BaseRollerView:
         self.roller.stop_ptz()
 
     def update_roller_view(self):
-        self.current_angle_label.setText(f"{self.roller.current_angle:.1f}")
+        self.current_angle_label.setText(f"{self.roller.show_angle():.1f}")
 
     def disable_buttons(self):
         self.input_field.setEnabled(False)
@@ -173,7 +174,7 @@ class RollerViewHorizontal(BaseRollerView):
         self.slider_width = self.canvas_height + 30
 
         self.angle_shift = angle_shift
-        self.radin_shift = math.radians(self.angle_shift)
+        #self.radians_ridge_shift = math.radians(self.angle_shift + self.roller.ridge_angle)
 
         self.compass_label_side = 30
 
@@ -224,15 +225,15 @@ class ArrowCanvas(QFrame):
             else:
                 trad = math.pi - trad
 
-        trad = trad + self.roller_view.radin_shift
-        if trad > 2 * math.pi:
+        trad = trad - math.radians(self.roller_view.angle_shift + self.roller_view.roller.ridge_angle)
+        while trad > 2 * math.pi:
             trad = trad - 2 * math.pi
-        if trad < 0:
+        while trad < 0:
             trad = trad + 2 * math.pi
 
         tangle = trad * 180 / math.pi
         self.roller_view.input_field.setText(f"{tangle:.1f}")
-        self.roller_view.roller.turn_ptz_move(tangle)
+        self.roller_view.roller.turn_ptz_move(self.roller_view.roller.real_angle(tangle))
 
 
     def paintEvent(self, event):
@@ -249,7 +250,7 @@ class ArrowCanvas(QFrame):
             mcenter_x = msize.width() // 2
             mcenter_y = msize.height() // 2
             marrow_length = msize.height() // 2 - 20
-            madjusted_angle_rad = math.radians(self.roller_view.roller.current_angle - self.roller_view.angle_shift)  # Adjust angle to make 0 at the top
+            madjusted_angle_rad = math.radians(self.roller_view.roller.current_angle + self.roller_view.roller.ridge_angle + self.roller_view.angle_shift)  # Adjust angle to make 0 at the top
             mx = int(mcenter_x + marrow_length * math.cos(madjusted_angle_rad))
             my = int(mcenter_y + marrow_length * math.sin(madjusted_angle_rad))
             mqp.drawLine(mcenter_x, mcenter_y, mx, my)
@@ -282,7 +283,7 @@ class ArrowCanvas(QFrame):
         radius = center_y - 15
         if self.roller_view.roller.zero_azimuth is None:
             for angle in range(0, 360, 10):
-                adjusted_angle = angle - self.roller_view.angle_shift  # Adjust angle to make 0 at the top
+                adjusted_angle = angle + self.roller_view.angle_shift + self.roller_view.roller.ridge_angle  # Adjust angle to make 0 at the top
                 x = int(center_x + radius * math.cos(math.radians(adjusted_angle)))
                 y = int(center_y + radius * math.sin(math.radians(adjusted_angle)))
                 qp.drawEllipse(x, y, 3, 3)
@@ -296,7 +297,7 @@ class ArrowCanvas(QFrame):
                     qp.drawStaticText( int(tx - tsize.width() / 2), int(ty - tsize.height() / 2), text)
         else:
             for angle in range(0, 360, 10):
-                adjusted_angle = angle - self.roller_view.angle_shift + self.roller_view.roller.zero_azimuth # Adjust angle to make 0 at the top
+                adjusted_angle = angle + self.roller_view.angle_shift + self.roller_view.roller.ridge_angle + self.roller_view.roller.zero_azimuth # Adjust angle to make 0 at the top
                 x = int(center_x + radius * math.cos(math.radians(adjusted_angle)))
                 y = int(center_y + radius * math.sin(math.radians(adjusted_angle)))
                 qp.drawEllipse(x, y, 3, 3)
@@ -314,7 +315,7 @@ class ArrowCanvas(QFrame):
             qp.setFont(font)
             qp.setPen(QPen(Qt.QColor(240, 20, 20), 2))
             for angle in names:
-                adjusted_angle = angle - self.roller_view.angle_shift + self.roller_view.roller.zero_azimuth
+                adjusted_angle = angle + self.roller_view.angle_shift + self.roller_view.roller.zero_azimuth
                 text = QStaticText(names[angle])
                 tsize = text.size()
                 tx = center_x + (radius + 4 + tsize.width() / 2) * math.cos(math.radians(adjusted_angle))
@@ -327,8 +328,9 @@ class ArrowCanvas(QFrame):
 
         #write red roller ridge
         zradius = center_y - 13
-        zx = int(center_x + zradius * math.cos(-self.roller_view.radin_shift))
-        zy = int(center_y + zradius * math.sin(-self.roller_view.radin_shift))
+        radians_shift = math.radians(self.roller_view.angle_shift + self.roller_view.roller.ridge_angle)
+        zx = int(center_x + zradius * math.cos(radians_shift))
+        zy = int(center_y + zradius * math.sin(radians_shift))
         qp.setPen(QPen(Qt.QColor(200, 20, 20), 2))
         qp.drawLine(center_x, center_y, zx, zy)
         #end write red roller ridge

@@ -20,7 +20,9 @@ class BaseRoller:
         self.moving = False
         self.connected = True
         self.ms_to_wait = 20
+
         self.zero_azimuth = None
+        self.ridge_angle = 0.0
 
     def turn_ptz_move(self, target_angle):
         if self.connected and not self.moving:
@@ -102,6 +104,12 @@ class BaseRoller:
     def on_motor_connect(self):
         pass
 
+    def show_angle(self):
+        return self.current_angle
+
+    def real_angle(self, view_angle):
+        return view_angle
+
     @staticmethod
     def enter(s):
         return s.encode('utf-8')
@@ -116,20 +124,33 @@ class StepperRoller(BaseRoller):
 
         self.steps = self.controller.settings["rollers"][self.roller_index]["steps"]
         self.cur_step = self.angle_to_step(self.current_angle)
+        self.ridge_angle = self.controller.settings["rollers"][self.roller_index]["ridge_angle"]
+        self.zero_azimuth = self.controller.settings["rollers"][self.roller_index]["current_zero_azimuth"]
+        assert self.zero_azimuth is None
+
+        self.current_angle = self.ridge_angle
 
         self._communicator = self.controller.radxa.provide_proxy_mail_post(STEPPER_ROLLER_INDEX, [STEPPER_MOTOR_INDEX, WORKER_MAIL_INDEX, DATA_STORE_MAIL_INDEX])
         self.moving = False
 
+        self.min_angle, self.max_angle = self.normalize_angles(self.min_angle, self.max_angle)
+
     def _start_move_angle(self, dst_angle):
+        if dst_angle > self.max_angle:
+            dst_angle = self.max_angle
+        if dst_angle < self.min_angle:
+            dst_angle = self.min_angle
         trg_step = self.angle_to_step(dst_angle)
         self.send_move_command(trg_step)
         assert self.connected
         self.state_update(True, True)
 
-    def do_patrol(self, min_angle: float, max_angle: float, rotation_speed: float):
+    #angles should be real, not show angles!
+    def do_patrol(self, angle_1: float, angle_2: float, rotation_speed: float):
+        min_angle, max_angle = self.normalize_angles(angle_1, angle_2)
         if self.connected and not self.is_moving():
-            trg_step_1 = self.angle_to_step(min_angle)
-            trg_step_2 = self.angle_to_step(max_angle)
+            trg_step_1 = self.angle_to_step(max(min_angle, self.min_angle))
+            trg_step_2 = self.angle_to_step(min(max_angle, self.max_angle))
             velocity_delay = 360.0 / (float(self.steps) * rotation_speed)
             j_patrol_task = {
                 "run_final_on_stop": 2,
@@ -147,6 +168,19 @@ class StepperRoller(BaseRoller):
             }
             self._communicator.send_to(self.enter(json.dumps(j_patrol_task)), STEPPER_MOTOR_INDEX)
             self.state_update(True, True)
+
+    @staticmethod
+    def normalize_angles(angle_1, angle_2):
+        assert not angle_1 == angle_2
+        min_angle = min(angle_1, angle_2)
+        max_angle = max(angle_1, angle_2)
+        while min_angle > 360.:
+            min_angle -= 360.
+            max_angle -= 360.
+        while max_angle < 0.:
+            min_angle += 360.
+            max_angle += 360.
+        return min_angle, max_angle
 
     def tune_zero_azimuth(self):
         if self.connected and not self.is_moving():
@@ -204,12 +238,18 @@ class StepperRoller(BaseRoller):
 
     def is_moving(self):
         return self.moving
+    '''
+    def show_angle(self):
+        return self.current_angle - self.ridge_angle
 
+    def real_angle(self, view_angle):
+        return view_angle + self.ridge_angle
+    '''
     def angle_to_step(self, angle):
-        return int(angle * self.steps / 360)
+        return int((angle + self.ridge_angle) * self.steps / 360.0)
 
     def step_to_angle(self, step):
-        return 360.0 * step / self.steps
+        return 360.0 * step / self.steps - self.ridge_angle
 
     def send_move_command(self, trg_step):
         motor_delay = 360.0 / (float(self.steps) * self.rotation_speed)
@@ -225,11 +265,11 @@ class StepperRoller(BaseRoller):
 
     def send_stop_command(self):
         self._communicator.send_to(self.enter("s"), STEPPER_MOTOR_INDEX)
-
+    '''
     def set_cur_angle_command(self, new_cur_angle):
         new_cur_step = self.angle_to_step(new_cur_angle)
         self._communicator.send_to(self.enter(f"c{new_cur_step}"), STEPPER_MOTOR_INDEX)
-
+    '''
     def on_motor_connect(self):
         self.__check_zero_azimuth(4)
 
