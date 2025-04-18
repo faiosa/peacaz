@@ -245,7 +245,7 @@ class ControllerSettings(SettingsComposer):
         ridge_angle_policy = DoublePolicy("ridge_angle", "Кут хребта ролера (град.)")
         is_radxa_engine_policy.addSubPolicy(ridge_angle_policy, ["stepper"])
 
-        current_azimuth_policy = AzimuthPolicy("current_zero_azimuth", "Пточний азимут (град.) [необовязково]", roller)
+        current_azimuth_policy = AzimuthPolicy("current_zero_azimuth", "Пточний азимут (град.) [необовязково]", roller, ridge_angle_policy)
         is_radxa_engine_policy.addSubPolicy(current_azimuth_policy, ["stepper"])
 
         roller_policies = [

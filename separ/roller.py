@@ -107,8 +107,11 @@ class BaseRoller:
     def show_angle(self):
         return self.current_angle
 
-    def real_angle(self, view_angle):
+    def azimuth_to_ridge_angle(self, view_angle):
         return view_angle
+
+    def ridge_to_azimuth_angle(self, angle):
+        return angle
 
     @staticmethod
     def enter(s):
@@ -126,9 +129,6 @@ class StepperRoller(BaseRoller):
         self.cur_step = self.angle_to_step(self.current_angle)
         self.ridge_angle = self.controller.settings["rollers"][self.roller_index]["ridge_angle"]
         self.zero_azimuth = self.controller.settings["rollers"][self.roller_index]["current_zero_azimuth"]
-        assert self.zero_azimuth is None
-
-        self.current_angle = self.ridge_angle
 
         self._communicator = self.controller.radxa.provide_proxy_mail_post(STEPPER_ROLLER_INDEX, [STEPPER_MOTOR_INDEX, WORKER_MAIL_INDEX, DATA_STORE_MAIL_INDEX])
         self.moving = False
@@ -238,13 +238,35 @@ class StepperRoller(BaseRoller):
 
     def is_moving(self):
         return self.moving
-    '''
-    def show_angle(self):
-        return self.current_angle - self.ridge_angle
 
-    def real_angle(self, view_angle):
-        return view_angle + self.ridge_angle
-    '''
+    #shows current azimuth if self.zero_azimuth is not None or current_angle(related to ridge)
+    def show_angle(self):
+        return self.ridge_to_azimuth_angle(self.current_angle)
+
+    #performs backward transformation to show_angle
+    def azimuth_to_ridge_angle(self, view_angle):
+        if self.zero_azimuth is None:
+            return view_angle
+        else:
+            rangle = view_angle - self.ridge_angle - self.zero_azimuth
+            while rangle >= 360.0:
+                rangle -= 360.0
+            while rangle < 0:
+                rangle += 360.0
+            return rangle
+
+    # returns angle's azimuth if self.zero_azimuth is not None or current_angle(related to ridge)
+    def ridge_to_azimuth_angle(self, angle):
+        if self.zero_azimuth is None:
+            return angle
+        else:
+            rangle = angle + self.ridge_angle + self.zero_azimuth
+            while rangle >= 360.0:
+                rangle -= 360.0
+            while rangle < 0:
+                rangle += 360.0
+            return rangle
+
     def angle_to_step(self, angle):
         return int((angle + self.ridge_angle) * self.steps / 360.0)
 
@@ -271,7 +293,8 @@ class StepperRoller(BaseRoller):
         self._communicator.send_to(self.enter(f"c{new_cur_step}"), STEPPER_MOTOR_INDEX)
     '''
     def on_motor_connect(self):
-        self.__check_zero_azimuth(4)
+        pass
+        #self.__check_zero_azimuth(4)
 
 
 class TimeRoller(BaseRoller):

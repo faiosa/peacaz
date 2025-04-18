@@ -172,10 +172,10 @@ class Policy:
             return self._widget_to_settings(self._widget_value(widget))
 
     def _settings_value(self, default = None): #used within create_widget to set initial value
-        return str(self.ds.settings[self.key] if self.key in self.ds.settings else default)
+        return self.ds.settings[self.key] if self.key in self.ds.settings else default
 
     def _initial_value(self, default = None): #used within create_widget to set initial value
-        return self._settings_to_widget(self._settings_value(default))
+        return str(self._settings_to_widget(self._settings_value(default)))
 
     def _settings_to_widget(self, value):
         return value
@@ -228,7 +228,7 @@ class OptionalDoublePolicy(DoublePolicy):
             return None
 
     def _settings_value(self, default = None):
-        value = ""
+        value = None
         if self.key in self.ds.settings and self.ds.settings[self.key] is not None:
             value = float(self.ds.settings[self.key])
         return value

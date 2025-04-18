@@ -74,14 +74,13 @@ class BaseRollerView:
             #messagebox.showwarning("Warning", "Введіть коректне число")
 
     def roll_desired_angle(self, desired_angle):
-        print(f"ROLLING to {desired_angle} but need {self.roller.real_angle(desired_angle)}")
-        self.roller.turn_ptz_move(self.roller.real_angle(desired_angle))
+        self.roller.turn_ptz_move(self.roller.azimuth_to_ridge_angle(desired_angle))
 
     #Works for stepper only
     def turn_ptz_patrol(self, patrol_params):
         if self.support_patrol:
             if not self.roller.is_moving():
-                self.roller.do_patrol(self.roller.real_angle(patrol_params['min_angle']), self.roller.real_angle(patrol_params['max_angle']), patrol_params['rotation_speed'])
+                self.roller.do_patrol(self.roller.azimuth_to_ridge_angle(patrol_params['min_angle']), self.roller.azimuth_to_ridge_angle(patrol_params['max_angle']), patrol_params['rotation_speed'])
         else:
             func_logger.fatal("Patrol works with stepper roller only")
 
@@ -232,8 +231,8 @@ class ArrowCanvas(QFrame):
             trad = trad + 2 * math.pi
 
         tangle = trad * 180 / math.pi
-        self.roller_view.input_field.setText(f"{tangle:.1f}")
-        self.roller_view.roller.turn_ptz_move(self.roller_view.roller.real_angle(tangle))
+        self.roller_view.input_field.setText(f"{self.roller_view.roller.ridge_to_azimuth_angle(tangle):.1f}")
+        self.roller_view.roller.turn_ptz_move(tangle)
 
 
     def paintEvent(self, event):
@@ -297,7 +296,7 @@ class ArrowCanvas(QFrame):
                     qp.drawStaticText( int(tx - tsize.width() / 2), int(ty - tsize.height() / 2), text)
         else:
             for angle in range(0, 360, 10):
-                adjusted_angle = angle + self.roller_view.angle_shift + self.roller_view.roller.ridge_angle + self.roller_view.roller.zero_azimuth # Adjust angle to make 0 at the top
+                adjusted_angle = angle + self.roller_view.angle_shift + self.roller_view.roller.zero_azimuth # Adjust angle to make 0 at the top
                 x = int(center_x + radius * math.cos(math.radians(adjusted_angle)))
                 y = int(center_y + radius * math.sin(math.radians(adjusted_angle)))
                 qp.drawEllipse(x, y, 3, 3)
