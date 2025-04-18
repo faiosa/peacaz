@@ -9,7 +9,7 @@ class SetCurrentAnglePolicy(DoublePolicy):
     def __edit_save(self):
         self.edit = True
 
-    def _initial_value(self, default=None):
+    def _settings_value(self, default=None):
         try:
             result = self.roller.current_angle
         except Exception:

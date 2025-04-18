@@ -58,7 +58,7 @@ class Controller:
             self.radxa = Pearax(connection_provider)
             self.serial_monitor = SerialMonitor(self.radxa.provide_agent(HEART_BEAT_INDEX), [self])
 
-        self.rollers = [ self.create_roller(json) for json in json_settings.get("rollers") ]
+        self.rollers = [ self.__create_roller(roller_index, json) for roller_index, json in enumerate(json_settings.get("rollers")) ]
 
         switchboard_settings = self.settings.get("switchboard")
         switchboard_serial_port = switchboard_settings.get("serial_port")
@@ -102,35 +102,14 @@ class Controller:
         else:
             raise Exception("Controller show should appear only once")
 
-    def create_roller(self, json):
+    def __create_roller(self, roller_index, json):
         is_vertical = json.get("type") == "vertical"
         if json.get("engine") == "stepper":
-            return StepperRoller(
-                self,
-                rotation_speed=json.get("rotation_speed"),
-                steps=json.get("steps"),
-                min_angle=json.get("min_angle"),
-                max_angle=json.get("max_angle"),
-                is_vertical = is_vertical
-            )
+            return StepperRoller(self, roller_index)
         elif is_vertical:
-            return VerticalRoller(
-                self,
-                rotation_speed=json.get("rotation_speed"),
-                min_angle=json.get("min_angle"),
-                max_angle=json.get("max_angle"),
-                current_angle=json.get("current_angle"),
-                serial_port=json.get("serial_port")
-            )
+            return VerticalRoller(self, roller_index)
         else:
-            return HorizontalRoller(
-                self,
-                rotation_speed=json.get("rotation_speed"),
-                min_angle=json.get("min_angle"),
-                max_angle=json.get("max_angle"),
-                current_angle=json.get("current_angle"),
-                serial_port=json.get("serial_port")
-            )
+            return HorizontalRoller(self, roller_index)
 
     def is_moving(self):
         for roller in self.rollers:

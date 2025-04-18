@@ -6,7 +6,8 @@ from PyQt5.QtWidgets import QFrame, QVBoxLayout, QTabWidget, QGroupBox, QHBoxLay
     QMessageBox
 
 from separ.settings.dictionary import SettingsComposer, DictionarySettings, ComboPolicy, PinsPolicy, StrPolicy, \
-    BoolPolicy, DoublePolicy, IntPolicy, IpHostPolicy
+    BoolPolicy, DoublePolicy, IntPolicy, IpHostPolicy, OptionalDoublePolicy
+from separ.settings.policies import AzimuthPolicy
 from separ.settings.specific import SetCurrentAnglePolicy
 from utils.settings import SEPAR_SETTINGS_FILE
 
@@ -241,8 +242,11 @@ class ControllerSettings(SettingsComposer):
 
         is_radxa_engine_policy.addSubPolicy(num_steps_policy, ["stepper"])
 
-        set_stepper_cur_angle_policy = SetCurrentAnglePolicy("Поточний кут", roller)
-        is_radxa_engine_policy.addSubPolicy(set_stepper_cur_angle_policy, ["stepper"])
+        ridge_angle_policy = DoublePolicy("ridge_angle", "Кут хребта ролера (град.)")
+        is_radxa_engine_policy.addSubPolicy(ridge_angle_policy, ["stepper"])
+
+        current_azimuth_policy = AzimuthPolicy("current_ridge_azimuth", "Пточний азимут (град.) [необовязково]", roller)
+        is_radxa_engine_policy.addSubPolicy(current_azimuth_policy, ["stepper"])
 
         roller_policies = [
             roller_direction_policy,
@@ -255,7 +259,8 @@ class ControllerSettings(SettingsComposer):
             DoublePolicy("rotation_speed",  "Швидкість повертання (градус/с)"),
             num_steps_policy,
             view_angle_policy,
-            set_stepper_cur_angle_policy
+            ridge_angle_policy,
+            current_azimuth_policy
         ]
 
         settings_view = DictionarySettings(f"{roller_settings['type']} roller", roller_layout, roller_settings, roller_policies)

@@ -8,11 +8,12 @@ from utils.ptz_controller import send_pelco_command
 import time
 
 class BaseRoller:
-    def __init__(self, controller, min_angle, max_angle, is_vertical):
-        self.min_angle = min_angle
-        self.max_angle = max_angle
-        self.is_vertical = is_vertical
+    def __init__(self, controller, roller_index):#, min_angle, max_angle, is_vertical):
+        self.roller_index = roller_index
         self.controller = controller
+        self.min_angle = self.controller.settings["rollers"][self.roller_index]["min_angle"]
+        self.max_angle = self.controller.settings["rollers"][self.roller_index]["max_angle"]
+        self.is_vertical = self.controller.settings["rollers"][self.roller_index]["type"] == "vertical"
         self.view = None
 
         self.current_angle = 0.
@@ -88,11 +89,11 @@ class BaseRoller:
                 lambda: self._check_move()
             )
 
-    def show(self, parent_frame, roller_index):
+    def show(self, parent_frame):
         if self.is_vertical:
             self.view = RollerViewVertical(self, parent_frame, True)
         else:
-            view_angle_shift = self.controller.settings["rollers"][roller_index]["view_angle_shift"] if "view_angle_shift" in self.controller.settings["rollers"][roller_index] else 0
+            view_angle_shift = self.controller.settings["rollers"][self.roller_index]["view_angle_shift"] if "view_angle_shift" in self.controller.settings["rollers"][self.roller_index] else 0
             self.view = RollerViewHorizontal(self, parent_frame, view_angle_shift, True)
 
     def tune_zero_azimuth(self):
@@ -108,12 +109,14 @@ class BaseRoller:
 STEPPER_ROLLER_INDEX = 21
 
 class StepperRoller(BaseRoller):
-    def __init__(self, controller, rotation_speed, steps, min_angle, max_angle, is_vertical):
-        super().__init__(controller, min_angle, max_angle, is_vertical)
+    def __init__(self, controller, roller_index):
+        super().__init__(controller, roller_index)
         assert self.controller.radxa is not None
-        self.rotation_speed = rotation_speed
-        self.steps = steps
+        self.rotation_speed = self.controller.settings["rollers"][self.roller_index]["rotation_speed"]
+
+        self.steps = self.controller.settings["rollers"][self.roller_index]["steps"]
         self.cur_step = self.angle_to_step(self.current_angle)
+
         self._communicator = self.controller.radxa.provide_proxy_mail_post(STEPPER_ROLLER_INDEX, [STEPPER_MOTOR_INDEX, WORKER_MAIL_INDEX, DATA_STORE_MAIL_INDEX])
         self.moving = False
 
@@ -232,11 +235,11 @@ class StepperRoller(BaseRoller):
 
 
 class TimeRoller(BaseRoller):
-    def __init__(self, controller, rotation_speed, min_angle, max_angle, current_angle, serial_port, is_vertical):
-        super().__init__(controller, min_angle, max_angle, is_vertical)
-        self.current_angle = current_angle
-        self.serial_port = serial_port
-        self.rotation_speed = rotation_speed
+    def __init__(self, controller, roller_index):
+        super().__init__(controller, roller_index)
+        self.current_angle = self.controller.settings["rollers"][self.roller_index]["current_angle"]
+        self.serial_port = self.controller.settings["rollers"][self.roller_index]["serial_port"]
+        self.rotation_speed = self.controller.settings["rollers"][self.roller_index]["rotation_speed"]
         self.start_move_time = 0
         self.is_moving_increase = False
         self.is_moving_decrease = False
@@ -339,8 +342,9 @@ class TimeRoller(BaseRoller):
             
 
 class VerticalRoller(TimeRoller):
-    def __init__(self, controller, rotation_speed, min_angle, max_angle, current_angle, serial_port):
-        super().__init__(controller, rotation_speed, min_angle, max_angle, current_angle, serial_port, True)
+    def __init__(self, controller, roller_index):
+        super().__init__(controller, roller_index)
+        assert self.is_vertical
 
     def increase_angle_command(self):
         return UP
@@ -350,8 +354,9 @@ class VerticalRoller(TimeRoller):
 
 
 class HorizontalRoller(TimeRoller):
-    def __init__(self, controller, rotation_speed, min_angle, max_angle, current_angle, serial_port):
-        super().__init__(controller, rotation_speed, min_angle, max_angle, current_angle, serial_port, False)
+    def __init__(self, controller, roller_index):
+        super().__init__(controller, roller_index)
+        assert not self.is_vertical
 
     def increase_angle_command(self):
         return RIGHT

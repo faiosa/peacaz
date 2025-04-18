@@ -33,9 +33,8 @@ class ControllerView:
         self.restore_button.clicked.connect(self.controller.tune_angles)
         rollers_layout.addWidget(self.restore_button, 8, 5)
 
-        for indx in range(0, len(self.controller.rollers)):
-            roller = self.controller.rollers[indx]
-            roller.show(self.frame, indx)
+        for roller in self.controller.rollers:
+            roller.show(self.frame)
 
         self.stop_button = QPushButton(self.frame)
         self.stop_button.setIcon(QIcon("assets/stop.png"))

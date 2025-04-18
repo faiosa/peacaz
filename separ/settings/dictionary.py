@@ -169,10 +169,19 @@ class Policy:
         if widget is None:
             return self.disabled_value
         else:
-            return self._widget_value(widget)
+            return self._widget_to_settings(self._widget_value(widget))
+
+    def _settings_value(self, default = None): #used within create_widget to set initial value
+        return str(self.ds.settings[self.key] if self.key in self.ds.settings else default)
 
     def _initial_value(self, default = None): #used within create_widget to set initial value
-        return str(self.ds.settings[self.key] if self.key in self.ds.settings else default)
+        return self._settings_to_widget(self._settings_value(default))
+
+    def _settings_to_widget(self, value):
+        return value
+
+    def _widget_to_settings(self, value):
+        return value
 
     def save(self):
         assert self.spec #only specific policies has special way to be saved
@@ -207,6 +216,22 @@ class DoublePolicy(Policy):
 
     def _widget_value(self, widget):
         return float(widget.text())
+
+class OptionalDoublePolicy(DoublePolicy):
+    def __init__(self, key: str, label: str, specific=False):
+        super().__init__(key, label, specific)
+
+    def _widget_value(self, widget):
+        try:
+            return float(widget.text())
+        except Exception:
+            return None
+
+    def _settings_value(self, default = None):
+        value = ""
+        if self.key in self.ds.settings and self.ds.settings[self.key] is not None:
+            value = float(self.ds.settings[self.key])
+        return value
 
 class StrPolicy(Policy):
     def __init__(self, key: str, label: str, enabled = True):
@@ -277,6 +302,7 @@ class ComboPolicy(Policy):
 
     def _widget_value(self, widget):
         return widget.currentText()
+
 
 
 class SettingsComposer(QFrame):
