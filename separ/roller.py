@@ -155,7 +155,7 @@ class StepperRoller(BaseRoller):
                     {"class": "ReceiveAzimuthTask"},
                     {"class": "SendCommandTask", "mail_index": STEPPER_MOTOR_INDEX, "bytes": "g"},
                     {"class": "ReceiveMotorStep"},
-                    {"class": "CalcZeroAzimuth", "steps": 400}
+                    {"class": "CalcZeroAzimuth", "steps": self.steps}
                 ]
             }
             self._communicator.send_to(json.dumps({"cmd": "del", "key": "zero_azimuth"}).encode('utf-8'), DATA_STORE_MAIL_INDEX)
