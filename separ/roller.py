@@ -128,7 +128,7 @@ class StepperRoller(BaseRoller):
         self.steps = self.controller.settings["rollers"][self.roller_index]["steps"]
         self.cur_step = self.angle_to_step(self.current_angle)
         self.ridge_angle = self.controller.settings["rollers"][self.roller_index]["ridge_angle"]
-        self.zero_azimuth = self.controller.settings["rollers"][self.roller_index]["current_zero_azimuth"]
+        #self.zero_azimuth = self.controller.settings["rollers"][self.roller_index]["current_zero_azimuth"]
 
         self._communicator = self.controller.radxa.provide_proxy_mail_post(STEPPER_ROLLER_INDEX, [STEPPER_MOTOR_INDEX, WORKER_MAIL_INDEX, DATA_STORE_MAIL_INDEX])
         self.moving = False
@@ -287,14 +287,13 @@ class StepperRoller(BaseRoller):
 
     def send_stop_command(self):
         self._communicator.send_to(self.enter("s"), STEPPER_MOTOR_INDEX)
-    '''
-    def set_cur_angle_command(self, new_cur_angle):
-        new_cur_step = self.angle_to_step(new_cur_angle)
-        self._communicator.send_to(self.enter(f"c{new_cur_step}"), STEPPER_MOTOR_INDEX)
-    '''
+
+    def send_command(self, command: bytes, mail_index: int, cur_time = None, ttl = None):
+        self._communicator.send_to(command, mail_index, cur_time, ttl)
+
     def on_motor_connect(self):
         pass
-        #self.__check_zero_azimuth(4)
+        self.__check_zero_azimuth(8)
 
 
 class TimeRoller(BaseRoller):
