@@ -41,6 +41,10 @@ class AzimuthPolicy(OptionalDoublePolicy):
     def save(self):
         assert not getattr(self.roller, "send_command", None) is None
         if self.__edit:
-            jcommand = {"cmd": "set", "key": "zero_azimuth", "val": self.value()}
+            val = self.value()
+            if val is None:
+                jcommand = {"cmd": "del", "key": "zero_azimuth"}
+            else:
+                jcommand = {"cmd": "set", "key": "zero_azimuth", "val": val}
             self.roller.send_command(json.dumps(jcommand).encode('utf-8'), DATA_STORE_MAIL_INDEX, time.time(), 0.7)
             time.sleep(0.1)#to be sure the command sent before pearax is closed
