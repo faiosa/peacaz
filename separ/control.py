@@ -1,4 +1,4 @@
-from pearax.channel import udp_client_socket, SerialConnection
+from pearax.channel import udp_client_socket, tcp_client_socket, SerialConnection
 from pearax.mail import MailClient
 
 from separ.pearax_util import SerialMonitor
@@ -26,11 +26,6 @@ class Manager:
     def close(self):
         for controller in self.controllers:
             controller.close()
-
-
-def tcp_client_socket(param, param1):
-    pass
-
 
 class Controller:
     def __init__(self, json_settings):
