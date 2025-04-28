@@ -26,10 +26,14 @@ class AzimuthPolicy(OptionalDoublePolicy):
     def _settings_to_widget(self, value):
         if value is None:
             return None
+        if self.roller is None:
+            return None
         return value + self.roller.current_angle + self.roller.ridge_angle
 
     def _widget_to_settings(self, value):
         if value is None:
+            return None
+        if self.roller is None:
             return None
         return value - self.roller.current_angle - float(self.ridge_angle_policy.value())
 
