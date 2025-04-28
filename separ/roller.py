@@ -3,6 +3,7 @@ import json
 from PyQt5.QtCore import QTimer
 from pearax import STEPPER_MOTOR_INDEX, WORKER_MAIL_INDEX, COMPASS_MAIL_INDEX, DATA_STORE_MAIL_INDEX
 from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
+from separ import normalize_angles
 from separ.qt5_roller_view import RollerViewVertical, RollerViewHorizontal
 from utils.ptz_controller import send_pelco_command
 import time
@@ -133,7 +134,7 @@ class StepperRoller(BaseRoller):
         self._communicator = self.controller.radxa.provide_proxy_mail_post(STEPPER_ROLLER_INDEX, [STEPPER_MOTOR_INDEX, WORKER_MAIL_INDEX, DATA_STORE_MAIL_INDEX])
         self.moving = False
 
-        self.min_angle, self.max_angle = self.normalize_angles(self.min_angle, self.max_angle)
+        self.min_angle, self.max_angle = normalize_angles(self.min_angle, self.max_angle)
 
     def _start_move_angle(self, dst_angle):
         if dst_angle > self.max_angle:
@@ -147,7 +148,7 @@ class StepperRoller(BaseRoller):
 
     #angles should be real, not show angles!
     def do_patrol(self, angle_1: float, angle_2: float, rotation_speed: float):
-        min_angle, max_angle = self.normalize_angles(angle_1, angle_2)
+        min_angle, max_angle = normalize_angles(angle_1, angle_2)
         if self.connected and not self.is_moving():
             trg_step_1 = self.angle_to_step(max(min_angle, self.min_angle))
             trg_step_2 = self.angle_to_step(min(max_angle, self.max_angle))
@@ -168,19 +169,6 @@ class StepperRoller(BaseRoller):
             }
             self._communicator.send_to(self.enter(json.dumps(j_patrol_task)), STEPPER_MOTOR_INDEX)
             self.state_update(True, True)
-
-    @staticmethod
-    def normalize_angles(angle_1, angle_2):
-        assert not angle_1 == angle_2
-        min_angle = min(angle_1, angle_2)
-        max_angle = max(angle_1, angle_2)
-        while min_angle > 360.:
-            min_angle -= 360.
-            max_angle -= 360.
-        while max_angle < 0.:
-            min_angle += 360.
-            max_angle += 360.
-        return min_angle, max_angle
 
     def tune_zero_azimuth(self):
         if self.connected and not self.is_moving():

@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QFrame, QHBoxLayout, QPushButton, QGridLayout, QLabel
 
+from separ import normalize_angles
 from separ.settings.dictionary import DoublePolicy, DictionarySettings
 
 
@@ -29,9 +30,10 @@ class PatrolDialog(QDialog):
 
 
     def __patrol_settings(self):
+        min_angle, max_angle = normalize_angles(self.roller_view.roller.min_angle, self.roller_view.roller.max_angle)
         return {
-            "min_angle": self.roller_view.roller.min_angle,
-            "max_angle": self.roller_view .roller.max_angle,
+            "min_angle": int(self.roller_view.roller.azimuth_to_ridge_angle(min_angle)),
+            "max_angle": int(self.roller_view.roller.azimuth_to_ridge_angle(max_angle)),
             "rotation_speed": self.roller_view.roller.rotation_speed
         }
 
