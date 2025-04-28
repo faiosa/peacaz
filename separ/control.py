@@ -1,8 +1,12 @@
+from typing import List
+
+from PyQt5.QtCore import QTimer
 from pearax.channel import udp_client_socket, tcp_client_socket, SerialConnection
+from pearax.func import IntByteConverter
 from pearax.mail import MailClient
 
 from separ.pearax_util import SerialMonitor
-from separ.qt5_control_view import ControllerView
+from separ.qt5_control_view import ControllerView, SwitchBoardView
 from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
 from pearax import func, STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX, PEARAX_BAUD_RATE, PINNER_INT_BYTE_SIZE, \
     PINNER_INT_BYTE_ORDER, HEART_BEAT_INDEX
@@ -154,12 +158,14 @@ class Controller:
             if self.switchboard.switchboard_pearax:
                 self.switchboard.switchboard_pearax.stop()
 
-class SwitchBoard:
+class SwitchBoard(IntByteConverter):
     def __init__(self, pearax: Pearax, switchboard_serial_port: str, pins, is_full_control):
+        super().__init__(PINNER_INT_BYTE_SIZE, PINNER_INT_BYTE_ORDER)
         self.pins = [int(sp) for sp in pins]
         self.states = []
         self.app_index = PINNER_CLIENT_INDEX
         self.switchboard_pearax = None
+        self.view = None
 
         if switchboard_serial_port is None:
             if pearax is None:
@@ -171,21 +177,41 @@ class SwitchBoard:
             self.serial_client = MailClient(self.switchboard_pearax.provide_agent(self.app_index))
             self.switchboard_pearax.start("SwitchBoardPearax")
         self.is_full_control = is_full_control
-        self.ints_to_bytes = func.ints_to_bytes_lambda(PINNER_INT_BYTE_SIZE, PINNER_INT_BYTE_ORDER)
-        self._initial_command()
 
+    def _switch_for_index(self, index) -> List[int]:
+        pass
 
-    def _compose_command(self, *args):
-        return self.ints_to_bytes(*args)
+    def _update_states(self, nstates: List[int]):
+        pass
 
-    def _exec_command(self, command):
-        self.serial_client.send(command)
+    def _ensure_exec_command(self, cmd, retry = 8):
+        resp = self.serial_client.receive()
+        if resp:
+            self._update_states(self.ints_from_bytes(resp))
+            retry = 0
+        if retry > 0:
+            self.serial_client.send(cmd)
+            QTimer.singleShot(
+                32,
+                lambda: self._ensure_exec_command(cmd, retry - 1)
+            )
+        else:
+            self.view.update_button_visuals()
 
-    def _initial_command(self):
-        args = [0] * len(self.pins) * 2
+    def pin(self, index):
+        command = self._switch_for_index(index)
+        bts = self.ints_to_bytes(*command)
+        self._ensure_exec_command(bts)
+
+    def show(self, switch_board_frame):
+        self.view = SwitchBoardView(self, switch_board_frame)
+        self.__initial_command()
+
+    def __initial_command(self):
+        args = [2] * len(self.pins) * 2
         args[0::2] = self.pins
-        command = self._compose_command(*args)
-        self._exec_command(command)
+        command = self.ints_to_bytes(*args)
+        self._ensure_exec_command(command)
 
 
 class FullControlSwitchBoard(SwitchBoard):
@@ -193,25 +219,41 @@ class FullControlSwitchBoard(SwitchBoard):
         super().__init__(pearax, switchboard_serial_port, pins,True)
         self.states = [False] * len(pins)
 
-    def send_command(self, index):
-        self.states[index] = not self.states[index]
-        self.__send_gpio_command(index, self.states[index])
+    def _switch_for_index(self, index) -> List[int]:
+        return [self.pins[index], 0 if self.states[index] else 1]
 
-    def __send_gpio_command(self, index, state):
-        command = self._compose_command(self.pins[index], 1 if state else 0)
-        self._exec_command(command)
+
+    def _update_states(self, nstates: List[int]):
+        for i in range(len(nstates)//2):
+            pin = nstates[i * 2]
+            status = nstates[i * 2 + 1]
+            if status > 1:
+                func.func_logger.warning(f"Error response status for pin {pin}")
+                continue
+            for idx in range(len(self.pins)):
+                if self.pins[idx] == pin:
+                    self.states[idx] = status == 1
 
 class SimplySwitchBoard(SwitchBoard):
     def __init__(self, pearax, switchboard_serial_port, pins):
         super().__init__(pearax, switchboard_serial_port, pins,False)
+        assert len(pins) == 2
         self.states = [False] * 4
 
-    def send_command(self, index):
-        for i in range(0, len(self.states)):
-            self.states[i] = True if i == index else False
-        self.__send_pico_command(index)
+    def _switch_for_index(self, index) -> List[int]:
+        return [self.pins[0], index // 2, self.pins[1], index % 2]
 
-    def __send_pico_command(self, index):
-        first_pin, second_pin = self.pins
-        command = self._compose_command(first_pin, index % 2, second_pin, index // 2)
-        self._exec_command(command)
+    def _update_states(self, nstates: List[int]):
+        active = 0
+        for i in range(len(self.pins)):
+            pin = nstates[i * 2]
+            state = nstates[i * 2 + 1]
+            if state > 1:
+                func.func_logger.warning(f"Error response status for pin {pin}")
+                return
+            if pin == self.pins[0]:
+                active += state * 2
+            elif pin == self.pins[1]:
+                active += state
+        for i in range(len(self.states)):
+            self.states[i] = True if i == active else False

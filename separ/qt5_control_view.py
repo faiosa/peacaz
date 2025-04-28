@@ -41,15 +41,14 @@ class ControllerView:
         self.stop_button.clicked.connect(self.controller.stop_ptz)
         rollers_layout.addWidget(self.stop_button, 8, 4)
 
-
         switchboard_frame = QFrame(self.frame)
-        switchboard_layout = QHBoxLayout()
-        switchboard_frame.setLayout(switchboard_layout)
-        self.switchboard_view = SwitchBoardView(controller.switchboard, switchboard_frame, switchboard_layout)
+        controller.switchboard.show(switchboard_frame)
         rollers_layout.addWidget(switchboard_frame, 8, 0, 1, 3)
 
 class SwitchBoardView:
-    def __init__(self, switchboard, frame, layout):
+    def __init__(self, switchboard, frame):
+        layout = QHBoxLayout()
+        frame.setLayout(layout)
         self.switchboard = switchboard
         self.frame = frame
 
@@ -64,8 +63,7 @@ class SwitchBoardView:
         self.update_button_visuals()
 
     def send_command(self, idx):
-        self.switchboard.send_command(idx)
-        self.update_button_visuals()
+        self.switchboard.pin(idx)
 
     def update_button_visuals(self):
         for i, button in enumerate(self.buttons):
