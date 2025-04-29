@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout
 from PyQt5.QtGui import QIcon, QFont, QPalette, QColor
 from PyQt5 import Qt, QtCore
 
+from separ import get_asset
 from utils.path import resource_path
 from windows.settings import SettingsWindow
 from separ.qt5_roller_view import RollerViewVertical, RollerViewHorizontal
@@ -37,7 +38,7 @@ class ControllerView:
             roller.show(self.frame)
 
         self.stop_button = QPushButton(self.frame)
-        self.stop_button.setIcon(QIcon("assets/stop.png"))
+        self.stop_button.setIcon(QIcon(get_asset("stop.png")))
         self.stop_button.clicked.connect(self.controller.stop_ptz)
         rollers_layout.addWidget(self.stop_button, 8, 4)
 

@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPus
     QDialog, QLabel
 
 from config.tweak import Tweak
+from separ import get_asset
 from separ.BluePrint import BluePrint, GridBluePrint
 from separ.control import Manager
 from separ.settings.dialog import TotalSettings
@@ -39,7 +40,7 @@ class MainRollerView(QMainWindow):
         #self.blue_print = BluePrint(window)
         self.blue_print = GridBluePrint(window)
         settings_button = QPushButton(window)
-        settings_button.setIcon(QIcon("assets/settings.png"))
+        settings_button.setIcon(QIcon(get_asset("settings.png")))
         settings_button.clicked.connect(lambda: self.open_settings_window())
         settings_button.setFixedWidth(25)
         self.blue_print.add_settings_button(settings_button)
@@ -74,7 +75,7 @@ class MainRollerView(QMainWindow):
 
     def __get_open_button(self, index):
         open_button = QPushButton()
-        open_button.setIcon(QtGui.QIcon.fromTheme("document-open"))
+        open_button.setIcon(QIcon(get_asset("open.png")))
         open_button.clicked.connect((lambda i = index: lambda: self.open_signal_file(i))())
         open_button.setFixedWidth(25)
         return open_button

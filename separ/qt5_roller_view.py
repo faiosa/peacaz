@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QLabel, QLineEdit, QFrame, QWidget, QPushButton
 import math
 from pearax.func import func_logger
 
+from separ import get_asset
 from separ.patrol_dialog import PatrolDialog
 
 
@@ -183,7 +184,7 @@ class RollerViewHorizontal(BaseRollerView):
 
         #Draw compass icon
         self.compass_label = QLabel(self.canvas_frame)
-        pixmap = QPixmap("assets/compass_30.png")
+        pixmap = QPixmap(get_asset("compass_30.png"))
         self.compass_label.setPixmap(pixmap)
         self.compass_label.setParent(self.canvas_frame)
         self.compass_label.setFixedWidth(self.compass_label_side)
