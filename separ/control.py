@@ -8,7 +8,7 @@ from pearax.mail import MailClient
 from separ.pearax_util import SerialMonitor
 from separ.qt5_control_view import ControllerView, SwitchBoardView
 from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
-from pearax import func, STEPPER_MOTOR_INDEX, PINNER_CLIENT_INDEX, PEARAX_BAUD_RATE, PINNER_INT_BYTE_SIZE, \
+from pearax import func, PINNER_CLIENT_INDEX, PEARAX_BAUD_RATE, PINNER_INT_BYTE_SIZE, \
     PINNER_INT_BYTE_ORDER, HEART_BEAT_INDEX
 from pearax.core import Pearax
 import time

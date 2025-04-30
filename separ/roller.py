@@ -1,7 +1,7 @@
 import json
 
 from PyQt5.QtCore import QTimer
-from pearax import STEPPER_MOTOR_INDEX, WORKER_MAIL_INDEX, COMPASS_MAIL_INDEX, DATA_STORE_MAIL_INDEX
+from pearax import HORIZONTAL_STEPPER_MAIL_INDEX, VERTICAL_STEPPER_MAIL_INDEX, WORKER_MAIL_INDEX, COMPASS_MAIL_INDEX, DATA_STORE_MAIL_INDEX
 from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
 from separ import normalize_angles
 from separ.qt5_roller_view import RollerViewVertical, RollerViewHorizontal
@@ -118,7 +118,8 @@ class BaseRoller:
     def enter(s):
         return s.encode('utf-8')
 
-STEPPER_ROLLER_INDEX = 21
+STEPPER_HORIZONTAL_ROLLER_INDEX = 21
+STEPPER_VERTICAL_ROLLER_INDEX = 21
 
 class StepperRoller(BaseRoller):
     def __init__(self, controller, roller_index):
@@ -130,8 +131,18 @@ class StepperRoller(BaseRoller):
         self.cur_step = self.angle_to_step(self.current_angle)
         self.ridge_angle = self.controller.settings["rollers"][self.roller_index]["ridge_angle"]
         #self.zero_azimuth = self.controller.settings["rollers"][self.roller_index]["current_zero_azimuth"]
+        if self.is_vertical:
+            self.motor_mail_index = VERTICAL_STEPPER_MAIL_INDEX
+            self.roller_mail_index = STEPPER_VERTICAL_ROLLER_INDEX
+            self._communicator = self.controller.radxa.provide_proxy_mail_post(self.roller_mail_index, [self.motor_mail_index])
+        else:
+            self.motor_mail_index = HORIZONTAL_STEPPER_MAIL_INDEX
+            self.roller_mail_index = STEPPER_HORIZONTAL_ROLLER_INDEX
+            self._communicator = self.controller.radxa.provide_proxy_mail_post(self.roller_mail_index,
+                                                                               [self.motor_mail_index,
+                                                                                WORKER_MAIL_INDEX,
+                                                                                DATA_STORE_MAIL_INDEX])
 
-        self._communicator = self.controller.radxa.provide_proxy_mail_post(STEPPER_ROLLER_INDEX, [STEPPER_MOTOR_INDEX, WORKER_MAIL_INDEX, DATA_STORE_MAIL_INDEX])
         self.moving = False
 
         self.min_angle, self.max_angle = normalize_angles(self.min_angle, self.max_angle)
@@ -148,6 +159,7 @@ class StepperRoller(BaseRoller):
 
     #angles should be real, not show angles!
     def do_patrol(self, angle_1: float, angle_2: float, rotation_speed: float):
+        assert not self.is_vertical
         min_angle, max_angle = normalize_angles(angle_1, angle_2)
         if self.connected and not self.is_moving():
             trg_step_1 = self.angle_to_step(max(min_angle, self.min_angle))
@@ -167,10 +179,11 @@ class StepperRoller(BaseRoller):
                     {"class": "RecallOldVelocity"}
                 ]
             }
-            self._communicator.send_to(self.enter(json.dumps(j_patrol_task)), STEPPER_MOTOR_INDEX)
+            self._communicator.send_to(self.enter(json.dumps(j_patrol_task)), HORIZONTAL_STEPPER_MAIL_INDEX)
             self.state_update(True, True)
 
     def tune_zero_azimuth(self):
+        assert not self.is_vertical
         if self.connected and not self.is_moving():
             j_azimuth_task = {
                 "type": "DataJob",
@@ -178,7 +191,7 @@ class StepperRoller(BaseRoller):
                     #{"class": "SendCommandTask", "mail_index": DATA_STORE_MAIL_INDEX, "bytes": json.dumps({"cmd": "del", "key": "zero_azimuth"})},
                     {"class": "SendCommandTask", "mail_index": COMPASS_MAIL_INDEX, "bytes": " "},
                     {"class": "ReceiveAzimuthTask"},
-                    {"class": "SendCommandTask", "mail_index": STEPPER_MOTOR_INDEX, "bytes": "g"},
+                    {"class": "SendCommandTask", "mail_index": HORIZONTAL_STEPPER_MAIL_INDEX, "bytes": "g"},
                     {"class": "ReceiveMotorStep"},
                     {"class": "CalcZeroAzimuth", "steps": self.steps}
                 ]
@@ -188,6 +201,7 @@ class StepperRoller(BaseRoller):
             self.__check_zero_azimuth()
 
     def __check_zero_azimuth(self, retry = 16):
+        assert not self.is_vertical
         msg = self._communicator.receive_from(DATA_STORE_MAIL_INDEX)
         if msg:
             jdata = json.loads(msg.decode("utf-8"))
@@ -209,7 +223,7 @@ class StepperRoller(BaseRoller):
 
     def _check_move_angle(self):
         while True:
-            resp = self._communicator.receive_from(STEPPER_MOTOR_INDEX)
+            resp = self._communicator.receive_from(self.motor_mail_index)
             if resp is None:
                 break
             else:
@@ -219,10 +233,10 @@ class StepperRoller(BaseRoller):
                 self.state_update(True, status == 'r', self.step_to_angle(cur_step))
                 self.view.update_roller_view()
         if self.is_moving():
-            self._communicator.send_to(self.enter("g"), STEPPER_MOTOR_INDEX)
+            self._communicator.send_to(self.enter("g"), self.motor_mail_index)
 
     def _stop_move_angle(self):
-        self._communicator.send_to(self.enter("s"), STEPPER_MOTOR_INDEX)
+        self._communicator.send_to(self.enter("s"), self.motor_mail_index)
 
     def is_moving(self):
         return self.moving
@@ -271,10 +285,10 @@ class StepperRoller(BaseRoller):
                 {"class": "MoveToTargetStep", "target_step": trg_step}
             ]
         }
-        self._communicator.send_to(self.enter(json.dumps(j_move_task)), STEPPER_MOTOR_INDEX)
+        self._communicator.send_to(self.enter(json.dumps(j_move_task)), self.motor_mail_index)
 
     def send_stop_command(self):
-        self._communicator.send_to(self.enter("s"), STEPPER_MOTOR_INDEX)
+        self._communicator.send_to(self.enter("s"), self.motor_mail_index)
 
     def send_command(self, command: bytes, mail_index: int, cur_time = None, ttl = None):
         self._communicator.send_to(command, mail_index, cur_time, ttl)
