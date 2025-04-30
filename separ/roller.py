@@ -60,12 +60,10 @@ class BaseRoller:
                 self.current_angle = current_angle
 
     def on_connection_on(self):
-        print(f" CONNECTION_ON {self.__class__.__name__}")
         self.view.enable_buttons()
         self.view.update_roller_view()
 
     def on_connection_off(self):
-        print(f" CONNECTION_OFF {self.__class__.__name__}")
         self.view.disable_buttons()
 
     def on_move_on(self):
@@ -104,7 +102,6 @@ class BaseRoller:
         pass
 
     def on_motor_connect(self):
-        print(f" ON_MOTOR_CONNECT {self.__class__.__name__} connected to motor")
         pass
 
     def show_angle(self):
@@ -269,7 +266,6 @@ class StepperRollerHorizontal(StepperRoller):
                 else:
                     self.zero_azimuth = float(jdata["zero_azimuth"])
                     retry = 0
-                    print(f" HORIZONTAL_STEPPER found zero azimuth={self.zero_azimuth}")
 
         if retry > 0:
             self._communicator.send_to(self.enter(json.dumps({"cmd": "get", "key": "zero_azimuth"})), DATA_STORE_MAIL_INDEX)
@@ -278,7 +274,6 @@ class StepperRollerHorizontal(StepperRoller):
                 lambda: self.__check_zero_azimuth(retry - 1)
             )
         else:
-            print(f" HORIZONTAL_STEPPER finished azimuth search")
             self.view.update_roller_view()
 
     #shows current azimuth if self.zero_azimuth is not None or current_angle(related to ridge)
