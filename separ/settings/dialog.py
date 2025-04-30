@@ -244,9 +244,13 @@ class ControllerSettings(SettingsComposer):
 
         ridge_angle_policy = DoublePolicy("ridge_angle", "Кут хребта ролера (град.)")
         is_radxa_engine_policy.addSubPolicy(ridge_angle_policy, ["stepper"])
+        roller_direction_policy.addSubPolicy(ridge_angle_policy, ["horizontal"])
 
         current_azimuth_policy = AzimuthPolicy("current_zero_azimuth", "Пточний азимут (град.) [необовязково]", roller, ridge_angle_policy)
         is_radxa_engine_policy.addSubPolicy(current_azimuth_policy, ["stepper"])
+        roller_direction_policy.addSubPolicy(current_azimuth_policy, ["horizontal"])
+
+        is_radxa_engine_policy.addSubPolicy(roller_direction_policy, ["stepper", "line", "__disabled__"])#enable for all values, Just to trigger roller_direction_policy.normalizeSubPolicies
 
         roller_policies = [
             roller_direction_policy,

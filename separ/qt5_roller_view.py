@@ -102,8 +102,8 @@ class BaseRollerView:
             self.patrol_button.setEnabled(True)
 
 class RollerViewVertical(BaseRollerView):
-    def __init__(self, roller, frame, support_patrol = False):
-        super().__init__(roller, frame, support_patrol)
+    def __init__(self, roller, frame):
+        super().__init__(roller, frame, False)
 
         self.slider_height = self.canvas_height
         self.slider_width = 60

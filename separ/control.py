@@ -7,7 +7,7 @@ from pearax.mail import MailClient
 
 from separ.pearax_util import SerialMonitor
 from separ.qt5_control_view import ControllerView, SwitchBoardView
-from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller
+from separ.roller import HorizontalRoller, VerticalRoller, StepperRoller, StepperRollerVertical, StepperRollerHorizontal
 from pearax import func, PINNER_CLIENT_INDEX, PEARAX_BAUD_RATE, PINNER_INT_BYTE_SIZE, \
     PINNER_INT_BYTE_ORDER, HEART_BEAT_INDEX
 from pearax.core import Pearax
@@ -104,7 +104,10 @@ class Controller:
     def __create_roller(self, roller_index, json):
         is_vertical = json.get("type") == "vertical"
         if json.get("engine") == "stepper":
-            return StepperRoller(self, roller_index)
+            if is_vertical:
+                return StepperRollerVertical(self, roller_index)
+            else:
+                return StepperRollerHorizontal(self, roller_index)
         elif is_vertical:
             return VerticalRoller(self, roller_index)
         else:

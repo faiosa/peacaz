@@ -43,8 +43,9 @@ class AzimuthPolicy(OptionalDoublePolicy):
         return widget
 
     def save(self):
-        assert not getattr(self.roller, "send_command", None) is None
         if self.__edit:
+            if getattr(self.roller, "send_command", None) is None:
+                return
             val = self.value()
             if val is None:
                 jcommand = {"cmd": "del", "key": "zero_azimuth"}

@@ -1,7 +1,10 @@
 import json
+from typing import Optional
 
 from PyQt5.QtCore import QTimer
 from pearax import HORIZONTAL_STEPPER_MAIL_INDEX, VERTICAL_STEPPER_MAIL_INDEX, WORKER_MAIL_INDEX, COMPASS_MAIL_INDEX, DATA_STORE_MAIL_INDEX
+from pearax.mail import MailPost
+
 from config.ptz_controls_config import LEFT, STOP, RIGHT, UP, DOWN
 from separ import normalize_angles
 from separ.qt5_roller_view import RollerViewVertical, RollerViewHorizontal
@@ -57,10 +60,12 @@ class BaseRoller:
                 self.current_angle = current_angle
 
     def on_connection_on(self):
+        print(f" CONNECTION_ON {self.__class__.__name__}")
         self.view.enable_buttons()
         self.view.update_roller_view()
 
     def on_connection_off(self):
+        print(f" CONNECTION_OFF {self.__class__.__name__}")
         self.view.disable_buttons()
 
     def on_move_on(self):
@@ -93,16 +98,13 @@ class BaseRoller:
             )
 
     def show(self, parent_frame):
-        if self.is_vertical:
-            self.view = RollerViewVertical(self, parent_frame, True)
-        else:
-            view_angle_shift = self.controller.settings["rollers"][self.roller_index]["view_angle_shift"] if "view_angle_shift" in self.controller.settings["rollers"][self.roller_index] else 0
-            self.view = RollerViewHorizontal(self, parent_frame, view_angle_shift, True)
+        pass
 
     def tune_zero_azimuth(self):
         pass
 
     def on_motor_connect(self):
+        print(f" ON_MOTOR_CONNECT {self.__class__.__name__} connected to motor")
         pass
 
     def show_angle(self):
@@ -129,23 +131,24 @@ class StepperRoller(BaseRoller):
 
         self.steps = self.controller.settings["rollers"][self.roller_index]["steps"]
         self.cur_step = self.angle_to_step(self.current_angle)
-        self.ridge_angle = self.controller.settings["rollers"][self.roller_index]["ridge_angle"]
-        #self.zero_azimuth = self.controller.settings["rollers"][self.roller_index]["current_zero_azimuth"]
-        if self.is_vertical:
-            self.motor_mail_index = VERTICAL_STEPPER_MAIL_INDEX
-            self.roller_mail_index = STEPPER_VERTICAL_ROLLER_INDEX
-            self._communicator = self.controller.radxa.provide_proxy_mail_post(self.roller_mail_index, [self.motor_mail_index])
-        else:
-            self.motor_mail_index = HORIZONTAL_STEPPER_MAIL_INDEX
-            self.roller_mail_index = STEPPER_HORIZONTAL_ROLLER_INDEX
-            self._communicator = self.controller.radxa.provide_proxy_mail_post(self.roller_mail_index,
-                                                                               [self.motor_mail_index,
-                                                                                WORKER_MAIL_INDEX,
-                                                                                DATA_STORE_MAIL_INDEX])
-
         self.moving = False
-
         self.min_angle, self.max_angle = normalize_angles(self.min_angle, self.max_angle)
+        self._communicator: Optional[MailPost] = None
+        self.motor_mail_index: Optional[int] = None
+
+    def _check_move_angle(self):
+        while True:
+            resp = self._communicator.receive_from(self.motor_mail_index)
+            if resp is None:
+                break
+            else:
+                s = resp.decode("utf-8").strip()
+                status = s[:1]
+                cur_step = int(s[1:])
+                self.state_update(True, status == 'r', self.step_to_angle(cur_step))
+                self.view.update_roller_view()
+        if self.is_moving():
+            self._communicator.send_to(self.enter("g"), self.motor_mail_index)
 
     def _start_move_angle(self, dst_angle):
         if dst_angle > self.max_angle:
@@ -157,9 +160,66 @@ class StepperRoller(BaseRoller):
         assert self.connected
         self.state_update(True, True)
 
+    def _stop_move_angle(self):
+        self._communicator.send_to(self.enter("s"), self.motor_mail_index)
+
+    def is_moving(self):
+        return self.moving
+
+    def show_angle(self):
+        return self.current_angle
+
+    def angle_to_step(self, angle):
+        return int(angle * self.steps / 360.0)
+
+    def step_to_angle(self, step):
+        return 360.0 * step / self.steps
+
+    def send_move_command(self, trg_step):
+        motor_delay = 360.0 / (float(self.steps) * self.rotation_speed)
+        j_move_task = {
+            "run_final_on_stop": 0,
+            "tasks": [
+                {"class": "StepperParametersTask", "velocity_delay": motor_delay},
+                {"class": "StepperParametersTask", "target_step": trg_step},
+                {"class": "MoveToTargetStep", "target_step": trg_step}
+            ]
+        }
+        self._communicator.send_to(self.enter(json.dumps(j_move_task)), self.motor_mail_index)
+
+    def send_stop_command(self):
+        self._communicator.send_to(self.enter("s"), self.motor_mail_index)
+
+    def send_command(self, command: bytes, mail_index: int, cur_time = None, ttl = None):
+        self._communicator.send_to(command, mail_index, cur_time, ttl)
+
+class StepperRollerVertical(StepperRoller):
+    def __init__(self, controller, roller_index):
+        super().__init__(controller, roller_index)
+        assert self.is_vertical
+        self.motor_mail_index = VERTICAL_STEPPER_MAIL_INDEX
+        self.roller_mail_index = STEPPER_VERTICAL_ROLLER_INDEX
+        self._communicator = self.controller.radxa.provide_proxy_mail_post(self.roller_mail_index,
+                                                                           [self.motor_mail_index])
+
+    def show(self, parent_frame):
+        self.view = RollerViewVertical(self, parent_frame)
+
+class StepperRollerHorizontal(StepperRoller):
+    def __init__(self, controller, roller_index):
+        super().__init__(controller, roller_index)
+        assert not self.is_vertical
+        self.ridge_angle = self.controller.settings["rollers"][self.roller_index]["ridge_angle"]
+
+        self.motor_mail_index = HORIZONTAL_STEPPER_MAIL_INDEX
+        self.roller_mail_index = STEPPER_HORIZONTAL_ROLLER_INDEX
+        self._communicator = self.controller.radxa.provide_proxy_mail_post(self.roller_mail_index,
+                                                                               [self.motor_mail_index,
+                                                                                WORKER_MAIL_INDEX,
+                                                                                DATA_STORE_MAIL_INDEX])
+
     #angles should be real, not show angles!
     def do_patrol(self, angle_1: float, angle_2: float, rotation_speed: float):
-        assert not self.is_vertical
         min_angle, max_angle = normalize_angles(angle_1, angle_2)
         if self.connected and not self.is_moving():
             trg_step_1 = self.angle_to_step(max(min_angle, self.min_angle))
@@ -183,7 +243,6 @@ class StepperRoller(BaseRoller):
             self.state_update(True, True)
 
     def tune_zero_azimuth(self):
-        assert not self.is_vertical
         if self.connected and not self.is_moving():
             j_azimuth_task = {
                 "type": "DataJob",
@@ -201,7 +260,6 @@ class StepperRoller(BaseRoller):
             self.__check_zero_azimuth()
 
     def __check_zero_azimuth(self, retry = 16):
-        assert not self.is_vertical
         msg = self._communicator.receive_from(DATA_STORE_MAIL_INDEX)
         if msg:
             jdata = json.loads(msg.decode("utf-8"))
@@ -211,6 +269,7 @@ class StepperRoller(BaseRoller):
                 else:
                     self.zero_azimuth = float(jdata["zero_azimuth"])
                     retry = 0
+                    print(f" HORIZONTAL_STEPPER found zero azimuth={self.zero_azimuth}")
 
         if retry > 0:
             self._communicator.send_to(self.enter(json.dumps({"cmd": "get", "key": "zero_azimuth"})), DATA_STORE_MAIL_INDEX)
@@ -219,27 +278,8 @@ class StepperRoller(BaseRoller):
                 lambda: self.__check_zero_azimuth(retry - 1)
             )
         else:
+            print(f" HORIZONTAL_STEPPER finished azimuth search")
             self.view.update_roller_view()
-
-    def _check_move_angle(self):
-        while True:
-            resp = self._communicator.receive_from(self.motor_mail_index)
-            if resp is None:
-                break
-            else:
-                s = resp.decode("utf-8").strip()
-                status = s[:1]
-                cur_step = int(s[1:])
-                self.state_update(True, status == 'r', self.step_to_angle(cur_step))
-                self.view.update_roller_view()
-        if self.is_moving():
-            self._communicator.send_to(self.enter("g"), self.motor_mail_index)
-
-    def _stop_move_angle(self):
-        self._communicator.send_to(self.enter("s"), self.motor_mail_index)
-
-    def is_moving(self):
-        return self.moving
 
     #shows current azimuth if self.zero_azimuth is not None or current_angle(related to ridge)
     def show_angle(self):
@@ -275,27 +315,14 @@ class StepperRoller(BaseRoller):
     def step_to_angle(self, step):
         return 360.0 * step / self.steps - self.ridge_angle
 
-    def send_move_command(self, trg_step):
-        motor_delay = 360.0 / (float(self.steps) * self.rotation_speed)
-        j_move_task = {
-            "run_final_on_stop": 0,
-            "tasks": [
-                {"class": "StepperParametersTask", "velocity_delay": motor_delay},
-                {"class": "StepperParametersTask", "target_step": trg_step},
-                {"class": "MoveToTargetStep", "target_step": trg_step}
-            ]
-        }
-        self._communicator.send_to(self.enter(json.dumps(j_move_task)), self.motor_mail_index)
-
-    def send_stop_command(self):
-        self._communicator.send_to(self.enter("s"), self.motor_mail_index)
-
-    def send_command(self, command: bytes, mail_index: int, cur_time = None, ttl = None):
-        self._communicator.send_to(command, mail_index, cur_time, ttl)
 
     def on_motor_connect(self):
-        pass
+        super().on_motor_connect()
         self.__check_zero_azimuth(8)
+
+    def show(self, parent_frame):
+        view_angle_shift = self.controller.settings["rollers"][self.roller_index]["view_angle_shift"] if "view_angle_shift" in self.controller.settings["rollers"][self.roller_index] else 0
+        self.view = RollerViewHorizontal(self, parent_frame, view_angle_shift, True)
 
 
 class TimeRoller(BaseRoller):
@@ -416,6 +443,8 @@ class VerticalRoller(TimeRoller):
     def decrease_angle_command(self):
         return DOWN
 
+    def show(self, parent_frame):
+        self.view = RollerViewVertical(self, parent_frame)
 
 class HorizontalRoller(TimeRoller):
     def __init__(self, controller, roller_index):
@@ -427,6 +456,10 @@ class HorizontalRoller(TimeRoller):
 
     def decrease_angle_command(self):
         return LEFT
+
+    def show(self, parent_frame):
+        view_angle_shift = self.controller.settings["rollers"][self.roller_index]["view_angle_shift"] if "view_angle_shift" in self.controller.settings["rollers"][self.roller_index] else 0
+        self.view = RollerViewHorizontal(self, parent_frame, view_angle_shift, False)
 
 
 

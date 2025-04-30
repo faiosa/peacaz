@@ -47,9 +47,11 @@ class DictionarySettings:
             self.need_refresh = False
 
     def normalizeSubPolicies(self):
+        #print(f"    DIALOG {self.title} normalizing policies")
+        disabled = []
         for index in range(len(self.policies)):
             if not self.policies[index] is None:
-                self.policies[index].normalizeSubPolicies()
+                self.policies[index].normalizeSubPolicies(disabled_policies = disabled)
 
     def enablePolicy(self, policy):
         if self.policies[policy.index] is None:
@@ -133,15 +135,26 @@ class Policy:
     def addSubPolicy(self, policy, enable_val_list):
         self.subp.append((policy, enable_val_list))
 
-    def normalizeSubPolicies(self, refresh_ds=[], do_refresh=True):
+    def normalizeSubPolicies(self, refresh_ds=None, disabled_policies=None, do_refresh=True):
+        if refresh_ds is None:
+            refresh_ds = []
+        if disabled_policies is None:
+            disabled_policies = []
+        #print(f"  NORMALIZING policy {self.key} with disabled: {[p.key for p in disabled_policies]}")
         for policy, enable_val_list in self.subp:
+            if policy in disabled_policies:
+                #print(f"    POLICY '{policy.key}' is disabled already")
+                continue
             if self.status() in enable_val_list:
+                #print(f"    ENABLED POLICY '{policy.key}' by upper policy='{self.key}'")
                 policy.ds.enablePolicy(policy)
             else:
                 policy.ds.disablePolicy(policy)
+                disabled_policies.append(policy)
+                #print(f"    DISABLED POLICY '{policy.key}' by upper policy='{self.key}'")
             if not policy.ds in refresh_ds:
                 refresh_ds.append(policy.ds)
-            policy.normalizeSubPolicies(refresh_ds, do_refresh=False)
+            policy.normalizeSubPolicies(refresh_ds, disabled_policies, do_refresh=False)
         if do_refresh:
             for ds in refresh_ds:
                 ds.refreshView()
