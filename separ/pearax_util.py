@@ -1,3 +1,4 @@
+import struct
 import time
 
 from PyQt5.QtCore import QTimer
@@ -24,6 +25,7 @@ class SerialMonitor(MailClient):
         self.disconnected_count = 0
         self.disconnected_limit = 7
         self.rate_ms = 25
+        self.rate_ms_bytes = struct.pack('!d', float(self.rate_ms) / 1000.0)
         self.is_running = False
         for waiter in listeners:
             _inspect_client(waiter)
@@ -61,7 +63,7 @@ class SerialMonitor(MailClient):
                 for listener in self.listeners:
                     listener.on_serial_disconnect()
 
-        self.send(str(cur_time).encode("utf-8"), cur_time, STANDARD_TTL)
+        self.send(self.rate_ms_bytes, cur_time, STANDARD_TTL)
         QTimer.singleShot(
             self.rate_ms,
             lambda: self.__monitor()
