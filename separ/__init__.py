@@ -2,7 +2,6 @@ import pathlib
 
 
 def normalize_angles(angle_1, angle_2):
-    assert not angle_1 == angle_2
     min_angle = min(angle_1, angle_2)
     max_angle = max(angle_1, angle_2)
     while min_angle > 360.:
@@ -11,6 +10,11 @@ def normalize_angles(angle_1, angle_2):
     while max_angle < 0.:
         min_angle += 360.
         max_angle += 360.
+    if min_angle == max_angle:
+        if min_angle > 0:
+            min_angle -= 1
+        elif max_angle < 360:
+            max_angle += 1
     return min_angle, max_angle
 
 
